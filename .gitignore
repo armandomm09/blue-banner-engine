@@ -1,0 +1,5 @@
+# HEATSEEKER
+heatseeker/*
+!heatseeker/*.py
+
+.venv
