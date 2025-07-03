@@ -3,3 +3,5 @@ heatseeker/*
 !heatseeker/*.py
 
 .venv
+
+__pycache__

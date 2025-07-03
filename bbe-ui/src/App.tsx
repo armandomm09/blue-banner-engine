@@ -88,7 +88,6 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   what,
   tech,
   output,
-  imageUrl,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
