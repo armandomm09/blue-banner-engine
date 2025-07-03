@@ -1,0 +1,72 @@
+basePath: /api/v1
+definitions:
+  main.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  main.PredictionResponseJSON:
+    properties:
+      match_key:
+        example: 2024txda_qm1
+        type: string
+      predicted_scores:
+        additionalProperties:
+          type: integer
+        example:
+          blue: 112
+          red: 95
+        type: object
+      predicted_winner:
+        example: blue
+        type: string
+      win_probability:
+        additionalProperties:
+          type: number
+        example:
+          blue: 0.79
+          red: 0.21
+        type: object
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the API server for the Blue Banner Engine, providing FRC match
+    predictions.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Blue Banner Engine (BBE) API
+  version: "1.0"
+paths:
+  /predict/{match_key}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a full prediction for a given FRC match key from the
+        BBE prediction service.
+      parameters:
+      - description: FRC Match Key (e.g., 2024txda_qm1)
+        in: path
+        name: match_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful prediction
+          schema:
+            $ref: '#/definitions/main.PredictionResponseJSON'
+        "500":
+          description: Internal Server Error (e.g., gRPC call failed)
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Match Prediction
+      tags:
+      - predictions
+swagger: "2.0"

@@ -1,0 +1,38 @@
+// bbe/matchpoint/protos/prediction.proto
+
+syntax = "proto3";
+
+package matchpoint;
+
+option go_package = "blue-banner-engine/protos";
+
+// El servicio principal que expone las funcionalidades del predictor.
+service Matchpoint {
+  // Un método RPC para obtener la predicción completa de un partido.
+  rpc GetMatchPrediction(MatchPredictionRequest) returns (MatchPredictionResponse) {}
+}
+
+// Mensaje de solicitud: simple, solo necesita la clave del partido.
+message MatchPredictionRequest {
+  string match_key = 1;
+}
+
+// Mensaje de respuesta: una réplica estructurada de tu objeto MatchPrediction.
+message MatchPredictionResponse {
+  string match_key = 1;
+  string predicted_winner = 2;
+  WinProbability win_probability = 3;
+  PredictedScores predicted_scores = 4;
+}
+
+// Sub-mensaje para las probabilidades, anidado para mayor claridad.
+message WinProbability {
+  float red = 1;
+  float blue = 2;
+}
+
+// Sub-mensaje para los puntajes.
+message PredictedScores {
+  int32 red = 1;
+  int32 blue = 2;
+}
