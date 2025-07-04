@@ -52,10 +52,18 @@ type PredictionHandler struct {
 // @BasePath  /api/v1
 func main() {
 
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcServerAddress := os.Getenv("GRPC_SERVER_ADDRESS")
+	if grpcServerAddress == "" {
+		grpcServerAddress = "localhost:50051"
+	}
+
+	log.Printf("Attempting to connect to gRPC server at: %s", grpcServerAddress)
+
+	conn, err := grpc.Dial(grpcServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
+	defer conn.Close()
 	defer conn.Close()
 
 	handler := &PredictionHandler{

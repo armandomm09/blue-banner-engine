@@ -11,7 +11,7 @@ STATBOTICS_BASE_URL = "https://api.statbotics.io/v3"
 TBA_HEADER = {"X-TBA-Auth-Key": TBA_API_KEY}
 
 # Model Config
-MODEL_PATH = "/Users/armando/Progra/ai/bbe/matchpoint/models/models"
+MODEL_PATH = os.path.join(os.getcwd(), "models")
 CLASSIFIER_PATH = os.path.join(MODEL_PATH, "classification.json")
 RED_REGRESSOR_PATH = os.path.join(MODEL_PATH, "red_model.json")
 BLUE_REGRESSOR_PATH = os.path.join(MODEL_PATH, "blue_model.json")

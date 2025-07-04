@@ -5,3 +5,5 @@ heatseeker/*
 .venv
 
 __pycache__
+
+models

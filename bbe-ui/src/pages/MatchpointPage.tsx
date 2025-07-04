@@ -76,7 +76,7 @@ const MatchpointPage: React.FC = () => {
                         type="text"
                         value={matchKey}
                         onChange={(e) => setMatchKey(e.target.value)}
-                        placeholder="e.g., 2024txda_qm1"
+                        placeholder="e.g., 2025mxle_qm12"
                         className="flex-grow bg-card border border-border rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent transition-all"
                     />
                     <button

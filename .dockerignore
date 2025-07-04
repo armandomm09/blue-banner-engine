@@ -1,0 +1,33 @@
+# archivos y carpetas de Git
+.git
+.gitignore
+
+# archivos y carpetas de Docker
+Dockerfile*
+docker-compose.yml
+
+# archivos de configuración de IDE y SO
+.vscode/
+.idea/
+.DS_Store
+*.swo
+
+# archivos de desarrollo y documentación
+README.md
+dev/
+*.md
+
+# Ignorar dependencias de Node.js (se deben instalar dentro del contenedor si fuera necesario)
+node_modules
+.npm
+
+# Ignorar el entorno virtual de Python
+.venv
+__pycache__/
+*.pyc
+
+# Ignorar videos y datasets grandes
+heatseeker/downloaded_yt_vid/
+heatseeker/raw_dataset/
+matchpoint/dataset/
+
