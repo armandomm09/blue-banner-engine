@@ -96,7 +96,7 @@ You must have the following tools installed on your system:
 #### 1. Clone the Repository
 First, clone the project to your local machine:
 ```bash
-git clone https://github.com/your-username/bbe.git
+git clone https://github.com/armandomm09/bbe.git
 cd bbe
 ```
 
