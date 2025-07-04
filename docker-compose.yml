@@ -1,37 +1,37 @@
 services:
-  # Servicio del Backend de Go (API y Servidor Web)
+  
   go-api:
     build:
       context: .
       dockerfile: Dockerfile.go
     container_name: go-api-server
     ports:
-      - "8080:8080" # Mapea el puerto 8080 del contenedor al puerto 8080 de tu máquina
+      - "8080:8080" 
     environment:
-      # Le decimos al contenedor de Go cómo encontrar al de Python
+      
       - GRPC_SERVER_ADDRESS=python-predictor:50051
       
     networks:
       - bbe-net
     depends_on:
-      - python-predictor # Asegura que el servicio de Python inicie primero
+      - python-predictor 
 
-  # Servicio de Predicción de Python (gRPC)
+  
   python-predictor:
     build:
       context: .
       dockerfile: Dockerfile.python
     container_name: python-predictor-service
     environment:
-      # Pasa las variables de entorno necesarias al contenedor de Python
+      
       - TBA_API_KEY=${TBA_API_KEY} 
-      # - MLFLOW_TRACKING_URI=http://mlflow-server:5000 # (si tuvieras un servicio de mlflow)
+      
     env_file:
-      - .env # Carga variables desde un archivo .env
+      - .env 
     networks:
       - bbe-net
-    # No exponemos puertos (ports) porque solo el contenedor de Go necesita acceder a él
-    # a través de la red interna.
+    
+    
 
 networks:
   bbe-net:
