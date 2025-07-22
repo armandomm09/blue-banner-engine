@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type MatchpointClient interface {
 	// Un método RPC para obtener la predicción completa de un partido.
 	GetMatchPrediction(ctx context.Context, in *MatchPredictionRequest, opts ...grpc.CallOption) (*MatchPredictionResponse, error)
+	PredictAllEventMatches(ctx context.Context, in *EventPredictionRequest, opts ...grpc.CallOption) (*EventPredictionResponse, error)
 }
 
 type matchpointClient struct {
@@ -43,12 +44,22 @@ func (c *matchpointClient) GetMatchPrediction(ctx context.Context, in *MatchPred
 	return out, nil
 }
 
+func (c *matchpointClient) PredictAllEventMatches(ctx context.Context, in *EventPredictionRequest, opts ...grpc.CallOption) (*EventPredictionResponse, error) {
+	out := new(EventPredictionResponse)
+	err := c.cc.Invoke(ctx, "/matchpoint.Matchpoint/PredictAllEventMatches", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MatchpointServer is the server API for Matchpoint service.
 // All implementations must embed UnimplementedMatchpointServer
 // for forward compatibility
 type MatchpointServer interface {
 	// Un método RPC para obtener la predicción completa de un partido.
 	GetMatchPrediction(context.Context, *MatchPredictionRequest) (*MatchPredictionResponse, error)
+	PredictAllEventMatches(context.Context, *EventPredictionRequest) (*EventPredictionResponse, error)
 	mustEmbedUnimplementedMatchpointServer()
 }
 
@@ -58,6 +69,9 @@ type UnimplementedMatchpointServer struct {
 
 func (UnimplementedMatchpointServer) GetMatchPrediction(context.Context, *MatchPredictionRequest) (*MatchPredictionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMatchPrediction not implemented")
+}
+func (UnimplementedMatchpointServer) PredictAllEventMatches(context.Context, *EventPredictionRequest) (*EventPredictionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PredictAllEventMatches not implemented")
 }
 func (UnimplementedMatchpointServer) mustEmbedUnimplementedMatchpointServer() {}
 
@@ -90,6 +104,24 @@ func _Matchpoint_GetMatchPrediction_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Matchpoint_PredictAllEventMatches_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EventPredictionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchpointServer).PredictAllEventMatches(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/matchpoint.Matchpoint/PredictAllEventMatches",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchpointServer).PredictAllEventMatches(ctx, req.(*EventPredictionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Matchpoint_ServiceDesc is the grpc.ServiceDesc for Matchpoint service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +132,10 @@ var Matchpoint_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMatchPrediction",
 			Handler:    _Matchpoint_GetMatchPrediction_Handler,
+		},
+		{
+			MethodName: "PredictAllEventMatches",
+			Handler:    _Matchpoint_PredictAllEventMatches_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -76,6 +76,9 @@ func main() {
 	v1 := router.Group("/api/v1")
 	{
 		v1.GET("/predict/:match_key", handler.getPrediction)
+
+		v1.GET("/predict/event/:event_key", handler.getEventPredictions)
+
 	}
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -138,6 +141,41 @@ func (h *PredictionHandler) getPrediction(c *gin.Context) {
 			"red":  grpcResponse.GetPredictedScores().GetRed(),
 			"blue": grpcResponse.GetPredictedScores().GetBlue(),
 		},
+	}
+
+	c.JSON(http.StatusOK, jsonResponse)
+}
+
+func (h *PredictionHandler) getEventPredictions(c *gin.Context) {
+	eventKey := c.Param("event_key")
+	log.Printf("Received API request for event: %s", eventKey)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30) // Aumentamos el timeout para el lote
+	defer cancel()
+
+	// Llama al nuevo método RPC
+	grpcResponse, err := h.grpcClient.PredictAllEventMatches(ctx, &pb.EventPredictionRequest{EventKey: eventKey})
+	if err != nil {
+		log.Printf("gRPC batch call failed: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to get event predictions from prediction service"})
+		return
+	}
+
+	// Transforma la lista de respuestas gRPC a una lista de JSON
+	jsonResponse := make([]PredictionResponseJSON, 0)
+	for _, pred := range grpcResponse.GetPredictions() {
+		jsonResponse = append(jsonResponse, PredictionResponseJSON{
+			MatchKey:        pred.GetMatchKey(),
+			PredictedWinner: pred.GetPredictedWinner(),
+			WinProbability: map[string]float32{
+				"red":  pred.GetWinProbability().GetRed(),
+				"blue": pred.GetWinProbability().GetBlue(),
+			},
+			PredictedScores: map[string]int32{
+				"red":  pred.GetPredictedScores().GetRed(),
+				"blue": pred.GetPredictedScores().GetBlue(),
+			},
+		})
 	}
 
 	c.JSON(http.StatusOK, jsonResponse)
