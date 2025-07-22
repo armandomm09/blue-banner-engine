@@ -3,8 +3,8 @@ import grpc
 import time
 
 
-from . import prediction_pb2
-from . import prediction_pb2_grpc
+from .generated import prediction_pb2
+from .generated import prediction_pb2_grpc
 from .services.mp_prediction import MatchpointPredictor, MatchPrediction
 
 
@@ -13,6 +13,8 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
     def __init__(self):
         self.predictor = MatchpointPredictor()
         print("MatchpointPredictor service initialized.")
+
+
 
     def GetMatchPrediction(self, request, context):
         match_key = request.match_key
@@ -52,6 +54,41 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details("An internal server error occurred.")
             return prediction_pb2.MatchPredictionResponse()
+        
+    def PredictAllEventMatches(self, request, context):
+        event_key = request.event_key
+        print(f"Received gRPC batch prediction request for event: {event_key}")
+
+        try:
+            # Llama a tu nueva función de predicción por lotes
+            prediction_list: list[MatchPrediction] = self.predictor.predict_all_matches_for_event(event_key)
+
+            # Crea la respuesta principal
+            response = prediction_pb2.EventPredictionResponse()
+
+            # Itera sobre tus objetos de Python y conviértelos a mensajes protobuf
+            for prediction_obj in prediction_list:
+                proto_prediction = prediction_pb2.MatchPredictionResponse(
+                    match_key=prediction_obj.match_key,
+                    predicted_winner=prediction_obj.predicted_winner,
+                    win_probability=prediction_pb2.WinProbability(
+                        red=prediction_obj.win_probability['red'],
+                        blue=prediction_obj.win_probability['blue']
+                    ),
+                    predicted_scores=prediction_pb2.PredictedScores(
+                        red=prediction_obj.predicted_scores['red'],
+                        blue=prediction_obj.predicted_scores['blue']
+                    )
+                )
+                response.predictions.append(proto_prediction)
+            
+            return response
+
+        except Exception as e:
+            print(f"FATAL ERROR during batch processing for {event_key}: {e}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details("An internal server error occurred during batch prediction.")
+            return prediction_pb2.EventPredictionResponse()
 
 
 def serve():

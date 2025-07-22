@@ -26,7 +26,8 @@ if _version_not_supported:
 
 
 class MatchpointStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """El servicio principal que expone las funcionalidades del predictor.
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -39,12 +40,25 @@ class MatchpointStub(object):
                 request_serializer=prediction__pb2.MatchPredictionRequest.SerializeToString,
                 response_deserializer=prediction__pb2.MatchPredictionResponse.FromString,
                 _registered_method=True)
+        self.PredictAllEventMatches = channel.unary_unary(
+                '/matchpoint.Matchpoint/PredictAllEventMatches',
+                request_serializer=prediction__pb2.EventPredictionRequest.SerializeToString,
+                response_deserializer=prediction__pb2.EventPredictionResponse.FromString,
+                _registered_method=True)
 
 
 class MatchpointServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """El servicio principal que expone las funcionalidades del predictor.
+    """
 
     def GetMatchPrediction(self, request, context):
+        """Un método RPC para obtener la predicción completa de un partido.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def PredictAllEventMatches(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -58,6 +72,11 @@ def add_MatchpointServicer_to_server(servicer, server):
                     request_deserializer=prediction__pb2.MatchPredictionRequest.FromString,
                     response_serializer=prediction__pb2.MatchPredictionResponse.SerializeToString,
             ),
+            'PredictAllEventMatches': grpc.unary_unary_rpc_method_handler(
+                    servicer.PredictAllEventMatches,
+                    request_deserializer=prediction__pb2.EventPredictionRequest.FromString,
+                    response_serializer=prediction__pb2.EventPredictionResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'matchpoint.Matchpoint', rpc_method_handlers)
@@ -67,7 +86,8 @@ def add_MatchpointServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class Matchpoint(object):
-    """Missing associated documentation comment in .proto file."""
+    """El servicio principal que expone las funcionalidades del predictor.
+    """
 
     @staticmethod
     def GetMatchPrediction(request,
@@ -86,6 +106,33 @@ class Matchpoint(object):
             '/matchpoint.Matchpoint/GetMatchPrediction',
             prediction__pb2.MatchPredictionRequest.SerializeToString,
             prediction__pb2.MatchPredictionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def PredictAllEventMatches(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/matchpoint.Matchpoint/PredictAllEventMatches',
+            prediction__pb2.EventPredictionRequest.SerializeToString,
+            prediction__pb2.EventPredictionResponse.FromString,
             options,
             channel_credentials,
             insecure,
