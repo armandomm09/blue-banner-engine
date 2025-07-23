@@ -8,9 +8,10 @@ services:
     ports:
       - "8080:8080" 
     environment:
-      
+      - TBA_API_KEY=${TBA_API_KEY} 
       - GRPC_SERVER_ADDRESS=python-predictor:50051
-      
+    volumes:
+      - .env:/.env
     networks:
       - bbe-net
     depends_on:

@@ -1,11 +1,14 @@
 FROM golang:1.23-alpine AS builder
 
-WORKDIR /app
+WORKDIR /
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+
+COPY .env .env
+
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /bbe-server .
 
