@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import MatchpointPage from './pages/MatchpointPage';
+import HomePage from './pages/HomePage'; // Asegúrate de crear este archivo
+import MatchpointPage from './pages/MatchpointPage'; // Este es el archivo que actualizaremos
 
 const Navbar: React.FC = () => (
   <nav className="absolute top-0 left-0 right-0 p-6 z-10">

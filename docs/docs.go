@@ -24,6 +24,47 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/predict/event/{event_key}": {
+            "get": {
+                "description": "Retrieves all match predictions for a given FRC event key from the BBE prediction service.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "predictions"
+                ],
+                "summary": "Get All Match Predictions for an Event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FRC Event Key (e.g., 2025mxle)",
+                        "name": "event_key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful prediction for all matches",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/main.PredictionResponseJSON"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error (e.g., gRPC call failed)",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/predict/{match_key}": {
             "get": {
                 "description": "Retrieves a full prediction for a given FRC match key from the BBE prediction service.",
@@ -40,7 +81,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "FRC Match Key (e.g., 2024txda_qm1)",
+                        "description": "FRC Match Key (e.g., 2025mxle_qm12)",
                         "name": "match_key",
                         "in": "path",
                         "required": true
@@ -75,9 +116,23 @@ const docTemplate = `{
         "main.PredictionResponseJSON": {
             "type": "object",
             "properties": {
+                "actual_scores": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    },
+                    "example": {
+                        "blue": 98,
+                        "red": 100
+                    }
+                },
+                "actual_winner": {
+                    "type": "string",
+                    "example": "red"
+                },
                 "match_key": {
                     "type": "string",
-                    "example": "2024txda_qm1"
+                    "example": "2025mxle_qm1"
                 },
                 "predicted_scores": {
                     "type": "object",
@@ -92,6 +147,10 @@ const docTemplate = `{
                 "predicted_winner": {
                     "type": "string",
                     "example": "blue"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "played"
                 },
                 "win_probability": {
                     "type": "object",

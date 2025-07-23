@@ -7,8 +7,18 @@ definitions:
     type: object
   main.PredictionResponseJSON:
     properties:
+      actual_scores:
+        additionalProperties:
+          type: integer
+        example:
+          blue: 98
+          red: 100
+        type: object
+      actual_winner:
+        example: red
+        type: string
       match_key:
-        example: 2024txda_qm1
+        example: 2025mxle_qm1
         type: string
       predicted_scores:
         additionalProperties:
@@ -19,6 +29,9 @@ definitions:
         type: object
       predicted_winner:
         example: blue
+        type: string
+      status:
+        example: played
         type: string
       win_probability:
         additionalProperties:
@@ -50,7 +63,7 @@ paths:
       description: Retrieves a full prediction for a given FRC match key from the
         BBE prediction service.
       parameters:
-      - description: FRC Match Key (e.g., 2024txda_qm1)
+      - description: FRC Match Key (e.g., 2025mxle_qm12)
         in: path
         name: match_key
         required: true
@@ -67,6 +80,34 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       summary: Get Match Prediction
+      tags:
+      - predictions
+  /predict/event/{event_key}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all match predictions for a given FRC event key from
+        the BBE prediction service.
+      parameters:
+      - description: FRC Event Key (e.g., 2025mxle)
+        in: path
+        name: event_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful prediction for all matches
+          schema:
+            items:
+              $ref: '#/definitions/main.PredictionResponseJSON'
+            type: array
+        "500":
+          description: Internal Server Error (e.g., gRPC call failed)
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get All Match Predictions for an Event
       tags:
       - predictions
 swagger: "2.0"
