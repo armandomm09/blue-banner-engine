@@ -24,6 +24,44 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/events/{year}": {
+            "get": {
+                "description": "Retrieves a simplified list of all FRC events for a given year from The Blue Alliance.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get All Events for a Year",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "FRC Year (e.g., 2024)",
+                        "name": "year",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.TbaEvent"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/predict/event/{event_key}": {
             "get": {
                 "description": "Retrieves all match predictions for a given FRC event key from the BBE prediction service.",
@@ -52,14 +90,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/main.PredictionResponseJSON"
+                                "$ref": "#/definitions/types.MatchPrediction"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error (e.g., gRPC call failed)",
                         "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
+                            "$ref": "#/definitions/routes.ErrorResponse"
                         }
                     }
                 }
@@ -91,13 +129,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Successful prediction",
                         "schema": {
-                            "$ref": "#/definitions/main.PredictionResponseJSON"
+                            "$ref": "#/definitions/types.MatchPrediction"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error (e.g., gRPC call failed)",
                         "schema": {
-                            "$ref": "#/definitions/main.ErrorResponse"
+                            "$ref": "#/definitions/routes.ErrorResponse"
                         }
                     }
                 }
@@ -105,7 +143,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "main.ErrorResponse": {
+        "routes.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -113,7 +151,39 @@ const docTemplate = `{
                 }
             }
         },
-        "main.PredictionResponseJSON": {
+        "routes.TbaEvent": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "event_code": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "state_prov": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.MatchPrediction": {
             "type": "object",
             "properties": {
                 "actual_scores": {
@@ -149,7 +219,7 @@ const docTemplate = `{
                     "example": "blue"
                 },
                 "shap_analysis": {
-                    "$ref": "#/definitions/main.ShapAnalysisJSON"
+                    "$ref": "#/definitions/types.ShapAnalysis"
                 },
                 "status": {
                     "type": "string",
@@ -167,7 +237,7 @@ const docTemplate = `{
                 }
             }
         },
-        "main.ShapAnalysisJSON": {
+        "types.ShapAnalysis": {
             "type": "object",
             "properties": {
                 "base_value": {
