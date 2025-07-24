@@ -8,4 +8,8 @@ __pycache__
 
 models
 
-.env.DS_Store
+.env
+
+.DS_Store
+
+
