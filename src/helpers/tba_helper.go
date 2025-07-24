@@ -1,33 +1,17 @@
 package helpers
 
 import (
+	"blue-banner-engine/src/types"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 )
 
-// TbaScore represents the score for an alliance
-type TbaScore struct {
-	Score int32 `json:"score"`
-}
-
-// TbaAlliances represents the alliances in a match
-type TbaAlliances struct {
-	Red  TbaScore `json:"red"`
-	Blue TbaScore `json:"blue"`
-}
-
-// TbaMatch represents a match from TBA
-type TbaMatch struct {
-	Key             string       `json:"key"`
-	CompLevel       string       `json:"comp_level"`
-	WinningAlliance string       `json:"winning_alliance"`
-	Alliances       TbaAlliances `json:"alliances"`
-}
+// Tb
 
 // FetchTbaEventMatches fetches all matches for a given event from TBA
-func FetchTbaEventMatches(eventKey, tbaApiKey string) (map[string]TbaMatch, error) {
+func FetchTbaEventMatches(eventKey, tbaApiKey string) (map[string]types.TbaMatch, error) {
 	if tbaApiKey == "" {
 		return nil, fmt.Errorf("TBA_API_KEY is not configured")
 	}
@@ -50,12 +34,12 @@ func FetchTbaEventMatches(eventKey, tbaApiKey string) (map[string]TbaMatch, erro
 		return nil, fmt.Errorf("TBA API returned status %s", resp.Status)
 	}
 
-	var matches []TbaMatch
+	var matches []types.TbaMatch
 	if err := json.NewDecoder(resp.Body).Decode(&matches); err != nil {
 		return nil, err
 	}
 
-	matchMap := make(map[string]TbaMatch)
+	matchMap := make(map[string]types.TbaMatch)
 	for _, match := range matches {
 		matchMap[match.Key] = match
 	}
@@ -63,7 +47,7 @@ func FetchTbaEventMatches(eventKey, tbaApiKey string) (map[string]TbaMatch, erro
 }
 
 // FetchTbaMatch fetches a single match from TBA by match key
-func FetchTbaMatch(matchKey, tbaApiKey string) (*TbaMatch, error) {
+func FetchTbaMatch(matchKey, tbaApiKey string) (*types.TbaMatch, error) {
 	if tbaApiKey == "" {
 		return nil, fmt.Errorf("TBA_API_KEY is not configured")
 	}
@@ -86,9 +70,33 @@ func FetchTbaMatch(matchKey, tbaApiKey string) (*TbaMatch, error) {
 		return nil, fmt.Errorf("TBA API returned status %s", resp.Status)
 	}
 
-	var match TbaMatch
+	var match types.TbaMatch
 	if err := json.NewDecoder(resp.Body).Decode(&match); err != nil {
 		return nil, err
 	}
 	return &match, nil
+}
+
+func FetchTbaEventDetails(eventKey, tbaApiKey string) (*types.TbaEventDetails, error) {
+	if tbaApiKey == "" {
+		return nil, fmt.Errorf("TBA_API_KEY is not configured")
+	}
+	url := fmt.Sprintf("https://www.thebluealliance.com/api/v3/event/%s", eventKey)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-TBA-Auth-Key", tbaApiKey)
+
+	client := &http.Client{Timeout: time.Second * 10}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	var eventDetails types.TbaEventDetails
+	if err := json.NewDecoder(resp.Body).Decode(&eventDetails); err != nil {
+		return nil, err
+	}
+	return &eventDetails, nil
 }

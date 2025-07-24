@@ -34,7 +34,7 @@ class MatchpointPredictor:
         
         # Análisis SHAP
         shap_result = ShapAnalyzer.get_shap_analysis(features_df)
-
+        print(shap_result)
         # Ensamblar resultado
         prob_red_win, prob_blue_win = win_probs[0], win_probs[1]
         predicted_winner = "blue" if prob_blue_win > prob_red_win else "red"

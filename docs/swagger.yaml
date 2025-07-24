@@ -1,11 +1,32 @@
 basePath: /api/v1
 definitions:
-  main.ErrorResponse:
+  routes.ErrorResponse:
     properties:
       error:
         type: string
     type: object
-  main.PredictionResponseJSON:
+  routes.TbaEvent:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      end_date:
+        type: string
+      event_code:
+        type: string
+      event_type:
+        type: integer
+      key:
+        type: string
+      name:
+        type: string
+      start_date:
+        type: string
+      state_prov:
+        type: string
+    type: object
+  types.MatchPrediction:
     properties:
       actual_scores:
         additionalProperties:
@@ -31,7 +52,7 @@ definitions:
         example: blue
         type: string
       shap_analysis:
-        $ref: '#/definitions/main.ShapAnalysisJSON'
+        $ref: '#/definitions/types.ShapAnalysis'
       status:
         example: played
         type: string
@@ -43,7 +64,7 @@ definitions:
           red: 0.21
         type: object
     type: object
-  main.ShapAnalysisJSON:
+  types.ShapAnalysis:
     properties:
       base_value:
         type: number
@@ -75,6 +96,32 @@ info:
   title: Blue Banner Engine (BBE) API
   version: "1.0"
 paths:
+  /events/{year}:
+    get:
+      description: Retrieves a simplified list of all FRC events for a given year
+        from The Blue Alliance.
+      parameters:
+      - description: FRC Year (e.g., 2024)
+        in: path
+        name: year
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.TbaEvent'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get All Events for a Year
+      tags:
+      - events
   /predict/event/{event_key}:
     get:
       consumes:
@@ -94,12 +141,12 @@ paths:
           description: Successful prediction for all matches
           schema:
             items:
-              $ref: '#/definitions/main.PredictionResponseJSON'
+              $ref: '#/definitions/types.MatchPrediction'
             type: array
         "500":
           description: Internal Server Error (e.g., gRPC call failed)
           schema:
-            $ref: '#/definitions/main.ErrorResponse'
+            $ref: '#/definitions/routes.ErrorResponse'
       summary: Get All Match Predictions for an Event
       tags:
       - predictions
@@ -121,11 +168,11 @@ paths:
         "200":
           description: Successful prediction
           schema:
-            $ref: '#/definitions/main.PredictionResponseJSON'
+            $ref: '#/definitions/types.MatchPrediction'
         "500":
           description: Internal Server Error (e.g., gRPC call failed)
           schema:
-            $ref: '#/definitions/main.ErrorResponse'
+            $ref: '#/definitions/routes.ErrorResponse'
       summary: Get Single Match Prediction with SHAP
       tags:
       - predictions
