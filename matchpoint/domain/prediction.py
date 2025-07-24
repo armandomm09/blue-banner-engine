@@ -1,7 +1,15 @@
 
 
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, List, Optional
+
+
+@dataclass(frozen=True)
+class ShapResult:
+    base_value: float
+    values: List[float]
+    feature_names: List[str]
+    feature_data: List[float]
 
 @dataclass(frozen=True) 
 class MatchPrediction:
@@ -12,6 +20,7 @@ class MatchPrediction:
     predicted_winner: str
     win_probability: Dict[str, float] = field(default_factory=dict)
     predicted_scores: Dict[str, int] = field(default_factory=dict)
+    shap_analysis: Optional[ShapResult] = None
 
     def __str__(self) -> str:
         """

@@ -1,10 +1,12 @@
-from typing import List
+from typing import List, Optional
 import pandas as pd
 import requests
 from ..models.model_loader import loader
 from ..third_parties.fetcher import Fetcher
 from ..domain.prediction import MatchPrediction
 from ..config import FEATURE_ORDER, TBA_HEADER
+from .analysis.shap_analyzer import ShapAnalyzer
+
 class MatchpointPredictor:
     
     _instance = None
@@ -17,34 +19,33 @@ class MatchpointPredictor:
         return cls._instance
     
     @staticmethod
-    def get_match_prediction(match_key: str):
+    def get_match_prediction( match_key: str) -> Optional[MatchPrediction]:
+        """Predice un solo partido y calcula su análisis SHAP."""
         features_dict = Fetcher.get_match_features(match_key)
         if not features_dict:
             raise ValueError(f"Could not fetch features for match {match_key}")
         
         features_df = pd.DataFrame([features_dict])
 
+        # Predicciones
         win_probs = loader.classifier.predict_proba(features_df)[0]
         red_score = loader.red_regressor.predict(features_df)[0]
         blue_score = loader.blue_regressor.predict(features_df)[0]
-        prob_red_win = win_probs[0]
-        prob_blue_win = win_probs[1]
+        
+        # Análisis SHAP
+        shap_result = ShapAnalyzer.get_shap_analysis(features_df)
+
+        # Ensamblar resultado
+        prob_red_win, prob_blue_win = win_probs[0], win_probs[1]
         predicted_winner = "blue" if prob_blue_win > prob_red_win else "red"
 
-        prediction_result = MatchPrediction(
+        return MatchPrediction(
             match_key=match_key,
             predicted_winner=predicted_winner,
-            win_probability={
-                "red": round(float(prob_red_win), 4),
-                "blue": round(float(prob_blue_win), 4)
-            },
-            predicted_scores={
-                "red": int(round(red_score)),
-                "blue": int(round(blue_score))
-            }
+            win_probability={"red": round(float(prob_red_win), 4), "blue": round(float(prob_blue_win), 4)},
+            predicted_scores={"red": int(round(red_score)), "blue": int(round(blue_score))},
+            shap_analysis=shap_result
         )
-        
-        return prediction_result
     
     def predict_all_matches_for_event(self, event_key: str) -> List[MatchPrediction]:
         """

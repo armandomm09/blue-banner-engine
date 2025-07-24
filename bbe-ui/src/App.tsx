@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage'; // Asegúrate de crear este archivo
 import MatchpointPage from './pages/MatchpointPage'; // Este es el archivo que actualizaremos
+import MatchDetailPage from './pages/MatchDetailPage';
 
 const Navbar: React.FC = () => (
   <nav className="absolute top-0 left-0 right-0 p-6 z-10">
@@ -24,12 +25,14 @@ const Navbar: React.FC = () => (
 function App() {
   return (
     <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/matchpoint" element={<MatchpointPage />} />
-      </Routes>
-    </Router>
+    <Navbar />
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/matchpoint" element={<MatchpointPage />} />
+      <Route path="/matchpoint/event/:eventKey" element={<MatchpointPage />} />
+      <Route path="/matchpoint/match/:matchKey" element={<MatchDetailPage />} />
+    </Routes>
+  </Router>
   );
 }
 

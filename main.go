@@ -4,8 +4,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -23,25 +21,20 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-)
 
-type TbaScore struct {
-	Score int32 `json:"score"`
-}
-type TbaAlliances struct {
-	Red  TbaScore `json:"red"`
-	Blue TbaScore `json:"blue"`
-}
-type TbaMatch struct {
-	Key             string       `json:"key"`
-	CompLevel       string       `json:"comp_level"`
-	WinningAlliance string       `json:"winning_alliance"`
-	Alliances       TbaAlliances `json:"alliances"`
-}
+	"blue-banner-engine/src/helpers"
+)
 
 // --- Estructuras para la Respuesta JSON de nuestra API ---
 type ErrorResponse struct {
 	Error string `json:"error"`
+}
+
+type ShapAnalysisJSON struct {
+	BaseValue    float32   `json:"base_value"`
+	Values       []float32 `json:"values"`
+	FeatureNames []string  `json:"feature_names"`
+	FeatureData  []float32 `json:"feature_data"`
 }
 
 type PredictionResponseJSON struct {
@@ -52,6 +45,7 @@ type PredictionResponseJSON struct {
 	Status          string             `json:"status" example:"played"`
 	ActualWinner    string             `json:"actual_winner,omitempty" example:"red"`
 	ActualScores    map[string]int32   `json:"actual_scores,omitempty" example:"red:100,blue:98"`
+	ShapAnalysis    *ShapAnalysisJSON  `json:"shap_analysis,omitempty"`
 }
 
 type PredictionHandler struct {
@@ -106,7 +100,7 @@ func main() {
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	v1 := router.Group("/api/v1")
 	{
-		v1.GET("/predict/:match_key", handler.getPrediction)
+		v1.GET("/predict/match/:match_key", handler.getPrediction)
 
 		v1.GET("/predict/event/:event_key", handler.getEventPredictions)
 
@@ -138,27 +132,59 @@ func main() {
 	router.Run(":8080")
 }
 
-// @Summary      Get Match Prediction
-// @Description  Retrieves a full prediction for a given FRC match key from the BBE prediction service.
+// @Summary      Get Single Match Prediction with SHAP
+// @Description  Retrieves a detailed prediction for a single FRC match, including SHAP analysis for model explainability.
 // @Tags         predictions
 // @Accept       json
 // @Produce      json
 // @Param        match_key   path      string  true  "FRC Match Key (e.g., 2025mxle_qm12)"
 // @Success      200         {object}  PredictionResponseJSON "Successful prediction"
 // @Failure      500         {object}  ErrorResponse "Internal Server Error (e.g., gRPC call failed)"
-// @Router       /predict/{match_key} [get]
+// @Router       /predict/match/{match_key} [get]
 func (h *PredictionHandler) getPrediction(c *gin.Context) {
 	matchKey := c.Param("match_key")
 	log.Printf("Received API request for match: %s", matchKey)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10) // Timeout de 5 segundos
-	defer cancel()
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	grpcResponse, err := h.grpcClient.GetMatchPrediction(ctx, &pb.MatchPredictionRequest{MatchKey: matchKey})
-	if err != nil {
-		log.Printf("gRPC call failed: %v", err)
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to get prediction from prediction service"})
-		return
+	var grpcResponse *pb.MatchPredictionResponse
+	var grpcErr error
+	var tbaMatch *helpers.TbaMatch
+	var tbaErr error
+
+	go func() {
+		defer wg.Done()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer cancel()
+		grpcResponse, grpcErr = h.grpcClient.GetMatchPrediction(ctx, &pb.MatchPredictionRequest{MatchKey: matchKey})
+		if grpcErr != nil {
+			log.Printf("gRPC call failed: %v", grpcErr)
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to get prediction from prediction service"})
+			return
+		}
+	}()
+
+	// Fetch actual match data from TBA
+	go func() {
+		defer wg.Done()
+		tbaMatch, tbaErr = helpers.FetchTbaMatch(matchKey, h.tbaApiKey)
+		if tbaErr != nil {
+			log.Printf("TBA API call failed: %v", tbaErr)
+		}
+	}()
+	wg.Wait()
+	status := "upcoming"
+
+	var actualWinner string
+	var actualScores map[string]int32
+	if tbaErr == nil && tbaMatch.WinningAlliance != "" {
+		status = "played"
+		actualWinner = tbaMatch.WinningAlliance
+		actualScores = map[string]int32{
+			"red":  tbaMatch.Alliances.Red.Score,
+			"blue": tbaMatch.Alliances.Blue.Score,
+		}
 	}
 
 	jsonResponse := PredictionResponseJSON{
@@ -172,6 +198,15 @@ func (h *PredictionHandler) getPrediction(c *gin.Context) {
 			"red":  grpcResponse.GetPredictedScores().GetRed(),
 			"blue": grpcResponse.GetPredictedScores().GetBlue(),
 		},
+		ShapAnalysis: &ShapAnalysisJSON{
+			BaseValue:    grpcResponse.GetShapAnalysis().GetBaseValue(),
+			Values:       grpcResponse.GetShapAnalysis().GetValues(),
+			FeatureNames: grpcResponse.GetShapAnalysis().GetFeatureNames(),
+			FeatureData:  grpcResponse.GetShapAnalysis().GetFeatureData(),
+		},
+		Status:       status,
+		ActualWinner: actualWinner,
+		ActualScores: actualScores,
 	}
 
 	c.JSON(http.StatusOK, jsonResponse)
@@ -192,12 +227,11 @@ func (h *PredictionHandler) getEventPredictions(c *gin.Context) {
 
 	var wg sync.WaitGroup
 	var predictions []*pb.MatchPredictionResponse
-	var tbaMatches map[string]TbaMatch
+	var tbaMatches map[string]helpers.TbaMatch
 	var grpcErr, tbaErr error
 
-	wg.Add(2) // Vamos a ejecutar 2 tareas en paralelo
+	wg.Add(2)
 
-	// Tarea 1: Obtener Predicciones del Servicio de Python (en una goroutine)
 	go func() {
 		defer wg.Done()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
@@ -209,15 +243,13 @@ func (h *PredictionHandler) getEventPredictions(c *gin.Context) {
 		}
 	}()
 
-	// Tarea 2: Obtener Resultados Oficiales de The Blue Alliance (en una goroutine)
 	go func() {
 		defer wg.Done()
-		tbaMatches, tbaErr = h.fetchTbaResults(eventKey)
+		tbaMatches, tbaErr = helpers.FetchTbaEventMatches(eventKey, h.tbaApiKey)
 	}()
 
-	wg.Wait() // Espera a que ambas tareas terminen
+	wg.Wait()
 
-	// Manejo de errores después de la espera
 	if grpcErr != nil {
 		log.Printf("gRPC call failed: %v", grpcErr)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to get predictions from ML service"})
@@ -225,10 +257,8 @@ func (h *PredictionHandler) getEventPredictions(c *gin.Context) {
 	}
 	if tbaErr != nil {
 		log.Printf("TBA API call failed: %v", tbaErr)
-		// No fallamos la petición completa, solo loggeamos. Aún podemos devolver las predicciones.
 	}
 
-	// Fusión de Datos: Enriquece las predicciones con los resultados reales
 	jsonResponse := make([]PredictionResponseJSON, 0)
 	for _, pred := range predictions {
 		resp := PredictionResponseJSON{
@@ -236,7 +266,7 @@ func (h *PredictionHandler) getEventPredictions(c *gin.Context) {
 			PredictedWinner: pred.GetPredictedWinner(),
 			WinProbability:  map[string]float32{"red": pred.GetWinProbability().GetRed(), "blue": pred.GetWinProbability().GetBlue()},
 			PredictedScores: map[string]int32{"red": pred.GetPredictedScores().GetRed(), "blue": pred.GetPredictedScores().GetBlue()},
-			Status:          "upcoming", // Por defecto es 'upcoming'
+			Status:          "upcoming",
 		}
 
 		if tbaMatch, ok := tbaMatches[pred.GetMatchKey()]; ok && tbaMatch.WinningAlliance != "" {
@@ -251,40 +281,4 @@ func (h *PredictionHandler) getEventPredictions(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, jsonResponse)
-}
-
-// --- Nueva Función Auxiliar para llamar a la API de TBA ---
-func (h *PredictionHandler) fetchTbaResults(eventKey string) (map[string]TbaMatch, error) {
-	if h.tbaApiKey == "" {
-		return nil, fmt.Errorf("TBA_API_KEY is not configured")
-	}
-
-	url := fmt.Sprintf("https://www.thebluealliance.com/api/v3/event/%s/matches/simple", eventKey)
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("X-TBA-Auth-Key", h.tbaApiKey)
-
-	client := &http.Client{Timeout: time.Second * 10}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("TBA API returned status %s", resp.Status)
-	}
-
-	var matches []TbaMatch
-	if err := json.NewDecoder(resp.Body).Decode(&matches); err != nil {
-		return nil, err
-	}
-
-	// Convertimos la lista a un mapa para búsquedas O(1), mucho más rápido
-	matchMap := make(map[string]TbaMatch)
-	for _, match := range matches {
-		// if match.CompLevel == "qm" { // Solo nos interesan los de clasificación
-		matchMap[match.Key] = match
-		// }
-	}
-	return matchMap, nil
 }

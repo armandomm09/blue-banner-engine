@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10prediction.proto\x12\nmatchpoint\"+\n\x16\x45ventPredictionRequest\x12\x11\n\tevent_key\x18\x01 \x01(\t\"S\n\x17\x45ventPredictionResponse\x12\x38\n\x0bpredictions\x18\x01 \x03(\x0b\x32#.matchpoint.MatchPredictionResponse\"+\n\x16MatchPredictionRequest\x12\x11\n\tmatch_key\x18\x01 \x01(\t\"\xb2\x01\n\x17MatchPredictionResponse\x12\x11\n\tmatch_key\x18\x01 \x01(\t\x12\x18\n\x10predicted_winner\x18\x02 \x01(\t\x12\x33\n\x0fwin_probability\x18\x03 \x01(\x0b\x32\x1a.matchpoint.WinProbability\x12\x35\n\x10predicted_scores\x18\x04 \x01(\x0b\x32\x1b.matchpoint.PredictedScores\"+\n\x0eWinProbability\x12\x0b\n\x03red\x18\x01 \x01(\x02\x12\x0c\n\x04\x62lue\x18\x02 \x01(\x02\",\n\x0fPredictedScores\x12\x0b\n\x03red\x18\x01 \x01(\x05\x12\x0c\n\x04\x62lue\x18\x02 \x01(\x05\x32\xd2\x01\n\nMatchpoint\x12_\n\x12GetMatchPrediction\x12\".matchpoint.MatchPredictionRequest\x1a#.matchpoint.MatchPredictionResponse\"\x00\x12\x63\n\x16PredictAllEventMatches\x12\".matchpoint.EventPredictionRequest\x1a#.matchpoint.EventPredictionResponse\"\x00\x42\x1bZ\x19\x62lue-banner-engine/protosb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10prediction.proto\x12\nmatchpoint\"+\n\x16\x45ventPredictionRequest\x12\x11\n\tevent_key\x18\x01 \x01(\t\"S\n\x17\x45ventPredictionResponse\x12\x38\n\x0bpredictions\x18\x01 \x03(\x0b\x32#.matchpoint.MatchPredictionResponse\"+\n\x16MatchPredictionRequest\x12\x11\n\tmatch_key\x18\x01 \x01(\t\"\xe3\x01\n\x17MatchPredictionResponse\x12\x11\n\tmatch_key\x18\x01 \x01(\t\x12\x18\n\x10predicted_winner\x18\x02 \x01(\t\x12\x33\n\x0fwin_probability\x18\x03 \x01(\x0b\x32\x1a.matchpoint.WinProbability\x12\x35\n\x10predicted_scores\x18\x04 \x01(\x0b\x32\x1b.matchpoint.PredictedScores\x12/\n\rshap_analysis\x18\x05 \x01(\x0b\x32\x18.matchpoint.ShapAnalysis\"_\n\x0cShapAnalysis\x12\x12\n\nbase_value\x18\x01 \x01(\x02\x12\x0e\n\x06values\x18\x02 \x03(\x02\x12\x15\n\rfeature_names\x18\x03 \x03(\t\x12\x14\n\x0c\x66\x65\x61ture_data\x18\x04 \x03(\x02\"+\n\x0eWinProbability\x12\x0b\n\x03red\x18\x01 \x01(\x02\x12\x0c\n\x04\x62lue\x18\x02 \x01(\x02\",\n\x0fPredictedScores\x12\x0b\n\x03red\x18\x01 \x01(\x05\x12\x0c\n\x04\x62lue\x18\x02 \x01(\x05\x32\xd2\x01\n\nMatchpoint\x12_\n\x12GetMatchPrediction\x12\".matchpoint.MatchPredictionRequest\x1a#.matchpoint.MatchPredictionResponse\"\x00\x12\x63\n\x16PredictAllEventMatches\x12\".matchpoint.EventPredictionRequest\x1a#.matchpoint.EventPredictionResponse\"\x00\x42\x1bZ\x19\x62lue-banner-engine/protosb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -39,11 +39,13 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_MATCHPREDICTIONREQUEST']._serialized_start=162
   _globals['_MATCHPREDICTIONREQUEST']._serialized_end=205
   _globals['_MATCHPREDICTIONRESPONSE']._serialized_start=208
-  _globals['_MATCHPREDICTIONRESPONSE']._serialized_end=386
-  _globals['_WINPROBABILITY']._serialized_start=388
-  _globals['_WINPROBABILITY']._serialized_end=431
-  _globals['_PREDICTEDSCORES']._serialized_start=433
-  _globals['_PREDICTEDSCORES']._serialized_end=477
-  _globals['_MATCHPOINT']._serialized_start=480
-  _globals['_MATCHPOINT']._serialized_end=690
+  _globals['_MATCHPREDICTIONRESPONSE']._serialized_end=435
+  _globals['_SHAPANALYSIS']._serialized_start=437
+  _globals['_SHAPANALYSIS']._serialized_end=532
+  _globals['_WINPROBABILITY']._serialized_start=534
+  _globals['_WINPROBABILITY']._serialized_end=577
+  _globals['_PREDICTEDSCORES']._serialized_start=579
+  _globals['_PREDICTEDSCORES']._serialized_end=623
+  _globals['_MATCHPOINT']._serialized_start=626
+  _globals['_MATCHPOINT']._serialized_end=836
 # @@protoc_insertion_point(module_scope)

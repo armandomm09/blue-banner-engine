@@ -30,6 +30,8 @@ definitions:
       predicted_winner:
         example: blue
         type: string
+      shap_analysis:
+        $ref: '#/definitions/main.ShapAnalysisJSON'
       status:
         example: played
         type: string
@@ -40,6 +42,23 @@ definitions:
           blue: 0.79
           red: 0.21
         type: object
+    type: object
+  main.ShapAnalysisJSON:
+    properties:
+      base_value:
+        type: number
+      feature_data:
+        items:
+          type: number
+        type: array
+      feature_names:
+        items:
+          type: string
+        type: array
+      values:
+        items:
+          type: number
+        type: array
     type: object
 host: localhost:8080
 info:
@@ -56,32 +75,6 @@ info:
   title: Blue Banner Engine (BBE) API
   version: "1.0"
 paths:
-  /predict/{match_key}:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a full prediction for a given FRC match key from the
-        BBE prediction service.
-      parameters:
-      - description: FRC Match Key (e.g., 2025mxle_qm12)
-        in: path
-        name: match_key
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successful prediction
-          schema:
-            $ref: '#/definitions/main.PredictionResponseJSON'
-        "500":
-          description: Internal Server Error (e.g., gRPC call failed)
-          schema:
-            $ref: '#/definitions/main.ErrorResponse'
-      summary: Get Match Prediction
-      tags:
-      - predictions
   /predict/event/{event_key}:
     get:
       consumes:
@@ -108,6 +101,32 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       summary: Get All Match Predictions for an Event
+      tags:
+      - predictions
+  /predict/match/{match_key}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a detailed prediction for a single FRC match, including
+        SHAP analysis for model explainability.
+      parameters:
+      - description: FRC Match Key (e.g., 2025mxle_qm12)
+        in: path
+        name: match_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful prediction
+          schema:
+            $ref: '#/definitions/main.PredictionResponseJSON'
+        "500":
+          description: Internal Server Error (e.g., gRPC call failed)
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
+      summary: Get Single Match Prediction with SHAP
       tags:
       - predictions
 swagger: "2.0"
