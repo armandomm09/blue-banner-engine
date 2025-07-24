@@ -7,3 +7,5 @@ heatseeker/*
 __pycache__
 
 models
+
+.env
