@@ -29,6 +29,7 @@ export const EventSearch: React.FC = () => {
     const navigate = useNavigate();
     const [allEvents, setAllEvents] = useState<TBAEvent[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [eventTypeFilter, setEventTypeFilter] = useState<number | 'all'>('all');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -56,15 +57,19 @@ export const EventSearch: React.FC = () => {
     }, []);
 
     const filteredEvents = useMemo(() => {
-        if (!searchQuery) return allEvents;
+        let events = allEvents;
+        if (eventTypeFilter !== 'all') {
+            events = events.filter(event => event.event_type === eventTypeFilter);
+        }
+        if (!searchQuery) return events;
         const lowerCaseQuery = searchQuery.toLowerCase();
-        return allEvents.filter(event =>
+        return events.filter(event =>
             event.name.toLowerCase().includes(lowerCaseQuery) ||
             event.key.toLowerCase().includes(lowerCaseQuery) ||
             event.city.toLowerCase().includes(lowerCaseQuery) ||
             event.state_prov.toLowerCase().includes(lowerCaseQuery)
         );
-    }, [searchQuery, allEvents]);
+    }, [searchQuery, allEvents, eventTypeFilter]);
 
     const handleEventClick = (eventKey: string) => {
         navigate(`/matchpoint/event/${eventKey}`);
@@ -72,13 +77,25 @@ export const EventSearch: React.FC = () => {
 
     return (
         <div className="w-full">
-            <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search events by name, key, or location..."
-                className="w-full bg-card border border-border rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent transition-all mb-8"
-            />
+            <div className="flex flex-col md:flex-row gap-4 mb-8">
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search events by name, key, or location..."
+                    className="w-full bg-card border border-border rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent transition-all"
+                />
+                <select
+                    value={eventTypeFilter}
+                    onChange={e => setEventTypeFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                    className="w-full md:w-60 bg-card border border-border rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent transition-all"
+                >
+                    <option value="all">All Types</option>
+                    {Object.entries(EVENT_TYPE_MAP).filter(([k]) => k !== '-1').map(([type, { name }]) => (
+                        <option key={type} value={type}>{name}</option>
+                    ))}
+                </select>
+            </div>
 
             {isLoading && <p className="text-text-muted">Loading events...</p>}
             {error && <p className="text-red-400">{error}</p>}

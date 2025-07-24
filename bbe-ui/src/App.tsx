@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'; // Asegúrate de crear este archivo
 import MatchpointPage from './pages/MatchpointPage'; // Este es el archivo que actualizaremos
 import MatchDetailPage from './pages/MatchDetailPage';
 import EventDetailPage from './pages/EventDetailPage';
+import ApiDocsPage from './pages/ApiDocsPage';
 
 const Navbar: React.FC = () => (
   <nav className="absolute top-0 left-0 right-0 p-6 z-10">
@@ -31,6 +32,7 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/matchpoint" element={<MatchpointPage />} />
       <Route path="/matchpoint/event/:eventKey" element={<EventDetailPage />} />
+      <Route path="/docs/api/v1" element={<ApiDocsPage />} />
       <Route path="/matchpoint/match/:matchKey" element={<MatchDetailPage />} />
     </Routes>
   </Router>
