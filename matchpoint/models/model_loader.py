@@ -1,5 +1,6 @@
 import xgboost as xgb
 from .. import config 
+import shap
 
 class ModelLoader:
     _instance = None
@@ -16,6 +17,8 @@ class ModelLoader:
 
             cls._instance.blue_regressor = xgb.XGBRegressor()
             cls._instance.blue_regressor.load_model(config.BLUE_REGRESSOR_PATH)
+
+            cls._instance.shap_explainer = shap.TreeExplainer(cls._instance.classifier)
             
         return cls._instance
 

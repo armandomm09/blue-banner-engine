@@ -65,9 +65,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/predict/{match_key}": {
+        "/predict/match/{match_key}": {
             "get": {
-                "description": "Retrieves a full prediction for a given FRC match key from the BBE prediction service.",
+                "description": "Retrieves a detailed prediction for a single FRC match, including SHAP analysis for model explainability.",
                 "consumes": [
                     "application/json"
                 ],
@@ -77,7 +77,7 @@ const docTemplate = `{
                 "tags": [
                     "predictions"
                 ],
-                "summary": "Get Match Prediction",
+                "summary": "Get Single Match Prediction with SHAP",
                 "parameters": [
                     {
                         "type": "string",
@@ -148,6 +148,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "blue"
                 },
+                "shap_analysis": {
+                    "$ref": "#/definitions/main.ShapAnalysisJSON"
+                },
                 "status": {
                     "type": "string",
                     "example": "played"
@@ -160,6 +163,32 @@ const docTemplate = `{
                     "example": {
                         "blue": 0.79,
                         "red": 0.21
+                    }
+                }
+            }
+        },
+        "main.ShapAnalysisJSON": {
+            "type": "object",
+            "properties": {
+                "base_value": {
+                    "type": "number"
+                },
+                "feature_data": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "feature_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
                     }
                 }
             }

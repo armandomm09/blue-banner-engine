@@ -23,7 +23,14 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
         try:
 
             prediction_object: MatchPrediction = self.predictor.get_match_prediction(
-                match_key
+                match_key=str(match_key)
+            )
+            
+            shap_proto = prediction_pb2.ShapAnalysis(
+                base_value=prediction_object.shap_analysis.base_value,
+                values=prediction_object.shap_analysis.values,
+                feature_names=prediction_object.shap_analysis.feature_names,
+                feature_data=prediction_object.shap_analysis.feature_data,
             )
 
             if not prediction_object:
@@ -44,6 +51,7 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
                     red=prediction_object.predicted_scores["red"],
                     blue=prediction_object.predicted_scores["blue"],
                 ),
+                shap_analysis=shap_proto
             )
         except ValueError as e:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)

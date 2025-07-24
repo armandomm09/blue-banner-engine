@@ -30,11 +30,21 @@ message MatchPredictionRequest {
 }
 
 // Mensaje de respuesta: una réplica estructurada de tu objeto MatchPrediction.
+// --- MENSAJES DE RESPUESTA MODIFICADOS ---
 message MatchPredictionResponse {
   string match_key = 1;
   string predicted_winner = 2;
   WinProbability win_probability = 3;
   PredictedScores predicted_scores = 4;
+  ShapAnalysis shap_analysis = 5; // <-- NUEVO CAMPO
+}
+
+// --- NUEVO MENSAJE PARA LOS DATOS DE SHAP ---
+message ShapAnalysis {
+  float base_value = 1;
+  repeated float values = 2;
+  repeated string feature_names = 3;
+  repeated float feature_data = 4;
 }
 
 // Sub-mensaje para las probabilidades, anidado para mayor claridad.
