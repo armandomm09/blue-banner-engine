@@ -2,7 +2,7 @@
 import SwaggerUI from 'swagger-ui-react';
 import React from 'react';
 import 'swagger-ui-react/swagger-ui.css';
-import './3.x/theme-monokai.css'
+import './theme/theme-monokai.css'
 const ApiDocsPage: React.FC = () => {
   return (
     <main className="min-h-screen pt-32 pb-16 px-4 md:px-8 font-['Poppins'] bg-background text-text">

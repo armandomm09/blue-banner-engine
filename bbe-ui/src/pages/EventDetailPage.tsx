@@ -32,6 +32,38 @@ interface EventAnalysisData {
   predictions: Prediction[];
 }
 
+// --- Helper Functions ---
+const parseMatchKey = (matchKey: string) => {
+  const parts = matchKey.split("_");
+  if (parts.length < 2) return null;
+  
+  const matchPart = parts[1];
+  
+  // Handle different match formats:
+  // qm12, sf3m1, f1m1, etc.
+  const matchTypeMatch = matchPart.match(/^([a-z]+)(\d+)(?:m(\d+))?$/);
+  if (!matchTypeMatch) return null;
+  
+  const [, matchType, matchNumber, subMatch] = matchTypeMatch;
+  return {
+    matchType,
+    matchNumber: parseInt(matchNumber),
+    subMatch: subMatch ? parseInt(subMatch) : null
+  };
+};
+
+// Match type priority for proper sorting order
+const getMatchTypePriority = (matchType: string): number => {
+  const priorities: { [key: string]: number } = {
+    'qm': 1,   // Qualification matches first
+    'sf': 2,   // Semi-finals second
+    'f': 3,    // Finals last
+    'qf': 2,   // Quarter-finals (if they exist)
+    'ef': 1,   // Elimination finals (if they exist)
+  };
+  return priorities[matchType] || 999; // Unknown types go last
+};
+
 // --- Helper Components ---
 const LoadingSpinner: React.FC = () => (
   <div className="flex flex-col items-center justify-center py-20 text-accent">
@@ -63,6 +95,54 @@ const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
   <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg p-6 text-center mt-8">
     <h3 className="font-bold text-lg mb-2">Failed to Load Event Analysis</h3>
     <p>{message}</p>
+  </div>
+);
+
+const FilterControls: React.FC<{
+  matchTypes: string[];
+  selectedMatchType: string;
+  selectedMatchNumber: string;
+  onMatchTypeChange: (type: string) => void;
+  onMatchNumberChange: (number: string) => void;
+  onClearFilters: () => void;
+}> = ({ matchTypes, selectedMatchType, selectedMatchNumber, onMatchTypeChange, onMatchNumberChange, onClearFilters }) => (
+  <div className="bg-card border border-border rounded-xl p-4 mb-6">
+    <div className="flex flex-wrap items-center gap-4">
+      <div className="flex items-center gap-2">
+        <label className="text-text-muted text-sm font-medium">Match Type:</label>
+        <select
+          value={selectedMatchType}
+          onChange={(e) => onMatchTypeChange(e.target.value)}
+          className="bg-background border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent"
+        >
+          <option value="">All Types</option>
+          {matchTypes.map((type) => (
+            <option key={type} value={type}>
+              {type.toUpperCase()}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <label className="text-text-muted text-sm font-medium">Match Number:</label>
+        <input
+          type="number"
+          value={selectedMatchNumber}
+          onChange={(e) => onMatchNumberChange(e.target.value)}
+          placeholder="Any number"
+          className="bg-background border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent w-24"
+          min="1"
+        />
+      </div>
+      
+      <button
+        onClick={onClearFilters}
+        className="px-4 py-2 text-sm bg-accent/20 text-accent rounded-lg hover:bg-accent/30 transition-colors"
+      >
+        Clear Filters
+      </button>
+    </div>
   </div>
 );
 
@@ -135,6 +215,10 @@ const EventDetailPage: React.FC = () => {
   const [predictionAccuracy, setPredictionAccuracy] = useState<number | null>(
     null
   );
+  
+  // Filter state
+  const [selectedMatchType, setSelectedMatchType] = useState<string>("");
+  const [selectedMatchNumber, setSelectedMatchNumber] = useState<string>("");
 
   useEffect(() => {
     if (!eventKey) {
@@ -208,6 +292,72 @@ const EventDetailPage: React.FC = () => {
 
   const { event_details, predictions } = analysisData;
 
+  // Extract unique match types from predictions
+  const matchTypes = Array.from(
+    new Set(
+      predictions
+        .map((p) => parseMatchKey(p.match_key))
+        .filter((parsed) => parsed !== null)
+        .map((parsed) => parsed!.matchType)
+    )
+  ).sort();
+
+  // Filter and sort predictions
+  const filteredPredictions = predictions
+    .filter((p) => {
+      const parsed = parseMatchKey(p.match_key);
+      if (!parsed) return true; // Include if we can't parse the key
+
+      const matchesType = !selectedMatchType || parsed.matchType === selectedMatchType;
+      const matchesNumber = !selectedMatchNumber || parsed.matchNumber === parseInt(selectedMatchNumber);
+      
+      return matchesType && matchesNumber;
+    })
+    .sort((a, b) => {
+      const parsedA = parseMatchKey(a.match_key);
+      const parsedB = parseMatchKey(b.match_key);
+      
+      // If we can't parse either key, maintain original order
+      if (!parsedA && !parsedB) return 0;
+      if (!parsedA) return 1;
+      if (!parsedB) return -1;
+      
+      // First sort by match type (using priority order)
+      if (parsedA.matchType !== parsedB.matchType) {
+        return getMatchTypePriority(parsedA.matchType) - getMatchTypePriority(parsedB.matchType);
+      }
+      
+      // Then sort by match number (numerically)
+      if (parsedA.matchNumber !== parsedB.matchNumber) {
+        return parsedA.matchNumber - parsedB.matchNumber;
+      }
+      
+      // If same match type and number, sort by sub-match if available
+      if (parsedA.subMatch !== null && parsedB.subMatch !== null) {
+        return parsedA.subMatch - parsedB.subMatch;
+      }
+      
+      // If one has sub-match and other doesn't, put the one without sub-match first
+      if (parsedA.subMatch === null && parsedB.subMatch !== null) return -1;
+      if (parsedA.subMatch !== null && parsedB.subMatch === null) return 1;
+      
+      return 0;
+    });
+
+  // Filter handlers
+  const handleMatchTypeChange = (type: string) => {
+    setSelectedMatchType(type);
+  };
+
+  const handleMatchNumberChange = (number: string) => {
+    setSelectedMatchNumber(number);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedMatchType("");
+    setSelectedMatchNumber("");
+  };
+
   return (
     <main className="min-h-screen w-full pt-32 pb-16 px-4 md:px-8 font-['Poppins']">
       <div className="container mx-auto max-w-7xl animate-fade-in">
@@ -280,6 +430,24 @@ const EventDetailPage: React.FC = () => {
           </div>
         )}
 
+        {/* Filter Controls */}
+        <FilterControls
+          matchTypes={matchTypes}
+          selectedMatchType={selectedMatchType}
+          selectedMatchNumber={selectedMatchNumber}
+          onMatchTypeChange={handleMatchTypeChange}
+          onMatchNumberChange={handleMatchNumberChange}
+          onClearFilters={handleClearFilters}
+        />
+
+        {/* Results Summary */}
+        <div className="mb-4 text-center">
+          <p className="text-text-muted text-sm">
+            Showing {filteredPredictions.length} of {predictions.length} matches
+            {(selectedMatchType || selectedMatchNumber) && " (filtered)"}
+          </p>
+        </div>
+
         {/* Tabla de Resultados */}
         <div className="border border-border bg-card rounded-xl shadow-lg shadow-black/30 overflow-hidden">
           <div className="overflow-x-auto">
@@ -327,7 +495,7 @@ const EventDetailPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {predictions.map((p) => (
+                {filteredPredictions.map((p) => (
                   <tr
                     key={p.match_key}
                     className="hover:bg-background/30 transition-colors cursor-pointer"
