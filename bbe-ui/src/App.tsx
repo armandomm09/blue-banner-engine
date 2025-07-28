@@ -7,7 +7,7 @@ import EventDetailPage from './pages/EventDetailPage';
 import ApiDocsPage from './pages/ApiDocsPage';
 
 const Navbar: React.FC = () => (
-  <nav className="absolute top-0 left-0 right-0 p-6 z-10">
+  <nav className="w-full p-6 bg-background/95 backdrop-blur-sm border-b border-border">
     <div className="container mx-auto max-w-7xl flex justify-between items-center">
       <Link to="/" className="text-2xl font-bold text-white hover:text-accent transition-colors">
         BBE
@@ -27,15 +27,19 @@ const Navbar: React.FC = () => (
 function App() {
   return (
     <Router>
-    <Navbar />
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/matchpoint" element={<MatchpointPage />} />
-      <Route path="/matchpoint/event/:eventKey" element={<EventDetailPage />} />
-      <Route path="/docs/api/v1" element={<ApiDocsPage />} />
-      <Route path="/matchpoint/match/:matchKey" element={<MatchDetailPage />} />
-    </Routes>
-  </Router>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-0">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/matchpoint" element={<MatchpointPage />} />
+            <Route path="/matchpoint/event/:eventKey" element={<EventDetailPage />} />
+            <Route path="/docs/api/v1" element={<ApiDocsPage />} />
+            <Route path="/matchpoint/match/:matchKey" element={<MatchDetailPage />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
