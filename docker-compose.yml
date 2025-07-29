@@ -26,6 +26,7 @@ services:
     environment:
       
       - TBA_API_KEY=${TBA_API_KEY} 
+      - TESTING=false
       
     env_file:
       - .env 

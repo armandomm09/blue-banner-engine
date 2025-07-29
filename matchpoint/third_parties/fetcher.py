@@ -36,7 +36,7 @@ class Fetcher:
             all_teams = red_teams + blue_teams
             
             print("teams", tuple(all_teams))            
-            sb_stats_dict = Fetcher.sb.get_all_sb_stats_for_event_concurrently(event_key, tuple(all_teams))
+            sb_stats_dict = Fetcher.sb.get_all_sb_stats_for_event(event_key, tuple(all_teams))
             tba_stats_dict = Fetcher.tba.get_all_tba_stats_for_event_concurrently(event_key, tuple(all_teams))
             for i in range(3):
                 # Statbotics
@@ -108,7 +108,7 @@ class Fetcher:
             # 2. Obtener todos los datos de las APIs en paralelo/lote
             #    - Statbotics se obtiene de forma concurrente.
             #    - TBA OPRs/COPRs se obtiene en dos llamadas de lote.
-            all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event_concurrently(event_key, team_keys)
+            all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event(event_key, team_keys)
             all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_concurrently(event_key, team_keys)
 
             # 3. Combinar los datos en un solo diccionario para búsquedas rápidas

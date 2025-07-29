@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./matchpoint /app/matchpoint
 COPY ./models /app/models
+COPY ./matchpoint/data /app/matchpoint/data
 
 RUN chown -R app:app /app
 
