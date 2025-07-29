@@ -5,13 +5,19 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class SBService:
-        
-    def get_sb_team_stats_event(self, team, event_key):
+    
+    def get_sb_team_stats_event_from_api(self, team, event_key):
         
         try:
-            req = requests.get(f"{STATBOTICS_BASE_URL}/team_year/{str(team)}/{event_key[:4]}")
+            url = f"{STATBOTICS_BASE_URL}/team_event/{str(team)}/{event_key[:4]}"
+            req = requests.get(url)
+            
+            #Check status code
+            if req.status_code != 200:
+                raise requests.ConnectionError(f"\nError fetching statbotics stats {team}, {event_key}\nStatus code: {req.status_code}")
             
             team_dict = req.json()
+
             
             team_info = {
                 "event": event_key,
@@ -28,12 +34,13 @@ class SBService:
             
             return team_info
         except requests.ConnectionError as e:
-            print(e)
+            raise requests.ConnectionError(f"{e}")
         except KeyError as e:
-            raise KeyError(f"Key Error fetching statbotics stats\n{team}, {event_key}\n{e}")
+            print(f"Key Error fetching statbotics stats {team}, {event_key}\n")
+            raise KeyError(f"{e}")
         
     @functools.lru_cache(maxsize=32)
-    def get_all_sb_stats_for_event_concurrently(self, event_key: str, team_keys: tuple[str]) -> dict:
+    def get_all_sb_stats_for_event_concurrently_from_api(self, event_key: str, team_keys: tuple[str]) -> dict:
         """
         Obtiene TODOS los stats de Statbotics para una lista de equipos de un evento
         de manera concurrente usando multithreading.
@@ -49,7 +56,7 @@ class SBService:
             # Creamos un futuro para cada llamada a la API
             # Usamos un diccionario para poder asociar el futuro con la clave del equipo
             future_to_team = {
-                executor.submit(self.get_sb_team_stats_event, team_key, event_key): team_key
+                executor.submit(self.get_sb_team_stats_event_from_api, team_key, event_key): team_key
                 for team_key in team_keys
             }
 
@@ -60,9 +67,71 @@ class SBService:
                     if result:
                         all_team_stats[team_key] = result
                 except Exception as exc:
+                    # raise Exception(f"ERROR: El worker para el equipo {team_key} generó una excepción: {exc}")
                     print(f"ERROR: El worker para el equipo {team_key} generó una excepción: {exc}")
         
         print("Statbotics data fetching complete.")
+        return all_team_stats
+        
+    def get_sb_team_stats_event(self, team, event_key):
+        """
+        Obtiene los stats de Statbotics para un equipo en un evento desde el CSV.
+        """
+        try:
+            import pandas as pd
+            import os
+            
+            # Determinar la ruta del CSV según la variable de entorno TESTING
+            testing = os.getenv('TESTING', 'true').lower() == 'true'
+            if testing:
+                csv_path = "/Users/armando/Progra/ai/bbe/matchpoint/data/dataset.csv"
+            else:
+                csv_path = "/app/matchpoint/data/dataset.csv"
+            
+            df = pd.read_csv(csv_path)
+            
+            team_data = df[df['num'] == int(team)]
+            
+            if team_data.empty:
+                raise KeyError(f"No se encontró el equipo {team} en el CSV")
+            
+            row = team_data.iloc[0]
+            
+            team_info = {
+                "event": event_key,
+                "team": int(row['num']),
+                "epa": float(row['norm_epa']) if pd.notna(row['norm_epa']) else None,
+                "total_points": float(row['total_epa']) if pd.notna(row['total_epa']) else None,
+                "auto_points": float(row['auto_epa']) if pd.notna(row['auto_epa']) else None,
+                "teleop_points": float(row['teleop_epa']) if pd.notna(row['teleop_epa']) else None,
+                "endgame_points": float(row['endgame_epa']) if pd.notna(row['endgame_epa']) else None,
+                "winrate": float(row['winrate']) if pd.notna(row['winrate']) else None,
+                "rank": int(row["epa_rank"]) if pd.notna(row["epa_rank"]) else None
+            }
+            
+            return team_info
+            
+        except Exception as e:
+            print(f"Error al leer el CSV para equipo {team}, evento {event_key}: {e}")
+            raise KeyError(f"{e}")
+    
+    def get_all_sb_stats_for_event(self, event_key: str, team_keys: tuple[str]) -> dict:
+        """
+        Obtiene TODOS los stats de Statbotics para una lista de equipos de un evento desde el CSV.
+        """
+        all_team_stats = {}
+        
+        print(f"Fetching Statbotics data from CSV for {len(team_keys)} teams...")
+        
+        for team_key in team_keys:
+            try:
+                result = self.get_sb_team_stats_event(team_key, event_key)
+                if result:
+                    all_team_stats[team_key] = result
+            except Exception as exc:
+                print(f"ERROR: No se pudo obtener datos para el equipo {team_key}: {exc}")
+        
+        print("Statbotics CSV data fetching complete.")
         return all_team_stats
         
         
