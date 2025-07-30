@@ -29,7 +29,7 @@ interface Decoration {
     id: number;
     component: React.ComponentType<any>;
     className: string;
-    style: { top: string; left: string };
+    style: { top: string; left: string; color?: string };
     speed: number;
   }
 
@@ -54,8 +54,12 @@ export const generateDecorations = (config: GeneratorConfig) => {
         decorations.push({
           id: uniqueId++,
           component: getRandomItem(availableComponents).component,
-          className: `${size} text-accent/[${opacity}]`, // ✅ Use the accent color
-          style: { top, left },
+          className: size,
+          style: { 
+            top, 
+            left,
+            color: `rgba(0, 238, 228, ${opacity})` // Direct accent color with opacity
+          },
           speed: getRandomNumber(layer.speedRange[0], layer.speedRange[1]),
         });
       }

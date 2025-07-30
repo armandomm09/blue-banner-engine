@@ -1,6 +1,5 @@
 import { motion, type MotionValue, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { decorationsConfig } from '../../config/decorations.config';
 import bbeLogo from '../../assets/bbe_logo.png';
 import SimpleParallax from "simple-parallax-js";
 import { generateDecorations } from '../../config/decorations.generator';
@@ -45,17 +44,14 @@ interface HeroSectionProps {
     // ✅ New generator config for a denser, more intense, and more colorful field
     const decorations = useMemo(() => generateDecorations({
       layers: [
-        { gridSize: [4, 3], speedRange: [80, 150], opacityRange: [0.1, 0.2] },  // Farthest
-        { gridSize: [5, 4], speedRange: [180, 300], opacityRange: [0.2, 0.3] }, // Mid-ground
-        { gridSize: [3, 3], speedRange: [350, 500], opacityRange: [0.3, 0.4] }, // Foreground
+        { gridSize: [4, 3], speedRange: [120, 200], opacityRange: [0.1, 0.2] },  // Farthest
+        { gridSize: [5, 4], speedRange: [200, 350], opacityRange: [0.2, 0.3] }, // Mid-ground
+        { gridSize: [3, 3], speedRange: [350, 600], opacityRange: [0.3, 0.4] }, // Foreground
       ]
     }), []);
   
     const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
   
-    // ✅ Special parallax speeds for the hand-placed horizontal lines
-    const horizontalLineY1 = useTransform(scrollYProgress, [0, 1], ["0%", "600%"]);
-    const horizontalLineY2 = useTransform(scrollYProgress, [0, 1], ["0%", "700%"]);
   
     return (
       <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-background text-white">
@@ -65,17 +61,6 @@ interface HeroSectionProps {
           const y = useTransform(scrollYProgress, [0, 1], ["0%", `${speed}%`]);
           return <DecorationComponent key={id} y={y} className={className} style={style} />;
         })}
-  
-        {/* ✅ Hand-placed horizontal circuits */}
-        <CircuitLine 
-          y={horizontalLineY1 as any} 
-          className="w-[200%] -left-1/2 top-[30%] text-accent/20 z-10"
-        />
-        <CircuitLine 
-          y={horizontalLineY2 as any} 
-          className="w-[200%] -left-1/2 top-[60%] text-accent/30 z-10"
-          style={{ transform: "scaleX(-1)" }} // Flip it for variety
-        />
   
         {/* Main Content (with a high z-index to stay on top) */}
         <motion.div 
@@ -87,7 +72,9 @@ interface HeroSectionProps {
         >
           <AnimatedTagline />
           {/* ✅ Bigger Logo */}
-          <img src={bbeLogo} alt="BBE Logo" className="w-48 md:w-56 mb-6" />
+          <SimpleParallax>
+            <img src={bbeLogo} alt="BBE Logo" className="w-48 md:w-80 " />
+          </SimpleParallax>
           <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-4 leading-tight">
             Blue Banner Engine
           </h1>
