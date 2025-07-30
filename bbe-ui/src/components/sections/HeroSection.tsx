@@ -4,7 +4,6 @@ import bbeLogo from '../../assets/bbe_logo.png';
 import SimpleParallax from "simple-parallax-js";
 import { generateDecorations } from '../../config/decorations.generator';
 import { useMemo } from 'react';
-import { CircuitLine } from '../decorations/CircuitLine';
 
 
 // Animated Tagline Component

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import TargetCursor from './decorations/TargetCursor';
 
 // --- Type Definitions ---
 interface TBAEvent {
