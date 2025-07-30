@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import TargetCursor from './decorations/TargetCursor';
 
 // --- Type Definitions ---
 interface TBAEvent {
@@ -99,14 +100,18 @@ export const EventSearch: React.FC = () => {
 
             {isLoading && <p className="text-text-muted">Loading events...</p>}
             {error && <p className="text-red-400">{error}</p>}
-            
+            {/* <TargetCursor 
+                    spinDuration={2}
+                    hideDefaultCursor={true}
+                    /> */}
             {!isLoading && !error && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    
                     {filteredEvents.map(event => (
                         <div
                             key={event.key}
                             onClick={() => handleEventClick(event.key)}
-                            className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:border-accent hover:scale-105 transition-all duration-200"
+                            className="cursor-target bg-card border border-border rounded-lg p-4 cursor-pointer hover:border-accent hover:scale-105 transition-all duration-200"
                         >
                             <div className="flex justify-between items-start">
                                 <h3 className="font-bold text-white mb-1 pr-2">{event.name}</h3>
