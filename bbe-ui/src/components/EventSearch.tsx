@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import TargetCursor from './decorations/TargetCursor';
+import TargetCursor from './bits/TargetCursor';
+import Magnet from './bits/Magnet';
 
 // --- Type Definitions ---
 interface TBAEvent {
@@ -100,14 +101,15 @@ export const EventSearch: React.FC = () => {
 
             {isLoading && <p className="text-text-muted">Loading events...</p>}
             {error && <p className="text-red-400">{error}</p>}
-            {/* <TargetCursor 
+            <TargetCursor 
                     spinDuration={2}
                     hideDefaultCursor={true}
-                    /> */}
+                    />
             {!isLoading && !error && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     
                     {filteredEvents.map(event => (
+                        <Magnet padding={50} disabled={false} magnetStrength={50}>
                         <div
                             key={event.key}
                             onClick={() => handleEventClick(event.key)}
@@ -122,6 +124,7 @@ export const EventSearch: React.FC = () => {
                             <p className="text-sm text-text-muted">{event.city}, {event.state_prov}</p>
                             <p className="text-sm text-text-muted font-mono mt-2">{event.key}</p>
                         </div>
+                        </Magnet>
                     ))}
                 </div>
             )}

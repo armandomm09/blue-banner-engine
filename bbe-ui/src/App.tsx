@@ -28,7 +28,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-background">
-        <Navbar />
+        {/* <Navbar /> */}
         <main className="pt-0">
           <Routes>
             <Route path="/" element={<HomePage />} />
