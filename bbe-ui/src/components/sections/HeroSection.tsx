@@ -5,6 +5,7 @@ import SimpleParallax from "simple-parallax-js";
 import { generateDecorations } from '../../config/decorations.generator';
 import { useMemo } from 'react';
 import { CircuitLine } from '../decorations/CircuitLine';
+import Aurora from '../bits/Aurora';
 
 
 // Animated Tagline Component
@@ -54,14 +55,26 @@ interface HeroSectionProps {
   
   
     return (
+        
       <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-background text-white">
+        
+        {/* Aurora effect on top */}
+        <div className="absolute top-0 left-0 w-full h-1/3 z-10">
+          <Aurora 
+            colorStops={["#00eee4", "#08605f", "#177E89"]}
+            amplitude={0.4}
+            blend={0.6}
+            speed={0.8}
+          />
+        </div>
+        
         {/* Procedurally generated background decorations */}
         {decorations.map(deco => {
           const { id, component: DecorationComponent, className, style, speed } = deco;
           const y = useTransform(scrollYProgress, [0, 1], ["0%", `${speed}%`]);
           return <DecorationComponent key={id} y={y} className={className} style={style} />;
         })}
-  
+        
         {/* Main Content (with a high z-index to stay on top) */}
         <motion.div 
           style={{ y: contentY }}
@@ -71,6 +84,7 @@ interface HeroSectionProps {
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
           <AnimatedTagline />
+         
           {/* ✅ Bigger Logo */}
           <SimpleParallax>
             <img src={bbeLogo} alt="BBE Logo" className="w-48 md:w-80 " />
