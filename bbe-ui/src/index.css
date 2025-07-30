@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 
-/* original 00BFFF */
+/* original #12e0b4 */
 @theme {
   --color-background: #121212;
   --color-card: #1E1E1E;
   --color-text: #E0E0E0;
   --color-text-muted: #888888;
-  --color-accent: #00ffd5; 
+  --color-accent: #00eee4; 
   --color-border: #2c2c2c;
 }
 
