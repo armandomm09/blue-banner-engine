@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
+    "framer-motion": "^12.23.11",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3",
+    "simple-parallax-js": "^6.2.1",
     "swagger-ui-react": "^5.27.0"
   },
   "devDependencies": {
