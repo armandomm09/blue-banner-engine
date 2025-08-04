@@ -1,21 +1,32 @@
 package types
 
-type TbaScore struct {
-	Score int32 `json:"score"`
-}
-
-// TbaAlliances represents the alliances in a match
 type TbaAlliances struct {
-	Red  TbaScore `json:"red"`
-	Blue TbaScore `json:"blue"`
+	Blue struct {
+		Score    int32    `json:"score"`
+		TeamKeys []string `json:"team_keys"`
+	} `json:"blue"`
+	Red struct {
+		Score    int32    `json:"score"`
+		TeamKeys []string `json:"team_keys"`
+	} `json:"red"`
 }
 
-// TbaMatch represents a match from TBA
+type TbaTeamKeys struct {
+	Blue []string `json:"blue"`
+	Red  []string `json:"red"`
+}
+
 type TbaMatch struct {
-	Key             string       `json:"key"`
-	CompLevel       string       `json:"comp_level"`
-	WinningAlliance string       `json:"winning_alliance"`
+	ActualTime      int          `json:"actual_time"`
 	Alliances       TbaAlliances `json:"alliances"`
+	CompLevel       string       `json:"comp_level"`
+	EventKey        string       `json:"event_key"`
+	Key             string       `json:"key"`
+	MatchNumber     int          `json:"match_number"`
+	PredictedTime   int          `json:"predicted_time"`
+	SetNumber       int          `json:"set_number"`
+	Time            int          `json:"time"`
+	WinningAlliance string       `json:"winning_alliance"`
 }
 
 type TbaEventDetails struct {

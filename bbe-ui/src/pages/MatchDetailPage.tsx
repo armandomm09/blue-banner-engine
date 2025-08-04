@@ -99,6 +99,7 @@ const ShapWaterfallPlot: React.FC<{ analysis: ShapAnalysis }> = ({ analysis }) =
           </span>
         </div>
         {/* La Barra */}
+        
         <div className="w-1/2 h-full relative">
           <div
             className={`absolute h-full ${
