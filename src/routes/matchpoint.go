@@ -81,7 +81,11 @@ func GetAllMatchPredictionsForEvent(c *gin.Context) {
 	}
 	for _, pred := range predictions {
 		resp := types.MatchPrediction{
-			MatchKey:        pred.GetMatchKey(),
+			MatchKey: pred.GetMatchKey(),
+			TeamsKeys: types.TbaTeamKeys{
+				Blue: tbaMatches[pred.GetMatchKey()].Alliances.Blue.TeamKeys,
+				Red:  tbaMatches[pred.GetMatchKey()].Alliances.Red.TeamKeys,
+			},
 			PredictedWinner: pred.GetPredictedWinner(),
 			WinProbability:  map[string]float32{"red": pred.GetWinProbability().GetRed(), "blue": pred.GetWinProbability().GetBlue()},
 			PredictedScores: map[string]int32{"red": pred.GetPredictedScores().GetRed(), "blue": pred.GetPredictedScores().GetBlue()},
@@ -180,6 +184,10 @@ func GetSingleMatchPrediction(c *gin.Context) {
 		Status:       status,
 		ActualWinner: actualWinner,
 		ActualScores: actualScores,
+		TeamsKeys: types.TbaTeamKeys{
+			Blue: tbaMatch.Alliances.Blue.TeamKeys,
+			Red:  tbaMatch.Alliances.Red.TeamKeys,
+		},
 	}
 
 	c.JSON(http.StatusOK, jsonResponse)
