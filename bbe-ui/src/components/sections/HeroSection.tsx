@@ -53,14 +53,16 @@ interface HeroSectionProps {
   
   
     return (
+        
       <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-background text-white">
+        
         {/* Procedurally generated background decorations */}
         {decorations.map(deco => {
           const { id, component: DecorationComponent, className, style, speed } = deco;
           const y = useTransform(scrollYProgress, [0, 1], ["0%", `${speed}%`]);
           return <DecorationComponent key={id} y={y} className={className} style={style} />;
         })}
-  
+        
         {/* Main Content (with a high z-index to stay on top) */}
         <motion.div 
           style={{ y: contentY }}
@@ -70,6 +72,7 @@ interface HeroSectionProps {
           transition={{ duration: 0.8, ease: 'easeOut' }}
         >
           <AnimatedTagline />
+         
           {/* ✅ Bigger Logo */}
           <SimpleParallax>
             <img src={bbeLogo} alt="BBE Logo" className="w-48 md:w-80 " />

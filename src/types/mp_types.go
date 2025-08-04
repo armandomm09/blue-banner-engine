@@ -11,6 +11,7 @@ type ShapAnalysis struct {
 
 type MatchPrediction struct {
 	MatchKey        string             `json:"match_key" example:"2025mxle_qm1"`
+	TeamsKeys       TbaTeamKeys        `json:"team_keys"`
 	PredictedWinner string             `json:"predicted_winner" example:"blue"`
 	WinProbability  map[string]float32 `json:"win_probability" example:"red:0.21,blue:0.79"`
 	PredictedScores map[string]int32   `json:"predicted_scores" example:"red:95,blue:112"`

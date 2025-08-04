@@ -19,6 +19,7 @@ interface EventDetails {
 
 interface Prediction {
   match_key: string;
+  team_keys: {red: string[], blue: string[]}
   predicted_winner: "red" | "blue";
   win_probability: { red: number; blue: number };
   predicted_scores: { red: number; blue: number };
@@ -151,6 +152,26 @@ const PlayedMatchRow: React.FC<{ p: Prediction }> = ({ p }) => {
   return (
     <>
       <td className="py-3 px-4 font-mono">{p.match_key.split("_")[1]}</td>
+      
+      <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
+        {p.team_keys.red?.[0]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
+        {p.team_keys.red?.[1]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
+        {p.team_keys.red?.[2]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-blue-500/10 text-blue-300">
+        {p.team_keys.blue?.[0]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-blue-500/10 text-blue-300">
+        {p.team_keys.blue?.[1]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-blue-500/10 text-blue-300">
+        {p.team_keys.blue?.[2]?.replace("frc", "") || "-"}
+      </td>
+      
       <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
         {p.predicted_scores.red}
       </td>
@@ -182,6 +203,26 @@ const UpcomingMatchRow: React.FC<{ p: Prediction }> = ({ p }) => {
   return (
     <>
       <td className="py-3 px-4 font-mono">{p.match_key.split("_")[1]}</td>
+      
+      <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
+        {p.team_keys.red?.[0]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
+        {p.team_keys.red?.[1]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
+        {p.team_keys.red?.[2]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-blue-500/10 text-blue-300">
+        {p.team_keys.blue?.[0]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-blue-500/10 text-blue-300">
+        {p.team_keys.blue?.[1]?.replace("frc", "") || "-"}
+      </td>
+      <td className="py-3 px-4 font-mono text-center bg-blue-500/10 text-blue-300">
+        {p.team_keys.blue?.[2]?.replace("frc", "") || "-"}
+      </td>
+      
       <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
         {p.predicted_scores.red}
       </td>
@@ -461,6 +502,12 @@ const EventDetailPage: React.FC = () => {
                     Match
                   </th>
                   <th
+                    colSpan={6}
+                    className="py-2 px-4 font-semibold text-center border-b border-border"
+                  >
+                    Teams
+                  </th>
+                  <th
                     colSpan={2}
                     className="py-2 px-4 font-semibold text-center border-b border-border"
                   >
@@ -480,6 +527,24 @@ const EventDetailPage: React.FC = () => {
                   </th>
                 </tr>
                 <tr>
+                  <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
+                    Red 1
+                  </th>
+                  <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
+                    Red 2
+                  </th>
+                  <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
+                    Red 3
+                  </th>
+                  <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
+                    Blue 1
+                  </th>
+                  <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
+                    Blue 2
+                  </th>
+                  <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
+                    Blue 3
+                  </th>
                   <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
                     Red
                   </th>
