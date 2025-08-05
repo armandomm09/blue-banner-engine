@@ -1,7 +1,25 @@
-# Blue Banner Engine (BBE) 🔵
+<div align="center">
 
-*An AI-driven scouting and strategy platform designed to provide FRC teams with a decisive competitive edge by transforming data into actionable intelligence.*
 
+<p align="center">
+<img height="250" alt="bbe_logo_no_name" src="https://github.com/user-attachments/assets/ddf7a9fc-b3ef-453f-b34a-bd677e8fd967" />
+</p>
+
+# `⚙️🔵 Blue Banner Engine (BBE)`
+
+**An AI-driven scouting and strategy platform designed to provide FRC teams with a decisive competitive edge by transforming data into actionable intelligence.**
+
+![Open Source](https://img.shields.io/badge/open%20source-8A2BE2)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/armandomm09/blue-banner-engine)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/armandomm09/blue-banner-engine/deploy.yml)
+![Website](https://img.shields.io/website?url=https%3A%2F%2Fbbe-frc.com)
+![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fbbe-frc.com%2Fswagger.json)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/armandomm09/blue-banner-engine)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/armandomm09/blue-banner-engine)
+
+
+
+</div>
 ---
 
 ## Table of Contents
@@ -168,3 +186,4 @@ This project is licensed under the MIT License - see the `LICENSE` file for deta
 -   **Rene Cumplido Feregrino**
 
 ```
+
