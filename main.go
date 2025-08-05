@@ -167,5 +167,12 @@ func main() {
 	log.Println("Starting BBE server on port 8080...")
 	log.Println("Access the UI at https://187.188.81.91:1743/")
 	log.Println("API documentation at https://187.188.81.91:1743/swagger/index.html")
-	router.Run(":8080")
+
+	if os.Getenv("PRODUCTION") == "true" &&
+		os.Getenv("CERT_PATH") != "" &&
+		os.Getenv("KEY_PATH") != "" {
+		router.RunTLS(":8080", os.Getenv("CERT_PATH"), os.Getenv("KEY_PATH"))
+	} else {
+		router.Run(":8080")
+	}
 }
