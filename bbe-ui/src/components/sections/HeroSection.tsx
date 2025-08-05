@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 
 // Animated Tagline Component
 const AnimatedTagline = () => {
-  const text = "AI-Powered FRC Scouting Platform";
+  const text = "AI-Powered FRC Scouting Service";
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.03 } },
