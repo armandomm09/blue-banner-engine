@@ -76,7 +76,6 @@ type TbaEvent struct {
 // @license.name  MIT
 // @license.url   https://opensource.org/licenses/MIT
 
-// @host      localhost:8080
 // @BasePath  /api/v1
 func main() {
 
@@ -117,7 +116,14 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Configure Swagger host based on environment variable
+	swaggerHost := os.Getenv("SWAGGER_HOST")
+	if swaggerHost == "" {
+		swaggerHost = "localhost:8080" // default
+	}
+	docs.SwaggerInfo.Host = swaggerHost
 	docs.SwaggerInfo.BasePath = "/api/v1"
+
 	v1 := router.Group("/api/v1")
 	{
 		routes.RegisterMatchpointRoutes(v1, handler.grpcClient, tbaKey)
