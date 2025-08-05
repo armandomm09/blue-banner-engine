@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   
   // Determine target based on TESTING environment variable
   const isTesting = env.VITE_TESTING === 'true';
-  const target = isTesting ? 'http://localhost:8080' : 'http://172.16.194.210:8080';
+  const target = isTesting ? 'http://localhost:8080' : 'http://187.188.81.91:1743';
   
   console.log(`Vite config: TESTING=${env.TESTING}, target=${target}`);
   
