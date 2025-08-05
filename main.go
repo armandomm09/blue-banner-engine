@@ -109,7 +109,7 @@ func main() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://172.16.194.210:8080"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://172.16.194.210:8080", "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -134,13 +134,13 @@ func main() {
 	router.StaticFile("/favicon.ico", filepath.Join(staticFiles, "favicon.ico"))
 	router.StaticFile("/manifest.json", filepath.Join(staticFiles, "manifest.json"))
 	router.GET("/swagger.json", func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "http://localhost:5173")
+		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
 		c.File("docs/swagger.json")
 	})
 	router.OPTIONS("/swagger.json", func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "http://localhost:5173")
+		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
 		c.Status(http.StatusOK)

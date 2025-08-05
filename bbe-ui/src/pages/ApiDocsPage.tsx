@@ -9,7 +9,7 @@ const ApiDocsPage: React.FC = () => {
       <div className="container mx-auto max-w-7xl">
         <h1 className="text-4xl font-bold text-accent mb-8">BBE API v1 Documentation</h1>
         <div className="bg-card border border-border rounded-lg p-4">
-          <SwaggerUI url="http://localhost:8080/swagger.json" />
+          <SwaggerUI url="http://172.16.194.210:8080/swagger.json" />
         </div>
       </div>
     </main>
