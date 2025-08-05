@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
   const isTesting = env.VITE_TESTING === 'true';
   const target = isTesting ? 'http://localhost:8080' : 'http://187.188.81.91:1743';
   
-  console.log(`Vite config: TESTING=${env.TESTING}, target=${target}`);
+  console.log(`Vite config: TESTING=${env.VITE_TESTING}, target=${target}`);
   
   return {
     plugins: [react(), tailwindcss()],
