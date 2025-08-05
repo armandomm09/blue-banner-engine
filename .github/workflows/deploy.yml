@@ -1,0 +1,21 @@
+name: 🚀 Deploy on Push
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, X64]  
+    environment:
+      name: production          
+      url: https://frc-bbe.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3 
+
+      - name: Run redeploy script
+        run: |
+          /home/armando/redeploy.sh
