@@ -1,28 +1,26 @@
+# syntax=docker/dockerfile:1
+
 FROM golang:1.23-alpine AS builder
 
-WORKDIR /
+WORKDIR /app
 
 COPY go.mod go.sum ./
+
 RUN go mod download
 
 COPY . .
 
-COPY .env .env
-
-COPY ./docs /docs
-
-
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /bbe-server .
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o bbe-server .
 
 FROM alpine:latest
 
 RUN addgroup -S bbe && adduser -S bbe -G bbe
 
-COPY --from=builder /bbe-server /bbe-server
+COPY --from=builder /app/bbe-server /bbe-server
+COPY --from=builder /app/docs /docs
 
 COPY ./bbe-ui/dist /bbe-ui/dist
-
-COPY --from=builder /docs /docs
 
 EXPOSE 8080
 
