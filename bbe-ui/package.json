@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "prebuild": "node -e \"const fs=require('fs');const path=require('path');const envPath=path.join(__dirname,'../.env');const envContent=fs.readFileSync(envPath,'utf8');const lines=envContent.split('\\n').filter(line=>line.trim()!=='');const viteEnv=lines.filter(line=>line.startsWith('VITE_')||line.startsWith('SWAGGER_HOST=')).map(line=>line.trim()).join('\\n');fs.writeFileSync('.env',viteEnv);console.log('Copied environment variables to bbe-ui/.env');\"",
+    "build": "npm run prebuild && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
+    "@types/node": "^24.2.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
