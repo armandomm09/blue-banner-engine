@@ -8,7 +8,7 @@ const ApiDocsPage: React.FC = () => {
   const isTesting = import.meta.env.VITE_TESTING === 'true';
   const swaggerUrl = isTesting 
     ? 'http://localhost:8080/swagger.json' 
-    : 'http://172.16.194.210:8080/swagger.json';
+    : 'http://187.188.81.91:1743/swagger.json';
   
   console.log(`ApiDocsPage: TESTING=${import.meta.env.VITE_TESTING}, swaggerUrl=${swaggerUrl}`);
   
