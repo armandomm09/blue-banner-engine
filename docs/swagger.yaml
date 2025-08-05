@@ -56,6 +56,8 @@ definitions:
       status:
         example: played
         type: string
+      team_keys:
+        $ref: '#/definitions/types.TbaTeamKeys'
       win_probability:
         additionalProperties:
           type: number
@@ -81,7 +83,17 @@ definitions:
           type: number
         type: array
     type: object
-host: localhost:8080
+  types.TbaTeamKeys:
+    properties:
+      blue:
+        items:
+          type: string
+        type: array
+      red:
+        items:
+          type: string
+        type: array
+    type: object
 info:
   contact:
     email: support@swagger.io

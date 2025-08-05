@@ -15,7 +15,6 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
         "/events/{year}": {
@@ -219,6 +218,9 @@
                     "type": "string",
                     "example": "played"
                 },
+                "team_keys": {
+                    "$ref": "#/definitions/types.TbaTeamKeys"
+                },
                 "win_probability": {
                     "type": "object",
                     "additionalProperties": {
@@ -253,6 +255,23 @@
                     "type": "array",
                     "items": {
                         "type": "number"
+                    }
+                }
+            }
+        },
+        "types.TbaTeamKeys": {
+            "type": "object",
+            "properties": {
+                "blue": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "red": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 }
             }

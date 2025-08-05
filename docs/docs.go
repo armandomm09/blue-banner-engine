@@ -225,6 +225,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "played"
                 },
+                "team_keys": {
+                    "$ref": "#/definitions/types.TbaTeamKeys"
+                },
                 "win_probability": {
                     "type": "object",
                     "additionalProperties": {
@@ -262,6 +265,23 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "types.TbaTeamKeys": {
+            "type": "object",
+            "properties": {
+                "blue": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "red": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
         }
     }
 }`
@@ -269,7 +289,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Blue Banner Engine (BBE) API",
