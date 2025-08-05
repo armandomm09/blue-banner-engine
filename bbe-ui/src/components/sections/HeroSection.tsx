@@ -75,7 +75,7 @@ interface HeroSectionProps {
          
           {/* ✅ Bigger Logo */}
           <SimpleParallax>
-            <img src={bbeLogo} alt="BBE Logo" className="w-48 md:w-80 " />
+            <img src={bbeLogo} alt="BBE Logo" className="w-48 md:w-80 pt-5 " />
           </SimpleParallax>
           <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-4 leading-tight">
             Blue Banner Engine
