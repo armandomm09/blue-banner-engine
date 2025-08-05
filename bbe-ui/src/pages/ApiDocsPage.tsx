@@ -5,7 +5,6 @@ import 'swagger-ui-react/swagger-ui.css';
 import './theme/theme-monokai.css'
 
 const ApiDocsPage: React.FC = () => {
-  // Determine swagger URL based on TESTING environment variable
   const isTesting = import.meta.env.VITE_TESTING === 'true';
   const swaggerUrl = isTesting 
     ? 'http://localhost:8080/swagger.json' 
