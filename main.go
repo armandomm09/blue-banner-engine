@@ -108,7 +108,7 @@ func main() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://172.16.194.210:8080", "http://localhost:8080", "http://https://187.188.81.91:1743"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -165,14 +165,17 @@ func main() {
 	})
 
 	log.Println("Starting BBE server on port 8080...")
-	log.Println("Access the UI at https://187.188.81.91:1743/")
-	log.Println("API documentation at https://187.188.81.91:1743/swagger/index.html")
+	log.Println("Access the UI at https://159.54.136.121:1743/")
+	log.Println("API documentation at https://159.54.136.121:1743/swagger/index.html")
 
 	if os.Getenv("PRODUCTION") == "true" &&
 		os.Getenv("CERT_PATH") != "" &&
 		os.Getenv("KEY_PATH") != "" {
+		log.Println("Running on production")
 		router.RunTLS(":8080", os.Getenv("CERT_PATH"), os.Getenv("KEY_PATH"))
 	} else {
+		log.Println("Running on testing")
+
 		router.Run(":8080")
 	}
 }
