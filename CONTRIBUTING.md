@@ -18,7 +18,7 @@ This document provides guidelines for setting up your development environment an
 ## How to Contribute
 We use a standard GitHub workflow for contributions:
 
-1.  **Open an Issue:** If you have an idea for a new feature or have found a bug, please [open an issue](https://github.com/your-repo/blue-banner-engine/issues) first to discuss it. This allows us to coordinate efforts and prevent duplicate work.
+1.  **Open an Issue:** If you have an idea for a new feature or have found a bug, please [open an issue](https://github.com/armandomm09/blue-banner-engine/issues) first to discuss it. This allows us to coordinate efforts and prevent duplicate work.
 2.  **Fork the Repository:** Create your own copy of the project to work on.
 3.  **Create a New Branch:** Make a new branch in your fork for your changes (`git checkout -b feature/your-awesome-feature`).
 4.  **Make Your Changes:** Implement your feature or fix the bug.
