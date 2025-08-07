@@ -10,7 +10,7 @@ const ApiDocsPage: React.FC = () => {
     ? 'http://localhost:8080/swagger.json' 
     : 'https://bbe-frc.com/swagger.json';
   
-  console.log(`ApiDocsPage: TESTING=${import.meta.env.VITE_TESTING}, swaggerUrl=${swaggerUrl}`);
+  // console.log(`ApiDocsPage: TESTING=${import.meta.env.VITE_TESTING}, swaggerUrl=${swaggerUrl}`);
   
   return (
     <main className="min-h-screen pt-32 pb-16 px-4 md:px-8 font-['Poppins'] bg-background text-text">

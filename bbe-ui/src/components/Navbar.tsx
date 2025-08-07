@@ -64,7 +64,7 @@ const Navbar: React.FC = () => {
                 to="/matchpoint" 
                 className="text-lg text-white bg-accent/80 hover:bg-accent px-4 py-2 rounded-lg font-semibold transition-colors"
               >
-                Go to Matchpoint
+                Matchpoint
               </Link>
             </div>
           </div>
