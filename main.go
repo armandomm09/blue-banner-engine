@@ -136,8 +136,17 @@ func main() {
 
 	router.StaticFS("/static", http.Dir(filepath.Join(staticFiles, "static")))
 	router.StaticFS("/assets", http.Dir(filepath.Join(staticFiles, "assets")))
-	router.StaticFile("/favicon.ico", filepath.Join(staticFiles, "favicon.ico"))
 	router.StaticFile("/manifest.json", filepath.Join(staticFiles, "manifest.json"))
+	router.StaticFile("/bbe_logo_no_name.png", filepath.Join(staticFiles, "bbe_logo_no_name.png"))
+	router.StaticFile("/favicon.ico", filepath.Join(staticFiles, "bbe_logo_no_name.png"))
+
+	router.GET("/favicon.png", func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+		c.File("docs/visuals/bbe_logo_no_name.png") // Adjust path if needed
+	})
+
 	router.GET("/swagger.json", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
@@ -152,7 +161,7 @@ func main() {
 	})
 
 	router.NoRoute(func(c *gin.Context) {
-		if !strings.HasPrefix(c.Request.URL.Path, "/api") && !strings.HasPrefix(c.Request.URL.Path, "/swagger") {
+		if !strings.HasPrefix(c.Request.URL.Path, "/api") && !strings.HasPrefix(c.Request.URL.Path, "/swagger") && !strings.HasPrefix(c.Request.URL.Path, "/favicon.ico") {
 			path := filepath.Join(staticFiles, "index.html")
 			_, err := os.Stat(path)
 			if os.IsNotExist(err) {
