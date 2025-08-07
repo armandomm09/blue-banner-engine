@@ -99,78 +99,8 @@ BBE is designed with a modern, decoupled, multi-container architecture, enabling
 
 ## Getting Started & Setup
 
-Follow these instructions to set up and run the entire Blue Banner Engine stack locally.
+For detailed instructions on running Blue Banner Engine locally or contributing to the project, please see our [CONTRIBUTING.md](https://github.com/armandomm09/blue-banner-engine?tab=contributing-ov-file) guide.
 
-### Prerequisites
-
-You must have the following tools installed on your system:
-- [**Docker**](https://www.docker.com/products/docker-desktop/)
-- [**Docker Compose**](https://docs.docker.com/compose/install/) (usually included with Docker Desktop)
-- [**Git**](https://git-scm.com/)
-
-### Configuration
-
-#### 1. Clone the Repository
-First, clone the project to your local machine:
-```bash
-git clone https://github.com/armandomm09/bbe.git
-cd bbe
-```
-
-#### 2. Obtain and Place the ML Models
-The pre-trained machine learning models are required to run the prediction service. Due to their size, they are not stored in this Git repository.
-
-*   **Action Required:** You must obtain the three model files (`classification.json`, `red_model.json`, `blue_model.json`) from the project maintainers.
-
-*   **Placement:** Once you have the files, create a `models` directory in the root of the project and place them inside:
-    ```
-    bbe/
-    ├── models/
-    │   ├── classification.json
-    │   ├── red_model.json
-    │   └── blue_model.json
-    ├── matchpoint/
-    ├── ... (resto de los archivos)
-    ```
-
-#### 3. Create the Environment File
-The Python service requires an API key for The Blue Alliance. Create a `.env` file in the root of the project.
-
-1.  Copy the example file:
-    ```bash
-    cp .env.example .env
-    ```
-    *(Note: If `.env.example` does not exist, create a new file named `.env`)*
-
-2.  Edit the `.env` file and add your key:
-    ```
-    TBA_API_KEY="your_tba_api_key_here"
-    ```
-
-### Running the Application
-
-With Docker, the entire application stack can be launched with a single command.
-
-1.  **Build and Run the Containers:**
-    From the root directory of the project, run:
-    ```bash
-    docker-compose up --build
-    ```
-    -   `--build`: This flag tells Docker Compose to rebuild the images if any changes have been made to the `Dockerfiles` or the source code.
-    -   This command will start the Go API Gateway, the Python gRPC service, and the network connecting them.
-
-2.  **Access the Services:**
-    Once the containers are running, the application will be available at:
-    -   **Frontend UI:** [http://localhost:8080/](http://localhost:8080/)
-    -   **API Documentation (Swagger):** [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
-
-3.  **Stopping the Application:**
-    To stop all running containers, press `Ctrl + C` in the terminal where `docker-compose` is running. To clean up completely, you can run:
-    ```bash
-    docker-compose down
-    ```
-
----
 
 
 ## License
@@ -184,5 +114,5 @@ This project is licensed under the MIT License - see the `LICENSE` file for deta
 -   **Pablo Armando Mac Beath Milián**
 -   **Rene Cumplido Feregrino**
 
-```
+
 
