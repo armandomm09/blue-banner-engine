@@ -38,7 +38,7 @@ const modulesData: ModuleCardProps[] = [
       output: "Visual heatmaps and trajectory plots for spatial strategy analysis.",
     },
     {
-      title: "Woodie",
+      title: "Woodie (Just Woodie ;)",
       summary: "The Omniscient - Your friendly conversational AI assistant for FRC data.",
       what: "A conversational chatbot providing instant access to all FRC data and BBE insights, democratizing data access for the entire team through natural language queries.",
       tech: ["Discord.py", "RAG with LLMs", "TBA & BBE API Integration"],
