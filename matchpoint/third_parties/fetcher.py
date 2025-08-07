@@ -6,13 +6,34 @@ import functools
 from typing import Dict, Any
 
 class Fetcher:
+    """
+    A utility class to fetch and process data from The Blue Alliance (TBA)
+    and Statbotics APIs.
+    
+    This class provides static methods to retrieve team and match features for
+    FIRST Robotics Competition events.
+    """
     
     sb = SBService()
     tba = TBAService()
     
     @staticmethod
-    def get_match_features(match_key: str) -> dict:
+    def get_match_features(match_key: str) -> dict | None:
+        """
+        Fetches and compiles a feature set for a specific match.
 
+        This method retrieves team information for a given match, fetches statistics
+        for each participating team from both Statbotics and TBA, combines them,
+        and then orders them according to the FEATURE_ORDER constant.
+
+        Args:
+            match_key (str): The key for the match (e.g., '2023cada_qm1').
+
+        Returns:
+            dict | None: A dictionary with ordered features for the match. 
+                        Returns None if an error occurs during data fetching
+                        or processing.
+        """
         event_key = match_key.split("_")[0]
 
         try:
@@ -30,26 +51,20 @@ class Fetcher:
 
             raw_features = {}
             raw_features['week'] = 8 if event_week is None else event_week
-
-            # Obtener stats de statbotics en paralelo para los 6 equipos
-        
+            
             all_teams = red_teams + blue_teams
             
             print("teams", tuple(all_teams))            
             sb_stats_dict = Fetcher.sb.get_all_sb_stats_for_event(event_key, tuple(all_teams))
             tba_stats_dict = Fetcher.tba.get_all_tba_stats_for_event_concurrently(event_key, tuple(all_teams))
+
             for i in range(3):
-                # Statbotics
                 red_team = red_teams[i]
                 blue_team = blue_teams[i]
-                red_sb_stats = sb_stats_dict.get(red_team, {}) or {}
-                blue_sb_stats = sb_stats_dict.get(blue_team, {}) or {}
-                # TBA
-                red_tba_stats = tba_stats_dict.get(red_team, {}) or {}
-                blue_tba_stats = tba_stats_dict.get(blue_team, {}) or {}
-                # Unir
-                red_team_stats = red_sb_stats | red_tba_stats
-                blue_team_stats = blue_sb_stats | blue_tba_stats
+                
+                # Combine Statbotics and TBA stats for each team
+                red_team_stats = (sb_stats_dict.get(red_team, {}) or {}) | (tba_stats_dict.get(red_team, {}) or {})
+                blue_team_stats = (sb_stats_dict.get(blue_team, {}) or {}) | (tba_stats_dict.get(blue_team, {}) or {})
 
                 for stat_name, value in red_team_stats.items():
                     if stat_name not in ["team", "event"]:
@@ -59,6 +74,7 @@ class Fetcher:
                     if stat_name not in ["team", "event"]:
                         raw_features[f"blue{i+1}_{stat_name}"] = value
 
+            # Ensure all features from FEATURE_ORDER are present, defaulting to 0.0
             ordered_match_features = {
                 feature: raw_features.get(feature, 0.0) for feature in FEATURE_ORDER
             }
@@ -66,70 +82,78 @@ class Fetcher:
             return ordered_match_features
 
         except requests.exceptions.RequestException as e:
-            print(f"Error obteniendo datos para el partido {match_key}: {e}")
+            print(f"Error fetching data for match {match_key}: {e}")
             return None
         except KeyError as e:
             print(
-                f"Error procesando el partido {match_key}. ¿Falta un equipo o una clave?: {e}"
+                f"Error processing match {match_key}. Missing team or key?: {e}"
             )
             return None
     
     @staticmethod
-    def get_team_features(team, event_key):
+    def get_team_features(team: str, event_key: str) -> dict:
+        """
+        Fetches combined Statbotics and TBA stats for a single team at an event.
+
+        Args:
+            team (str): The team number (e.g., '254').
+            event_key (str): The event key (e.g., '2023casj').
+
+        Returns:
+            dict: A dictionary containing the merged stats from both Statbotics
+                  and TBA for the specified team and event.
+        """
         team = str(team)
         sb_stats = Fetcher.sb.get_sb_team_stats_event(team, event_key)
-        
         tba_stats = Fetcher.tba.get_tba_oprs_team_event(team, event_key)
         
         return sb_stats | tba_stats
     
     @staticmethod
-    @functools.lru_cache(maxsize=16) # Cachea los resultados para los 16 eventos más recientes
+    @functools.lru_cache(maxsize=16) 
     def get_all_team_features_for_event(event_key: str) -> Dict[str, Dict[str, Any]]:
-        """
-        Obtiene de manera eficiente las características combinadas de TODOS los equipos de un evento.
+      """
+      Fetches all features for every team participating in a given event.
 
-        Este es el método preferido para el procesamiento por lotes, ya que minimiza
-        las llamadas a la API y las organiza de forma concurrente.
+      This method is cached to avoid redundant API calls for the same event. It
+      retrieves a list of all teams at an event and then concurrently fetches
+      their stats from both Statbotics and TBA.
 
-        Returns:
-            Un diccionario donde la clave es el número del equipo (str) y el valor
-            es un diccionario con todas sus características (epa, opr, etc.).
-            Ej: {'254': {'epa': 70.1, ...}, '1678': {'epa': 68.5, ...}}
-        """
-        print(f"--- Iniciando obtención de datos por lotes para todos los equipos en: {event_key} ---")
-        try:
-            # 1. Obtener la lista de todos los equipos en el evento
-            req = requests.get(f"{TBA_BASE_URL}/event/{event_key}/teams/keys", headers=TBA_HEADER)
-            req.raise_for_status()
-            # Pasamos una tupla porque las listas no son "hashable" para el caché lru
-            team_keys = tuple(key[3:] for key in req.json())
+      Args:
+          event_key (str): The key for the event (e.g., '2023cada').
 
-            # 2. Obtener todos los datos de las APIs en paralelo/lote
-            #    - Statbotics se obtiene de forma concurrente.
-            #    - TBA OPRs/COPRs se obtiene en dos llamadas de lote.
-            all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event(event_key, team_keys)
-            all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_concurrently(event_key, team_keys)
+      Returns:
+          Dict[str, Dict[str, Any]]: A dictionary where keys are team numbers
+          and values are dictionaries of their combined features. Returns an
+          empty dictionary on failure.
+      """
+      try:
+          req = requests.get(f"{TBA_BASE_URL}/event/{event_key}/teams/keys", headers=TBA_HEADER)
+          req.raise_for_status()
+          
+          # Creates a tuple of team numbers (e.g., ('254', '1114', ...))
+          team_keys = tuple(key[3:] for key in req.json())
 
-            # 3. Combinar los datos en un solo diccionario para búsquedas rápidas
-            all_team_features = {}
-            for team_key in team_keys:
-                sb_stats = all_sb_stats.get(team_key, {}) or {}
-                
-                # Extraer los stats de TBA para este equipo específico del gran diccionario
-                tba_stats = {
-                    stat: data.get(f"frc{team_key}", 0.0)
-                    for stat, data in all_tba_stats.items()
-                }
-                
-                all_team_features[team_key] = sb_stats | tba_stats
-            
-            print(f"--- Datos obtenidos para {len(all_team_features)} equipos. ---")
-            return all_team_features
+          all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event(event_key, team_keys)
+          all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_concurrently(event_key, team_keys)
 
-        except requests.exceptions.RequestException as e:
-            print(f"ERROR: Fallo de red obteniendo datos de equipos para {event_key}: {e}")
-            return {}
-        except KeyError as e:
-            print(f"ERROR: Falta una clave obteniendo datos de equipos para {event_key}: {e}")
-            return {}
+          all_team_features = {}
+          for team_key in team_keys:
+              sb_stats = all_sb_stats.get(team_key, {}) or {}
+              
+              tba_stats = {
+                  stat: data.get(f"frc{team_key}", 0.0)
+                  for stat, data in all_tba_stats.items()
+              }
+              
+              all_team_features[team_key] = sb_stats | tba_stats
+          
+          print(f"--- Data fetched for {len(all_team_features)} teams. ---")
+          return all_team_features
+
+      except requests.exceptions.RequestException as e:
+          print(f"ERROR: Network failure fetching team data for {event_key}: {e}")
+          return {}
+      except KeyError as e:
+          print(f"ERROR: Missing key while fetching team data for {event_key}: {e}")
+          return {}

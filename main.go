@@ -24,7 +24,6 @@ import (
 	"blue-banner-engine/src/routes"
 )
 
-// --- Estructuras para la Respuesta JSON de nuestra API ---
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
@@ -93,7 +92,7 @@ func main() {
 		grpcServerAddress = "localhost:50051"
 	}
 
-	// --- Configuración del Cliente gRPC ---
+	// gRPC Client Configuration
 	conn, err := grpc.Dial(grpcServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)

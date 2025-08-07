@@ -76,9 +76,7 @@ func GetAllEvents(c *gin.Context) {
 	c.JSON(http.StatusOK, events)
 }
 
-// RegisterTbaRoutes agrupa y expone las rutas TBA
 func RegisterTbaRoutes(router *gin.RouterGroup, tbaApiKey string) {
-	// Guardamos la API key en el contexto para que GetAllEvents la lea
 	router.Use(func(c *gin.Context) {
 		c.Set("tbaApiKey", tbaApiKey)
 		c.Next()

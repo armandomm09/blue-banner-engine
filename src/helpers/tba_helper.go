@@ -77,6 +77,8 @@ func FetchTbaMatch(matchKey, tbaApiKey string) (*types.TbaMatch, error) {
 	return &match, nil
 }
 
+// FetchTbaMatch fetches detailed information for a single match from The Blue Alliance API using the provided match key and API key.
+
 func FetchTbaEventDetails(eventKey, tbaApiKey string) (*types.TbaEventDetails, error) {
 	if tbaApiKey == "" {
 		return nil, fmt.Errorf("TBA_API_KEY is not configured")

@@ -2,37 +2,43 @@ from concurrent import futures
 import grpc
 import time
 
-
 from .generated import prediction_pb2
 from .generated import prediction_pb2_grpc
 from .services.mp_prediction import MatchpointPredictor, MatchPrediction
 
-
 class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
+    """
+    Implements the gRPC service for Matchpoint predictions.
+    
+    This class handles incoming gRPC requests, delegates the prediction logic
+    to the MatchpointPredictor, and formats the responses as protobuf messages.
+    """
 
     def __init__(self):
+        """Initializes the service by creating an instance of the predictor."""
         self.predictor = MatchpointPredictor()
         print("MatchpointPredictor service initialized.")
 
-
-
     def GetMatchPrediction(self, request, context):
+        """
+        Handles a gRPC request for a single match prediction.
+
+        Args:
+            request: The incoming gRPC request object (prediction_pb2.MatchPredictionRequest).
+            context: The gRPC context object.
+
+        Returns:
+            A prediction_pb2.MatchPredictionResponse protobuf message.
+        """
         match_key = request.match_key
         print(f"Received gRPC request for match: {match_key}")
 
         try:
-
             prediction_object: MatchPrediction = self.predictor.get_match_prediction(
                 match_key=str(match_key)
             )
             
-            shap_proto = prediction_pb2.ShapAnalysis(
-                base_value=prediction_object.shap_analysis.base_value,
-                values=prediction_object.shap_analysis.values,
-                feature_names=prediction_object.shap_analysis.feature_names,
-                feature_data=prediction_object.shap_analysis.feature_data,
-            )
-
+            # Check if a valid prediction was returned
             if not prediction_object:
                 context.set_code(grpc.StatusCode.NOT_FOUND)
                 context.set_details(
@@ -40,6 +46,15 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
                 )
                 return prediction_pb2.MatchPredictionResponse()
 
+            # Convert the SHAP analysis data object to its protobuf representation
+            shap_proto = prediction_pb2.ShapAnalysis(
+                base_value=prediction_object.shap_analysis.base_value,
+                values=prediction_object.shap_analysis.values,
+                feature_names=prediction_object.shap_analysis.feature_names,
+                feature_data=prediction_object.shap_analysis.feature_data,
+            )
+
+            # Build and return the final protobuf response
             return prediction_pb2.MatchPredictionResponse(
                 match_key=prediction_object.match_key,
                 predicted_winner=prediction_object.predicted_winner,
@@ -64,17 +79,27 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
             return prediction_pb2.MatchPredictionResponse()
         
     def PredictAllEventMatches(self, request, context):
+        """
+        Handles a gRPC request for predicting all matches in an event.
+
+        Args:
+            request: The incoming gRPC request (prediction_pb2.EventPredictionRequest).
+            context: The gRPC context object.
+
+        Returns:
+            A prediction_pb2.EventPredictionResponse containing a list of match predictions.
+        """
         event_key = request.event_key
         print(f"Received gRPC batch prediction request for event: {event_key}")
 
         try:
-            # Llama a tu nueva función de predicción por lotes
+            # Call the batch prediction method
             prediction_list: list[MatchPrediction] = self.predictor.predict_all_matches_for_event(event_key)
 
-            # Crea la respuesta principal
+            # Create the main response message
             response = prediction_pb2.EventPredictionResponse()
 
-            # Itera sobre tus objetos de Python y conviértelos a mensajes protobuf
+            # Iterate over the Python objects and convert them to protobuf messages
             for prediction_obj in prediction_list:
                 proto_prediction = prediction_pb2.MatchPredictionResponse(
                     match_key=prediction_obj.match_key,
@@ -87,6 +112,7 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
                         red=prediction_obj.predicted_scores['red'],
                         blue=prediction_obj.predicted_scores['blue']
                     )
+                    # Note: SHAP analysis is not included in the batch response for efficiency
                 )
                 response.predictions.append(proto_prediction)
             
@@ -98,15 +124,16 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
             context.set_details("An internal server error occurred during batch prediction.")
             return prediction_pb2.EventPredictionResponse()
 
-
 def serve():
+    """
+    Initializes and starts the gRPC server.
+    """
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     prediction_pb2_grpc.add_MatchpointServicer_to_server(PredictorServicer(), server)
     server.add_insecure_port("[::]:50051")
     print("gRPC Matchpoint server started on port 50051.")
     server.start()
     server.wait_for_termination()
-
 
 if __name__ == "__main__":
     serve()

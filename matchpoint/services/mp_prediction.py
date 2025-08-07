@@ -8,34 +8,51 @@ from ..config import FEATURE_ORDER, TBA_HEADER
 from .analysis.shap_analyzer import ShapAnalyzer
 
 class MatchpointPredictor:
+    """
+    A singleton class responsible for generating match predictions.
+    
+    It orchestrates data fetching, feature engineering, model prediction,
+    and results analysis.
+    """
     
     _instance = None
     
     def __new__(cls):
         if cls._instance is None:
-            
             cls._instance = super().__new__(cls)
-
         return cls._instance
     
     @staticmethod
-    def get_match_prediction( match_key: str) -> Optional[MatchPrediction]:
-        """Predice un solo partido y calcula su análisis SHAP."""
+    def get_match_prediction(match_key: str) -> Optional[MatchPrediction]:
+        """
+        Predicts a single match and calculates its SHAP analysis.
+
+        Args:
+            match_key (str): The key for the match to predict (e.g., '2023cada_qm1').
+
+        Raises:
+            ValueError: If features for the match could not be fetched.
+
+        Returns:
+            Optional[MatchPrediction]: A data object containing the prediction,
+                                       probabilities, scores, and SHAP analysis.
+        """
         features_dict = Fetcher.get_match_features(match_key)
         if not features_dict:
             raise ValueError(f"Could not fetch features for match {match_key}")
         
         features_df = pd.DataFrame([features_dict])
 
-        # Predicciones
+        # Predictions
         win_probs = loader.classifier.predict_proba(features_df)[0]
         red_score = loader.red_regressor.predict(features_df)[0]
         blue_score = loader.blue_regressor.predict(features_df)[0]
         
-        # Análisis SHAP
+        # SHAP Analysis
         shap_result = ShapAnalyzer.get_shap_analysis(features_df)
         print(shap_result)
-        # Ensamblar resultado
+        
+        # Assemble result
         prob_red_win, prob_blue_win = win_probs[0], win_probs[1]
         predicted_winner = "blue" if prob_blue_win > prob_red_win else "red"
 
@@ -49,33 +66,46 @@ class MatchpointPredictor:
     
     def predict_all_matches_for_event(self, event_key: str) -> List[MatchPrediction]:
         """
-        Obtiene, procesa y predice todos los partidos de un evento de manera eficiente.
-        """
-        print(f"--- Iniciando predicción por lotes para el evento: {event_key} ---")
+        Efficiently fetches, processes, and predicts all matches for an event.
         
-        # --- Fase 1: Obtención de Datos por Lotes ---
-        # Llama a nuestra nueva función para obtener todos los datos de los equipos una sola vez.
+        This method follows a multi-phase approach for efficiency:
+        1. Batch Data Fetching: Gets all team data for the event in one go.
+        2. In-Memory Assembly: Constructs feature sets for all matches locally.
+        3. Batch Prediction: Runs models on the complete feature DataFrame at once.
+        4. Result Formatting: Assembles the prediction results into a list.
+
+        Args:
+            event_key (str): The key for the event (e.g., '2023cada').
+
+        Returns:
+            List[MatchPrediction]: A list of prediction objects for each valid match.
+        """
+        print(f"--- Starting batch prediction for event: {event_key} ---")
+        
+        # --- Phase 1: Batch Data Fetching ---
+        # Call our function to get all team data at once.
         all_team_features = Fetcher.get_all_team_features_for_event(event_key)
         if not all_team_features:
-            print("No se pudieron obtener los datos de los equipos, cancelando predicción.")
+            print("Could not fetch team features, aborting prediction.")
             return []
 
-        # Obtener la lista de todos los partidos del evento
+        # Get the list of all matches for the event
         try:
             req = requests.get(f"https://www.thebluealliance.com/api/v3/event/{event_key}/matches/simple", headers=TBA_HEADER)
             req.raise_for_status()
             all_matches = req.json()
             event_week = Fetcher.tba.get_event_week(event_key)
         except requests.exceptions.RequestException as e:
-            print(f"ERROR: No se pudieron obtener los partidos para el evento {event_key}: {e}")
+            print(f"ERROR: Could not fetch matches for event {event_key}: {e}")
             return []
 
-        # --- Fase 2: Ensamblaje de Características en Memoria ---
+        # --- Phase 2: In-Memory Feature Assembly ---
         features_list = []
-        valid_matches_for_prediction = [] # Guardamos los partidos que pudimos procesar
+        valid_matches_for_prediction = [] # Store matches we could process
 
         for match in all_matches:
-            # if match['comp_level'] != 'qm': # Opcional: filtrar solo qual matches
+            # Optional: filter only qualification matches
+            # if match.get('comp_level') != 'qm':
             #     continue
 
             try:
@@ -85,7 +115,7 @@ class MatchpointPredictor:
                 blue_teams = [team[3:] for team in match['alliances']['blue']['team_keys']]
 
                 for i in range(3):
-                    # Búsquedas en diccionario (instantáneas), no llamadas a la API
+                    # Dictionary lookups (instantaneous), not API calls
                     red_team_stats = all_team_features[red_teams[i]]
                     blue_team_stats = all_team_features[blue_teams[i]]
 
@@ -100,22 +130,22 @@ class MatchpointPredictor:
                 features_list.append(ordered_features)
                 valid_matches_for_prediction.append(match)
             except KeyError as e:
-                print(f"WARN: Saltando partido {match['key']} debido a datos de equipo faltantes: {e}")
+                print(f"WARN: Skipping match {match.get('key')} due to missing team data: {e}")
         
         if not features_list:
-            print("No se pudieron ensamblar características para ningún partido.")
+            print("Could not assemble features for any match.")
             return []
             
-        # --- Fase 3: Predicción por Lotes ---
-        print(f"Realizando predicción por lotes para {len(features_list)} partidos...")
+        # --- Phase 3: Batch Prediction ---
+        print(f"Performing batch prediction for {len(features_list)} matches...")
         features_df = pd.DataFrame(features_list)
         
-        # Llama a .predict() una sola vez para cada modelo sobre el DataFrame completo
+        # Call .predict() once for each model on the entire DataFrame
         all_win_probs = loader.classifier.predict_proba(features_df)
         all_red_scores = loader.red_regressor.predict(features_df)
         all_blue_scores = loader.blue_regressor.predict(features_df)
         
-        # --- Fase 4: Formateo de Resultados ---
+        # --- Phase 4: Formatting Results ---
         predictions = []
         for i, match in enumerate(valid_matches_for_prediction):
             prob_red_win, prob_blue_win = all_win_probs[i]
@@ -129,5 +159,5 @@ class MatchpointPredictor:
             )
             predictions.append(prediction_obj)
             
-        print("--- Predicción por lotes completada. ---")
+        print("--- Batch prediction complete. ---")
         return predictions
