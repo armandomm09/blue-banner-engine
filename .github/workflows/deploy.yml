@@ -1,21 +1,35 @@
-name: 🚀 Deploy on Push
+name: 🚀 Deploy On Push
 
 on:
   push:
     branches:
-      - main  
+      - main
+  workflow_dispatch:
 
-jobs:
+jobs: 
   deploy:
-    runs-on: [self-hosted, Linux, X64]  
-    environment:
-      name: production          
-      url: https://frc-bbe.com
-
+    name: "Deploy to VPS"
+    runs-on: ubuntu-latest
+    needs: test 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3 
-
-      - name: Run redeploy script
+      - name: Configure SSH
         run: |
-          /home/armando/redeploy.sh
+          mkdir -p ~/.ssh/
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy-key.pem
+          chmod 600 ~/.ssh/deploy-key.pem
+          cat >> ~/.ssh/config <<END
+          Host my-vps
+            HostName $SSH_IP
+            User $SSH_USER
+            IdentityFile ~/.ssh/deploy-key.pem
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_IP: ${{ secrets.SSH_IP }}
+
+      - name: Deploy site
+        run: ssh my-vps 'cd ${{ secrets.PROJECT_ROOT }} && redeploy.sh && docker ps'
+        
+    
