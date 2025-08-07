@@ -16,3 +16,5 @@ models
 docker-compose.prod.yml
 
 redeploy.sh
+
+models.zip
