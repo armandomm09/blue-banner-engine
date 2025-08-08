@@ -80,7 +80,7 @@ BBE is built on five interconnected pillars, each designed to solve a specific s
 
 BBE is designed with a modern, decoupled, multi-container architecture, enabling scalability and maintainability. Communication between the Go API gateway and the Python ML service is handled efficiently via gRPC.
 
-![image](visuals/flow.png)
+![image](docs/visuals/flow.png)
 
 ---
 
