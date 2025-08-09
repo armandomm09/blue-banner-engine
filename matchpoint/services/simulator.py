@@ -162,12 +162,11 @@ class Simulator:
             all_tba_stats=all_tba_stats
         )
 
-        ALLIANCE_NUMBERS = list(range(1, len(alliances) + 1))
-
         results_tracker = SimulationTracker(
-            alliance_numbers=ALLIANCE_NUMBERS, total_simulations=n_times, event_key=event_key
-        )
-
+        alliances=alliances,
+        total_simulations=n_times,
+        event_key=event_key
+    )
         initial_time = time()
         for i in range(n_times):
 
