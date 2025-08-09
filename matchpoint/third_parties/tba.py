@@ -95,6 +95,34 @@ class TBAService:
         except requests.ConnectionError as e:
             print(f"Error fetching {event_key} week:\n{e}")
             return None
+    
+    @staticmethod
+    def get_alliances(event_key: str):
+        """
+        Fetches the already made alliances for a given event
+        
+        Args:
+            event_key (str): The event key 
+            
+        Returns: 
+            tuple[str]: A flattened tuple of all the teams in the event's playoff
+            list[list[str]]: A list containing lists of each alliance's team numbers
+
+        """
+        try:
+            req = requests.get(f"{TBA_BASE_URL}/event/{event_key}/alliances", TBA_HEADER)
+            
+            res = req.json()
+            alliances_numbers = []
+            for  alliance in res:
+                alliances_numbers.append(alliance["picks"][0:3])
+                
+            for i, numbers in enumerate(alliances_numbers): 
+                for j, team in enumerate(numbers):
+                    alliances_numbers[i][j] = int(alliances_numbers[i][j][3:])
+            return tuple(sum(alliances_numbers, [])), alliances_numbers
+        except requests.ConnectionError as e:
+            raise e
             
     @functools.lru_cache(maxsize=32)
     def get_all_tba_stats_for_event_concurrently(self, event_key: str, team_keys: tuple[str]) -> dict:
@@ -112,7 +140,7 @@ class TBAService:
             dict: A dictionary mapping each team key to its fetched TBA statistics.
         """
         all_team_stats = {}
-        MAX_WORKERS = 10 
+        MAX_WORKERS = 20 
 
         print(f"Fetching TBA data for {len(team_keys)} teams using {MAX_WORKERS} workers...")
         

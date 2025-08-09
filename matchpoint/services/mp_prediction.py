@@ -50,7 +50,6 @@ class MatchpointPredictor:
         
         # SHAP Analysis
         shap_result = ShapAnalyzer.get_shap_analysis(features_df)
-        print(shap_result)
         
         # Assemble result
         prob_red_win, prob_blue_win = win_probs[0], win_probs[1]
@@ -63,6 +62,39 @@ class MatchpointPredictor:
             predicted_scores={"red": int(round(red_score)), "blue": int(round(blue_score))},
             shap_analysis=shap_result
         )
+        
+    def predict_match_by_features(self, features, shap: bool=False) -> MatchPrediction:
+        """
+        Predicts a match given specific match features
+        
+        Args:
+            features dict: A dictionary containing the inference-ready features for prediction
+            shab bool: Whether return the prediction come with shap analysis or no
+            
+        Returns:
+            MatchPrediction: A MatchPrediction object containing info about the inference
+        """
+        features_df = pd.DataFrame([features])
+
+        # Predictions
+        win_probs = loader.classifier.predict_proba(features_df)[0]
+        red_score = loader.red_regressor.predict(features_df)[0]
+        blue_score = loader.blue_regressor.predict(features_df)[0]
+        
+        prob_red_win, prob_blue_win = win_probs[0], win_probs[1]
+        predicted_winner = "blue" if prob_blue_win > prob_red_win else "red"
+        
+        mp = MatchPrediction(
+            match_key="x_match",
+            predicted_winner=predicted_winner,
+            win_probability={"red": round(float(prob_red_win), 4), "blue": round(float(prob_blue_win), 4)},
+            predicted_scores={"red": int(round(red_score)), "blue": int(round(blue_score))},
+        )
+        
+        if shap:
+            mp.shap_analysis = ShapAnalyzer.get_shap_analysis(features_df)
+            
+        return mp
     
     def predict_all_matches_for_event(self, event_key: str) -> List[MatchPrediction]:
         """
@@ -80,7 +112,6 @@ class MatchpointPredictor:
         Returns:
             List[MatchPrediction]: A list of prediction objects for each valid match.
         """
-        print(f"--- Starting batch prediction for event: {event_key} ---")
         
         # --- Phase 1: Batch Data Fetching ---
         # Call our function to get all team data at once.
@@ -137,7 +168,6 @@ class MatchpointPredictor:
             return []
             
         # --- Phase 3: Batch Prediction ---
-        print(f"Performing batch prediction for {len(features_list)} matches...")
         features_df = pd.DataFrame(features_list)
         
         # Call .predict() once for each model on the entire DataFrame
@@ -159,5 +189,4 @@ class MatchpointPredictor:
             )
             predictions.append(prediction_obj)
             
-        print("--- Batch prediction complete. ---")
         return predictions
