@@ -22,7 +22,7 @@ class SimulationTracker:
             print(f"Warning: Attempted to add a win for an unknown alliance: {alliance_number}")
 
     def __str__(self) -> str:
-        """Overrides the default print behavior to display a formatted results table."""
+        """Display a formatted results table."""
         header = [
             "\n--- Simulation Results ---",
             f"******** {self.event_key} ********",

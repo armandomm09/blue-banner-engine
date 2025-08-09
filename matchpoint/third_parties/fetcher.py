@@ -151,7 +151,8 @@ class Fetcher:
             or ordered_match_features[feature] == 0
         ]
         if missing_features:
-            print(json.dumps(ordered_match_features, indent=4))
+            # print(json.dumps(ordered_match_features, indent=4))
+            print(f"Missing required features in match features: {missing_features}")
             # raise ValueError(
             #     f"Missing required features in match features: {missing_features}")
 
@@ -176,63 +177,7 @@ class Fetcher:
 
         return sb_stats | tba_stats
 
-    @staticmethod
-    def get_match_features_teams_features(
-        red_teams: list[int], blue_teams: list[int], features
-    ):
-        """
-        Fetches the complete features for a match given each alliance's team and the playoffs complete features
-
-        Args:
-            red_teams list[int]: A list containing the red alliance's numbers
-            blue_teams list[int]: A list containing the blue alliance's numbers
-            features dict: A dictionary containing all of the playoffs' teams features
-
-        Returns:
-            dict: A dictionary containing all of the match's features, inference-ready
-
-        Raises:
-            ValueError: If any feature in FEATURE_ORDER is missing from the final features.
-        """
-
-        raw_features = {}
-        # raw_features['week'] = 8
-        for i in range(3):
-            red_team = red_teams[i]
-            blue_team = blue_teams[i]
-
-            # Combine Statbotics and TBA stats for each team
-            red_team_stats = features.get(red_team, {}) or {}
-            blue_team_stats = features.get(blue_team, {}) or {}
-
-            for stat_name, value in red_team_stats.items():
-                if stat_name not in ["team", "event"]:
-                    raw_features[f"red{i+1}_{stat_name}"] = value
-
-            for stat_name, value in blue_team_stats.items():
-                if stat_name not in ["team", "event"]:
-                    raw_features[f"blue{i+1}_{stat_name}"] = value
-
-        ordered_match_features = {
-            feature: raw_features.get(feature, 0.0) for feature in FEATURE_ORDER
-        }
-
-        # Check for missing features
-        missing_features = [
-            feature
-            for feature in FEATURE_ORDER
-            if feature not in ordered_match_features
-            or ordered_match_features[feature] is None
-            or ordered_match_features[feature] == 0
-        ]
-        if missing_features:
-            print(json.dumps(ordered_match_features, indent=4))
-            raise ValueError(
-                f"Missing required features in match features: {missing_features}"
-            )
-        print("WEEK", ordered_match_features["week"])
-        return ordered_match_features
-
+    
     @staticmethod
     @functools.lru_cache(maxsize=16)
     def get_all_team_features_for_event(event_key: str) -> Dict[str, Dict[str, Any]]:

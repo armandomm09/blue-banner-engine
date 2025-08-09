@@ -53,7 +53,7 @@ class Simulator:
                 red_alliance_number = i + 1
                 blue_alliance_number = j + 1
 
-                # Use the new, fast function to assemble features from existing data
+                # Fast function to assemble features from existing data
                 ordered_features = Fetcher.get_match_features_from_prefetched_data(
                     red_teams=alliances[i],
                     blue_teams=alliances[j],
@@ -62,7 +62,7 @@ class Simulator:
                     all_tba_stats=all_tba_stats,
                 )
 
-                # The prediction logic remains the same
+                # The prediction logic 
                 prediction = self.mp.predict_match_by_features(ordered_features)
 
                 prob_red_wins = prediction.win_probability["red"]
@@ -93,7 +93,7 @@ class Simulator:
             )
             match_results[match_number] = {"winner": winner, "loser": loser}
 
-        # The simulation logic remains the same
+        # The simulation logic 
         play_and_record_match("M1", 1, 8)
         play_and_record_match("M2", 4, 5)
         play_and_record_match("M3", 3, 6)
@@ -148,7 +148,7 @@ class Simulator:
         if event_week is None:
             event_week = 8  # Default week if not found
 
-        # 2. Get all team stats from both sources concurrently
+        # Get all team stats from both sources concurrently
         all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event(event_key, all_teams_flat)
         all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_concurrently(event_key, all_teams_flat)
         
@@ -164,7 +164,6 @@ class Simulator:
 
         ALLIANCE_NUMBERS = list(range(1, len(alliances) + 1))
 
-        # 1. Create a single instance of the tracker class BEFORE the loop.
         results_tracker = SimulationTracker(
             alliance_numbers=ALLIANCE_NUMBERS, total_simulations=n_times, event_key=event_key
         )
@@ -172,11 +171,8 @@ class Simulator:
         initial_time = time()
         for i in range(n_times):
 
-            # 2. Ejecutar la simulación súper rápida
             winner = self.simulate_frc_tournament_fast(precomputed_win_probs)
             results_tracker.add_win(winner)
         end_time = time() - initial_time
-
-        # 3. Mostrar resultados
 
         return results_tracker
