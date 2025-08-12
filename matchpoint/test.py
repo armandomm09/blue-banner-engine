@@ -12,6 +12,7 @@ for result in alliance.results:
     print(result)
 print(end_time)
 
+# 3.0652077198028564
 # import json
 # from matchpoint.third_parties.tba import TBAService
 

@@ -162,7 +162,10 @@ const FilterControls: React.FC<{
 
 const PlayedMatchRow: React.FC<{ p: Prediction; predictions: Prediction[] }> = ({ p, predictions }) => {
   const isPredictionCorrect = p.predicted_winner === p.actual_winner;
+
+  // @ts-ignore
   let actualWinnerTeams: number[] | null = null;
+  
   const finalMatch = predictions.find((p: Prediction) => p.match_key.includes("_f1m")); // Busca el match final
   if (
     finalMatch &&

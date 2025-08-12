@@ -62,7 +62,7 @@ class MatchpointPredictor:
             predicted_scores={"red": int(round(red_score)), "blue": int(round(blue_score))},
             shap_analysis=shap_result
         )
-        
+    
     def predict_match_by_features(self, features, shap: bool=False) -> MatchPrediction:
         """
         Predicts a match given specific match features
@@ -113,7 +113,6 @@ class MatchpointPredictor:
             List[MatchPrediction]: A list of prediction objects for each valid match.
         """
         
-        # --- Phase 1: Batch Data Fetching ---
         # Call our function to get all team data at once.
         all_team_features = Fetcher.get_all_team_features_for_event(event_key)
         if not all_team_features:

@@ -7,7 +7,6 @@ import functools
 from typing import Dict, Any
 import json
 
-
 class Fetcher:
     """
     A utility class to fetch and process data from The Blue Alliance (TBA)
@@ -113,7 +112,6 @@ class Fetcher:
         """
         raw_features = {"week": event_week}
 
-        print(all_tba_stats)
         for i in range(3):
             red_team = red_teams[i]
             blue_team = blue_teams[i]
@@ -141,7 +139,7 @@ class Fetcher:
 
         # Ensure all features from FEATURE_ORDER are present, defaulting to 0.0
         ordered_match_features = {
-            feature: raw_features.get(feature, None) for feature in FEATURE_ORDER
+            feature: raw_features.get(feature, 0.0) for feature in FEATURE_ORDER
         }
         
         missing_features = [

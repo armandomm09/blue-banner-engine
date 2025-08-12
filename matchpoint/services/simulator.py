@@ -75,7 +75,6 @@ class Simulator:
 
         # print("Pre-computation complete.")
         return win_probs
-
     def simulate_frc_tournament_fast(self, precomputed_probs):
         """
         Runs a full simulation using the ultra-fast winner determination function.
