@@ -5,6 +5,7 @@ import warnings
 
 from . import prediction_pb2 as prediction__pb2
 
+
 GRPC_GENERATED_VERSION = '1.73.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
@@ -45,6 +46,11 @@ class MatchpointStub(object):
                 request_serializer=prediction__pb2.EventPredictionRequest.SerializeToString,
                 response_deserializer=prediction__pb2.EventPredictionResponse.FromString,
                 _registered_method=True)
+        self.SimulatePlayoffs = channel.unary_unary(
+                '/matchpoint.Matchpoint/SimulatePlayoffs',
+                request_serializer=prediction__pb2.SimulationRequest.SerializeToString,
+                response_deserializer=prediction__pb2.SimulationResult.FromString,
+                _registered_method=True)
 
 
 class MatchpointServicer(object):
@@ -64,6 +70,12 @@ class MatchpointServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SimulatePlayoffs(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MatchpointServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -76,6 +88,11 @@ def add_MatchpointServicer_to_server(servicer, server):
                     servicer.PredictAllEventMatches,
                     request_deserializer=prediction__pb2.EventPredictionRequest.FromString,
                     response_serializer=prediction__pb2.EventPredictionResponse.SerializeToString,
+            ),
+            'SimulatePlayoffs': grpc.unary_unary_rpc_method_handler(
+                    servicer.SimulatePlayoffs,
+                    request_deserializer=prediction__pb2.SimulationRequest.FromString,
+                    response_serializer=prediction__pb2.SimulationResult.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -133,6 +150,33 @@ class Matchpoint(object):
             '/matchpoint.Matchpoint/PredictAllEventMatches',
             prediction__pb2.EventPredictionRequest.SerializeToString,
             prediction__pb2.EventPredictionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SimulatePlayoffs(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/matchpoint.Matchpoint/SimulatePlayoffs',
+            prediction__pb2.SimulationRequest.SerializeToString,
+            prediction__pb2.SimulationResult.FromString,
             options,
             channel_credentials,
             insecure,

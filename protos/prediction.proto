@@ -4,6 +4,8 @@ syntax = "proto3";
 
 package matchpoint;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "blue-banner-engine/protos";
 
 // El servicio principal que expone las funcionalidades del predictor.
@@ -12,7 +14,10 @@ service Matchpoint {
   rpc GetMatchPrediction(MatchPredictionRequest) returns (MatchPredictionResponse) {}
   
   rpc PredictAllEventMatches(EventPredictionRequest) returns (EventPredictionResponse) {}
+
+  rpc SimulatePlayoffs(SimulationRequest) returns (SimulationResult) {}
 }
+
 
 message EventPredictionRequest {
   string event_key = 1;
@@ -57,4 +62,28 @@ message WinProbability {
 message PredictedScores {
   int32 red = 1;
   int32 blue = 2;
+}
+
+message SimulationResult {
+
+    message Simulation_metadata {
+        uint32 total_simulations_run = 1;
+        google.protobuf.Timestamp timestamp_utc = 2;
+    }
+
+    message Results {
+        uint32 alliance_number = 1;
+        repeated uint32 teams = 2;
+        uint32 wins = 3;
+        double win_probability = 4;
+    }
+
+    string event_key = 1;
+    Simulation_metadata simulation_metadata = 2;
+    repeated Results results = 3;
+}
+
+message SimulationRequest {
+    string event_key = 1;
+    uint32 n_sims = 2;
 }

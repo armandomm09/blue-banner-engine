@@ -1,3 +1,4 @@
+from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
@@ -65,3 +66,39 @@ class PredictedScores(_message.Message):
     red: int
     blue: int
     def __init__(self, red: _Optional[int] = ..., blue: _Optional[int] = ...) -> None: ...
+
+class SimulationResult(_message.Message):
+    __slots__ = ("event_key", "simulation_metadata", "results")
+    class Simulation_metadata(_message.Message):
+        __slots__ = ("total_simulations_run", "timestamp_utc")
+        TOTAL_SIMULATIONS_RUN_FIELD_NUMBER: _ClassVar[int]
+        TIMESTAMP_UTC_FIELD_NUMBER: _ClassVar[int]
+        total_simulations_run: int
+        timestamp_utc: _timestamp_pb2.Timestamp
+        def __init__(self, total_simulations_run: _Optional[int] = ..., timestamp_utc: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    class Results(_message.Message):
+        __slots__ = ("alliance_number", "teams", "wins", "win_probability")
+        ALLIANCE_NUMBER_FIELD_NUMBER: _ClassVar[int]
+        TEAMS_FIELD_NUMBER: _ClassVar[int]
+        WINS_FIELD_NUMBER: _ClassVar[int]
+        WIN_PROBABILITY_FIELD_NUMBER: _ClassVar[int]
+        alliance_number: int
+        teams: _containers.RepeatedScalarFieldContainer[int]
+        wins: int
+        win_probability: float
+        def __init__(self, alliance_number: _Optional[int] = ..., teams: _Optional[_Iterable[int]] = ..., wins: _Optional[int] = ..., win_probability: _Optional[float] = ...) -> None: ...
+    EVENT_KEY_FIELD_NUMBER: _ClassVar[int]
+    SIMULATION_METADATA_FIELD_NUMBER: _ClassVar[int]
+    RESULTS_FIELD_NUMBER: _ClassVar[int]
+    event_key: str
+    simulation_metadata: SimulationResult.Simulation_metadata
+    results: _containers.RepeatedCompositeFieldContainer[SimulationResult.Results]
+    def __init__(self, event_key: _Optional[str] = ..., simulation_metadata: _Optional[_Union[SimulationResult.Simulation_metadata, _Mapping]] = ..., results: _Optional[_Iterable[_Union[SimulationResult.Results, _Mapping]]] = ...) -> None: ...
+
+class SimulationRequest(_message.Message):
+    __slots__ = ("event_key", "n_sims")
+    EVENT_KEY_FIELD_NUMBER: _ClassVar[int]
+    N_SIMS_FIELD_NUMBER: _ClassVar[int]
+    event_key: str
+    n_sims: int
+    def __init__(self, event_key: _Optional[str] = ..., n_sims: _Optional[int] = ...) -> None: ...

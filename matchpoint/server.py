@@ -1,10 +1,14 @@
-from concurrent import futures
+import json
 import grpc
-import time
-
+import traceback
+import sys
+from datetime import datetime, timezone
+from concurrent import futures
+from google.protobuf.timestamp_pb2 import Timestamp
 from .generated import prediction_pb2
 from .generated import prediction_pb2_grpc
 from .services.mp_prediction import MatchpointPredictor, MatchPrediction
+from .services.simulator import Simulator
 
 class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
     """
@@ -78,6 +82,61 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
             context.set_details("An internal server error occurred.")
             return prediction_pb2.MatchPredictionResponse()
         
+    def SimulatePlayoffs(self, request, context):
+        """
+        Handles a gRPC request for predicting all matches in an event.
+
+        Args:
+            request: The incoming gRPC request (prediction_pb2.EventPredictionRequest).
+            context: The gRPC context object.
+
+        Returns:
+            A prediction_pb2.EventPredictionResponse containing a list of match predictions.
+        """
+        event_key = request.event_key
+        n_sims = request.n_sims
+        print(f"Received playoff simulation request event: {event_key}")
+
+        try:
+            # Call the batch prediction method
+            sim = Simulator()
+            alliance = sim.simulate_n_playoffs(event_key, 1000)
+            # alliance = alliance.to_json()
+            print(alliance)
+            response = prediction_pb2.SimulationResult()
+            response.event_key = alliance.event_key
+            response.simulation_metadata.total_simulations_run = alliance._total_sims
+            
+            new_ts = datetime.now(timezone.utc)   # preferible: timezone-aware UTC
+            response.simulation_metadata.timestamp_utc.FromDatetime(new_ts)
+            
+            for result in alliance.results:
+                result_response = prediction_pb2.SimulationResult.Results()
+                result_response.alliance_number = result["alliance_number"]
+                for team in result["teams"]:
+                    result_response.teams.append(int(team))
+                result_response.wins = result["wins"]
+                result_response.win_probability = result["win_probability"]
+                response.results.append(result_response)
+            
+            print(response)
+            return response
+
+        except Exception as e:
+            template = "An exception of type {0} occurred when simulating. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            #    Get the traceback object for the innermost frame
+            tb_frame = exc_traceback.tb_frame
+            # Get the line number from the traceback frame
+            line_number = tb_frame.f_lineno
+            print(f"An error occurred on line: {line_number}")
+            # Optionally, print the full traceback for more context
+            traceback.print_exc()
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details("An internal server error occurred during batch prediction.")
+            return prediction_pb2.EventPredictionResponse()
+        
     def PredictAllEventMatches(self, request, context):
         """
         Handles a gRPC request for predicting all matches in an event.
@@ -98,7 +157,6 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
 
             # Create the main response message
             response = prediction_pb2.EventPredictionResponse()
-
             # Iterate over the Python objects and convert them to protobuf messages
             for prediction_obj in prediction_list:
                 proto_prediction = prediction_pb2.MatchPredictionResponse(
@@ -123,6 +181,8 @@ class PredictorServicer(prediction_pb2_grpc.MatchpointServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details("An internal server error occurred during batch prediction.")
             return prediction_pb2.EventPredictionResponse()
+        
+        
 
 def serve():
     """

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useParams} from "react-router-dom";
+import { useParams } from "react-router-dom";
+import PlayoffBracket from "../components/PlayoffBracket";
+import { PlayoffSimulations } from "../components/PlayoffSimulations";
 // import { FiGlobe, FiTv, FiMapPin, FiCalendar } from 'react-icons/fi'; // Iconos para los detalles
 
 // --- Type Definitions ---
@@ -19,7 +21,7 @@ interface EventDetails {
 
 interface Prediction {
   match_key: string;
-  team_keys: {red: string[], blue: string[]}
+  team_keys: { red: string[]; blue: string[] };
   predicted_winner: "red" | "blue";
   win_probability: { red: number; blue: number };
   predicted_scores: { red: number; blue: number };
@@ -37,30 +39,30 @@ interface EventAnalysisData {
 const parseMatchKey = (matchKey: string) => {
   const parts = matchKey.split("_");
   if (parts.length < 2) return null;
-  
+
   const matchPart = parts[1];
-  
+
   // Handle different match formats:
   // qm12, sf3m1, f1m1, etc.
   const matchTypeMatch = matchPart.match(/^([a-z]+)(\d+)(?:m(\d+))?$/);
   if (!matchTypeMatch) return null;
-  
+
   const [, matchType, matchNumber, subMatch] = matchTypeMatch;
   return {
     matchType,
     matchNumber: parseInt(matchNumber),
-    subMatch: subMatch ? parseInt(subMatch) : null
+    subMatch: subMatch ? parseInt(subMatch) : null,
   };
 };
 
 // Match type priority for proper sorting order
 const getMatchTypePriority = (matchType: string): number => {
   const priorities: { [key: string]: number } = {
-    'qm': 1,   // Qualification matches first
-    'sf': 2,   // Semi-finals second
-    'f': 3,    // Finals last
-    'qf': 2,   // Quarter-finals (if they exist)
-    'ef': 1,   // Elimination finals (if they exist)
+    qm: 1, // Qualification matches first
+    sf: 2, // Semi-finals second
+    f: 3, // Finals last
+    qf: 2, // Quarter-finals (if they exist)
+    ef: 1, // Elimination finals (if they exist)
   };
   return priorities[matchType] || 999; // Unknown types go last
 };
@@ -106,11 +108,20 @@ const FilterControls: React.FC<{
   onMatchTypeChange: (type: string) => void;
   onMatchNumberChange: (number: string) => void;
   onClearFilters: () => void;
-}> = ({ matchTypes, selectedMatchType, selectedMatchNumber, onMatchTypeChange, onMatchNumberChange, onClearFilters }) => (
+}> = ({
+  matchTypes,
+  selectedMatchType,
+  selectedMatchNumber,
+  onMatchTypeChange,
+  onMatchNumberChange,
+  onClearFilters,
+}) => (
   <div className="bg-card border border-border rounded-xl p-4 mb-6">
     <div className="flex flex-wrap items-center gap-4">
       <div className="flex items-center gap-2">
-        <label className="text-text-muted text-sm font-medium">Match Type:</label>
+        <label className="text-text-muted text-sm font-medium">
+          Match Type:
+        </label>
         <select
           value={selectedMatchType}
           onChange={(e) => onMatchTypeChange(e.target.value)}
@@ -124,9 +135,11 @@ const FilterControls: React.FC<{
           ))}
         </select>
       </div>
-      
+
       <div className="flex items-center gap-2">
-        <label className="text-text-muted text-sm font-medium">Match Number:</label>
+        <label className="text-text-muted text-sm font-medium">
+          Match Number:
+        </label>
         <input
           type="number"
           value={selectedMatchNumber}
@@ -136,7 +149,7 @@ const FilterControls: React.FC<{
           min="1"
         />
       </div>
-      
+
       <button
         onClick={onClearFilters}
         className="px-4 py-2 text-sm bg-accent/20 text-accent rounded-lg hover:bg-accent/30 transition-colors"
@@ -147,12 +160,29 @@ const FilterControls: React.FC<{
   </div>
 );
 
-const PlayedMatchRow: React.FC<{ p: Prediction }> = ({ p }) => {
+const PlayedMatchRow: React.FC<{ p: Prediction; predictions: Prediction[] }> = ({ p, predictions }) => {
   const isPredictionCorrect = p.predicted_winner === p.actual_winner;
+
+  // @ts-ignore
+  let actualWinnerTeams: number[] | null = null;
+  
+  const finalMatch = predictions.find((p: Prediction) => p.match_key.includes("_f1m")); // Busca el match final
+  if (
+    finalMatch &&
+    finalMatch.status === "played" &&
+    finalMatch.actual_winner
+  ) {
+    // Obtenemos los equipos de la alianza ganadora (red o blue)
+    const winnerAllianceTeams = finalMatch.actual_winner !== 'tie' ? finalMatch.team_keys[finalMatch.actual_winner] : [];
+    // Convertimos los strings "frcXXXX" a números XXXX
+    actualWinnerTeams = winnerAllianceTeams.map((teamKey) =>
+      parseInt(teamKey.replace("frc", ""), 10)
+    );
+  }
   return (
     <>
       <td className="py-3 px-4 font-mono">{p.match_key.split("_")[1]}</td>
-      
+
       <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
         {p.team_keys.red?.[0]?.replace("frc", "") || "-"}
       </td>
@@ -171,7 +201,7 @@ const PlayedMatchRow: React.FC<{ p: Prediction }> = ({ p }) => {
       <td className="py-3 px-4 font-mono text-center bg-blue-500/10 text-blue-300">
         {p.team_keys.blue?.[2]?.replace("frc", "") || "-"}
       </td>
-      
+
       <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
         {p.predicted_scores.red}
       </td>
@@ -203,7 +233,7 @@ const UpcomingMatchRow: React.FC<{ p: Prediction }> = ({ p }) => {
   return (
     <>
       <td className="py-3 px-4 font-mono">{p.match_key.split("_")[1]}</td>
-      
+
       <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
         {p.team_keys.red?.[0]?.replace("frc", "") || "-"}
       </td>
@@ -222,7 +252,7 @@ const UpcomingMatchRow: React.FC<{ p: Prediction }> = ({ p }) => {
       <td className="py-3 px-4 font-mono text-center bg-blue-500/10 text-blue-300">
         {p.team_keys.blue?.[2]?.replace("frc", "") || "-"}
       </td>
-      
+
       <td className="py-3 px-4 font-mono text-center bg-red-500/10 text-red-300">
         {p.predicted_scores.red}
       </td>
@@ -256,7 +286,9 @@ const EventDetailPage: React.FC = () => {
   const [predictionAccuracy, setPredictionAccuracy] = useState<number | null>(
     null
   );
-  
+
+  const [view, setView] = useState<"list" | "bracket" | "simulations">("list");
+
   // Filter state
   const [selectedMatchType, setSelectedMatchType] = useState<string>("");
   const [selectedMatchNumber, setSelectedMatchNumber] = useState<string>("");
@@ -349,39 +381,45 @@ const EventDetailPage: React.FC = () => {
       const parsed = parseMatchKey(p.match_key);
       if (!parsed) return true; // Include if we can't parse the key
 
-      const matchesType = !selectedMatchType || parsed.matchType === selectedMatchType;
-      const matchesNumber = !selectedMatchNumber || parsed.matchNumber === parseInt(selectedMatchNumber);
-      
+      const matchesType =
+        !selectedMatchType || parsed.matchType === selectedMatchType;
+      const matchesNumber =
+        !selectedMatchNumber ||
+        parsed.matchNumber === parseInt(selectedMatchNumber);
+
       return matchesType && matchesNumber;
     })
     .sort((a, b) => {
       const parsedA = parseMatchKey(a.match_key);
       const parsedB = parseMatchKey(b.match_key);
-      
+
       // If we can't parse either key, maintain original order
       if (!parsedA && !parsedB) return 0;
       if (!parsedA) return 1;
       if (!parsedB) return -1;
-      
+
       // First sort by match type (using priority order)
       if (parsedA.matchType !== parsedB.matchType) {
-        return getMatchTypePriority(parsedA.matchType) - getMatchTypePriority(parsedB.matchType);
+        return (
+          getMatchTypePriority(parsedA.matchType) -
+          getMatchTypePriority(parsedB.matchType)
+        );
       }
-      
+
       // Then sort by match number (numerically)
       if (parsedA.matchNumber !== parsedB.matchNumber) {
         return parsedA.matchNumber - parsedB.matchNumber;
       }
-      
+
       // If same match type and number, sort by sub-match if available
       if (parsedA.subMatch !== null && parsedB.subMatch !== null) {
         return parsedA.subMatch - parsedB.subMatch;
       }
-      
+
       // If one has sub-match and other doesn't, put the one without sub-match first
       if (parsedA.subMatch === null && parsedB.subMatch !== null) return -1;
       if (parsedA.subMatch !== null && parsedB.subMatch === null) return 1;
-      
+
       return 0;
     });
 
@@ -481,104 +519,171 @@ const EventDetailPage: React.FC = () => {
           onClearFilters={handleClearFilters}
         />
 
-        {/* Results Summary */}
-        <div className="mb-4 text-center">
-          <p className="text-text-muted text-sm">
-            Showing {filteredPredictions.length} of {predictions.length} matches
-            {(selectedMatchType || selectedMatchNumber) && " (filtered)"}
-          </p>
-        </div>
+        {/* View Controls & Results Summary */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+          {/* View Toggles */}
+          <div className="flex items-center gap-2 p-1 rounded-lg bg-background/50 border border-border">
+            <button
+              onClick={() => setView("list")}
+              className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                view === "list"
+                  ? "bg-accent text-white"
+                  : "text-text-muted hover:bg-white/5"
+              }`}
+            >
+              List View
+            </button>
+            <button
+              onClick={() => setView("bracket")}
+              className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                view === "bracket"
+                  ? "bg-accent text-white"
+                  : "text-text-muted hover:bg-white/5"
+              }`}
+            >
+              Bracket View
+            </button>
+            {/* --- NUEVO BOTÓN --- */}
+            <button
+              onClick={() => setView("simulations")}
+              className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                view === "simulations"
+                  ? "bg-accent text-white"
+                  : "text-text-muted hover:bg-white/5"
+              }`}
+            >
+              Simulations
+            </button>
+          </div>
 
-        {/* Tabla de Resultados */}
-        <div className="border border-border bg-card rounded-xl shadow-lg shadow-black/30 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap">
-              <thead className="text-text-muted uppercase bg-background/50 text-xs">
-                <tr>
-                  <th
-                    rowSpan={2}
-                    className="py-3 px-4 font-semibold align-middle border-b border-border"
-                  >
-                    Match
-                  </th>
-                  <th
-                    colSpan={6}
-                    className="py-2 px-4 font-semibold text-center border-b border-border"
-                  >
-                    Teams
-                  </th>
-                  <th
-                    colSpan={2}
-                    className="py-2 px-4 font-semibold text-center border-b border-border"
-                  >
-                    Predicted Score
-                  </th>
-                  <th
-                    colSpan={2}
-                    className="py-2 px-4 font-semibold text-center border-b border-border"
-                  >
-                    Real Score
-                  </th>
-                  <th
-                    rowSpan={2}
-                    className="py-3 px-4 font-semibold align-middle text-center border-b border-border"
-                  >
-                    Accuracy
-                  </th>
-                </tr>
-                <tr>
-                  <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
-                    Red 1
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
-                    Red 2
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
-                    Red 3
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
-                    Blue 1
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
-                    Blue 2
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
-                    Blue 3
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
-                    Red
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
-                    Blue
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
-                    Red
-                  </th>
-                  <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
-                    Blue
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredPredictions.map((p) => (
-                  <tr
-                    key={p.match_key}
-                    className="hover:bg-background/30 transition-colors cursor-pointer"
-                    onClick={() =>
-                      (window.location.href = `/matchpoint/match/${p.match_key}`)
-                    }
-                  >
-                    {p.status === "played" ? (
-                      <PlayedMatchRow p={p} />
-                    ) : (
-                      <UpcomingMatchRow p={p} />
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Results Summary */}
+          <div className="text-center md:text-right">
+            <p className="text-text-muted text-sm">
+              {view === "list"
+                ? `Showing ${filteredPredictions.length} of ${predictions.length} matches`
+                : `Showing ${
+                    predictions.filter(
+                      (p) =>
+                        p.match_key.includes("_sf") ||
+                        p.match_key.includes("_f")
+                    ).length
+                  } playoff matches`}
+              {(selectedMatchType || selectedMatchNumber) &&
+                view === "list" &&
+                " (filtered)"}
+            </p>
           </div>
         </div>
+
+        {/* Contenido Principal: Tabla o Bracket */}
+        {view === "list" ? (
+          // --- VISTA DE LISTA (TU CÓDIGO ORIGINAL) ---
+          // Si la vista es 'list', se renderiza este bloque completo.
+          <div className="border border-border bg-card rounded-xl shadow-lg shadow-black/30 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="text-text-muted uppercase bg-background/50 text-xs">
+                  <tr>
+                    <th
+                      rowSpan={2}
+                      className="py-3 px-4 font-semibold align-middle border-b border-border"
+                    >
+                      Match
+                    </th>
+                    <th
+                      colSpan={6}
+                      className="py-2 px-4 font-semibold text-center border-b border-border"
+                    >
+                      Teams
+                    </th>
+                    <th
+                      colSpan={2}
+                      className="py-2 px-4 font-semibold text-center border-b border-border"
+                    >
+                      Predicted Score
+                    </th>
+                    <th
+                      colSpan={2}
+                      className="py-2 px-4 font-semibold text-center border-b border-border"
+                    >
+                      Real Score
+                    </th>
+                    <th
+                      rowSpan={2}
+                      className="py-3 px-4 font-semibold align-middle text-center border-b border-border"
+                    >
+                      Accuracy
+                    </th>
+                  </tr>
+                  <tr>
+                    <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
+                      Red 1
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
+                      Red 2
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
+                      Red 3
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
+                      Blue 1
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
+                      Blue 2
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
+                      Blue 3
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
+                      Red
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
+                      Blue
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-red-900/40 text-red-300 border-b border-border">
+                      Red
+                    </th>
+                    <th className="py-2 px-4 font-semibold text-center bg-blue-900/40 text-blue-300 border-b border-border">
+                      Blue
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredPredictions.map((p) => (
+                    <tr
+                      key={p.match_key}
+                      className="hover:bg-background/30 transition-colors cursor-pointer"
+                      onClick={() =>
+                        (window.location.href = `/matchpoint/match/${p.match_key}`)
+                      }
+                    >
+                      {p.status === "played" ? (
+                        <PlayedMatchRow p={p} predictions={[]} />
+                      ) : (
+                        <UpcomingMatchRow p={p} />
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : view === "bracket" ? (
+          <PlayoffBracket predictions={predictions} />
+        ) : (
+          // --- NUEVA VISTA DE SIMULACIONES ---
+          <PlayoffSimulations
+            eventKey={eventKey!}
+            actualWinnerTeams={(() => {
+              const finalMatch = predictions.find((p) => p.match_key.includes("_f1m"));
+              if (finalMatch && finalMatch.status === "played" && finalMatch.actual_winner) {
+                const winnerAllianceTeams = finalMatch.actual_winner !== 'tie' ? finalMatch.team_keys[finalMatch.actual_winner] : [];
+                return winnerAllianceTeams.map((teamKey) => parseInt(teamKey.replace("frc", ""), 10));
+              }
+              return null;
+            })()}
+          />
+        )}
       </div>
     </main>
   );

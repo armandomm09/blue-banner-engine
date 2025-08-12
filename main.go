@@ -127,6 +127,7 @@ func main() {
 	{
 		routes.RegisterMatchpointRoutes(v1, handler.grpcClient, tbaKey)
 		routes.RegisterTbaRoutes(v1, tbaKey)
+		routes.RegisterSimulationRoutes(v1, handler.grpcClient)
 
 	}
 
@@ -184,6 +185,9 @@ func main() {
 	} else {
 		log.Println("Running on testing")
 
+		for _, item := range router.Routes() {
+			println("method:", item.Method, "path:", item.Path)
+		}
 		router.Run(":8080")
 	}
 }

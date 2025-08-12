@@ -72,7 +72,7 @@ class SBService:
         # 8 to 16 is usually a good starting point.
         MAX_WORKERS = 10 
 
-        print(f"Fetching Statbotics data for {len(team_keys)} teams using {MAX_WORKERS} workers...")
+        # print(f"Fetching Statbotics data for {len(team_keys)} teams using {MAX_WORKERS} workers...")
 
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             # Create a future for each API call
@@ -165,7 +165,7 @@ class SBService:
         """
         all_team_stats = {}
         
-        print(f"Fetching Statbotics data from CSV for {len(team_keys)} teams...")
+        # print(f"Fetching Statbotics data from CSV for {len(team_keys)} teams...")
         
         for team_key in team_keys:
             try:
@@ -175,5 +175,5 @@ class SBService:
             except Exception as exc:
                 print(f"ERROR: Could not get data for team {team_key}: {exc}")
         
-        print("Statbotics CSV data fetching complete.")
+        # print("Statbotics CSV data fetching complete.")
         return all_team_stats
