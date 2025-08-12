@@ -22,9 +22,10 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
+from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10prediction.proto\x12\nmatchpoint\"+\n\x16\x45ventPredictionRequest\x12\x11\n\tevent_key\x18\x01 \x01(\t\"S\n\x17\x45ventPredictionResponse\x12\x38\n\x0bpredictions\x18\x01 \x03(\x0b\x32#.matchpoint.MatchPredictionResponse\"+\n\x16MatchPredictionRequest\x12\x11\n\tmatch_key\x18\x01 \x01(\t\"\xe3\x01\n\x17MatchPredictionResponse\x12\x11\n\tmatch_key\x18\x01 \x01(\t\x12\x18\n\x10predicted_winner\x18\x02 \x01(\t\x12\x33\n\x0fwin_probability\x18\x03 \x01(\x0b\x32\x1a.matchpoint.WinProbability\x12\x35\n\x10predicted_scores\x18\x04 \x01(\x0b\x32\x1b.matchpoint.PredictedScores\x12/\n\rshap_analysis\x18\x05 \x01(\x0b\x32\x18.matchpoint.ShapAnalysis\"_\n\x0cShapAnalysis\x12\x12\n\nbase_value\x18\x01 \x01(\x02\x12\x0e\n\x06values\x18\x02 \x03(\x02\x12\x15\n\rfeature_names\x18\x03 \x03(\t\x12\x14\n\x0c\x66\x65\x61ture_data\x18\x04 \x03(\x02\"+\n\x0eWinProbability\x12\x0b\n\x03red\x18\x01 \x01(\x02\x12\x0c\n\x04\x62lue\x18\x02 \x01(\x02\",\n\x0fPredictedScores\x12\x0b\n\x03red\x18\x01 \x01(\x05\x12\x0c\n\x04\x62lue\x18\x02 \x01(\x05\x32\xd2\x01\n\nMatchpoint\x12_\n\x12GetMatchPrediction\x12\".matchpoint.MatchPredictionRequest\x1a#.matchpoint.MatchPredictionResponse\"\x00\x12\x63\n\x16PredictAllEventMatches\x12\".matchpoint.EventPredictionRequest\x1a#.matchpoint.EventPredictionResponse\"\x00\x42\x1bZ\x19\x62lue-banner-engine/protosb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10prediction.proto\x12\nmatchpoint\x1a\x1fgoogle/protobuf/timestamp.proto\"+\n\x16\x45ventPredictionRequest\x12\x11\n\tevent_key\x18\x01 \x01(\t\"S\n\x17\x45ventPredictionResponse\x12\x38\n\x0bpredictions\x18\x01 \x03(\x0b\x32#.matchpoint.MatchPredictionResponse\"+\n\x16MatchPredictionRequest\x12\x11\n\tmatch_key\x18\x01 \x01(\t\"\xe3\x01\n\x17MatchPredictionResponse\x12\x11\n\tmatch_key\x18\x01 \x01(\t\x12\x18\n\x10predicted_winner\x18\x02 \x01(\t\x12\x33\n\x0fwin_probability\x18\x03 \x01(\x0b\x32\x1a.matchpoint.WinProbability\x12\x35\n\x10predicted_scores\x18\x04 \x01(\x0b\x32\x1b.matchpoint.PredictedScores\x12/\n\rshap_analysis\x18\x05 \x01(\x0b\x32\x18.matchpoint.ShapAnalysis\"_\n\x0cShapAnalysis\x12\x12\n\nbase_value\x18\x01 \x01(\x02\x12\x0e\n\x06values\x18\x02 \x03(\x02\x12\x15\n\rfeature_names\x18\x03 \x03(\t\x12\x14\n\x0c\x66\x65\x61ture_data\x18\x04 \x03(\x02\"+\n\x0eWinProbability\x12\x0b\n\x03red\x18\x01 \x01(\x02\x12\x0c\n\x04\x62lue\x18\x02 \x01(\x02\",\n\x0fPredictedScores\x12\x0b\n\x03red\x18\x01 \x01(\x05\x12\x0c\n\x04\x62lue\x18\x02 \x01(\x05\"\xee\x02\n\x10SimulationResult\x12\x11\n\tevent_key\x18\x01 \x01(\t\x12M\n\x13simulation_metadata\x18\x02 \x01(\x0b\x32\x30.matchpoint.SimulationResult.Simulation_metadata\x12\x35\n\x07results\x18\x03 \x03(\x0b\x32$.matchpoint.SimulationResult.Results\x1ag\n\x13Simulation_metadata\x12\x1d\n\x15total_simulations_run\x18\x01 \x01(\r\x12\x31\n\rtimestamp_utc\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x1aX\n\x07Results\x12\x17\n\x0f\x61lliance_number\x18\x01 \x01(\r\x12\r\n\x05teams\x18\x02 \x03(\r\x12\x0c\n\x04wins\x18\x03 \x01(\r\x12\x17\n\x0fwin_probability\x18\x04 \x01(\x01\"6\n\x11SimulationRequest\x12\x11\n\tevent_key\x18\x01 \x01(\t\x12\x0e\n\x06n_sims\x18\x02 \x01(\r2\xa5\x02\n\nMatchpoint\x12_\n\x12GetMatchPrediction\x12\".matchpoint.MatchPredictionRequest\x1a#.matchpoint.MatchPredictionResponse\"\x00\x12\x63\n\x16PredictAllEventMatches\x12\".matchpoint.EventPredictionRequest\x1a#.matchpoint.EventPredictionResponse\"\x00\x12Q\n\x10SimulatePlayoffs\x12\x1d.matchpoint.SimulationRequest\x1a\x1c.matchpoint.SimulationResult\"\x00\x42\x1bZ\x19\x62lue-banner-engine/protosb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,20 +33,28 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'prediction_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z\031blue-banner-engine/protos'
-  _globals['_EVENTPREDICTIONREQUEST']._serialized_start=32
-  _globals['_EVENTPREDICTIONREQUEST']._serialized_end=75
-  _globals['_EVENTPREDICTIONRESPONSE']._serialized_start=77
-  _globals['_EVENTPREDICTIONRESPONSE']._serialized_end=160
-  _globals['_MATCHPREDICTIONREQUEST']._serialized_start=162
-  _globals['_MATCHPREDICTIONREQUEST']._serialized_end=205
-  _globals['_MATCHPREDICTIONRESPONSE']._serialized_start=208
-  _globals['_MATCHPREDICTIONRESPONSE']._serialized_end=435
-  _globals['_SHAPANALYSIS']._serialized_start=437
-  _globals['_SHAPANALYSIS']._serialized_end=532
-  _globals['_WINPROBABILITY']._serialized_start=534
-  _globals['_WINPROBABILITY']._serialized_end=577
-  _globals['_PREDICTEDSCORES']._serialized_start=579
-  _globals['_PREDICTEDSCORES']._serialized_end=623
-  _globals['_MATCHPOINT']._serialized_start=626
-  _globals['_MATCHPOINT']._serialized_end=836
+  _globals['_EVENTPREDICTIONREQUEST']._serialized_start=65
+  _globals['_EVENTPREDICTIONREQUEST']._serialized_end=108
+  _globals['_EVENTPREDICTIONRESPONSE']._serialized_start=110
+  _globals['_EVENTPREDICTIONRESPONSE']._serialized_end=193
+  _globals['_MATCHPREDICTIONREQUEST']._serialized_start=195
+  _globals['_MATCHPREDICTIONREQUEST']._serialized_end=238
+  _globals['_MATCHPREDICTIONRESPONSE']._serialized_start=241
+  _globals['_MATCHPREDICTIONRESPONSE']._serialized_end=468
+  _globals['_SHAPANALYSIS']._serialized_start=470
+  _globals['_SHAPANALYSIS']._serialized_end=565
+  _globals['_WINPROBABILITY']._serialized_start=567
+  _globals['_WINPROBABILITY']._serialized_end=610
+  _globals['_PREDICTEDSCORES']._serialized_start=612
+  _globals['_PREDICTEDSCORES']._serialized_end=656
+  _globals['_SIMULATIONRESULT']._serialized_start=659
+  _globals['_SIMULATIONRESULT']._serialized_end=1025
+  _globals['_SIMULATIONRESULT_SIMULATION_METADATA']._serialized_start=832
+  _globals['_SIMULATIONRESULT_SIMULATION_METADATA']._serialized_end=935
+  _globals['_SIMULATIONRESULT_RESULTS']._serialized_start=937
+  _globals['_SIMULATIONRESULT_RESULTS']._serialized_end=1025
+  _globals['_SIMULATIONREQUEST']._serialized_start=1027
+  _globals['_SIMULATIONREQUEST']._serialized_end=1081
+  _globals['_MATCHPOINT']._serialized_start=1084
+  _globals['_MATCHPOINT']._serialized_end=1377
 # @@protoc_insertion_point(module_scope)

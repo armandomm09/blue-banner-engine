@@ -66,6 +66,19 @@ definitions:
           red: 0.21
         type: object
     type: object
+  types.Result:
+    properties:
+      alliance_number:
+        type: integer
+      teams:
+        items:
+          type: integer
+        type: array
+      win_probability:
+        type: number
+      wins:
+        type: integer
+    type: object
   types.ShapAnalysis:
     properties:
       base_value:
@@ -82,6 +95,24 @@ definitions:
         items:
           type: number
         type: array
+    type: object
+  types.SimulationMetadata:
+    properties:
+      timestamp_utc:
+        type: string
+      total_simulations_run:
+        type: integer
+    type: object
+  types.SimulationResponse:
+    properties:
+      event_key:
+        type: string
+      results:
+        items:
+          $ref: '#/definitions/types.Result'
+        type: array
+      simulation_metadata:
+        $ref: '#/definitions/types.SimulationMetadata'
     type: object
   types.TbaTeamKeys:
     properties:
@@ -160,6 +191,39 @@ paths:
           schema:
             $ref: '#/definitions/routes.ErrorResponse'
       summary: Get All Match Predictions for an Event
+      tags:
+      - predictions
+  /predict/event/{event_key}/playoff/{n_sims}:
+    get:
+      consumes:
+      - application/json
+      description: Using matchpoint predictor, simulates the playoff results for an
+        event
+      parameters:
+      - description: FRC Event Key (e.g., 2025mxle)
+        in: path
+        name: event_key
+        required: true
+        type: string
+      - description: Number of desired simulations (e.g., 1000)
+        in: path
+        name: n_sims
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful prediction for all matches
+          schema:
+            items:
+              $ref: '#/definitions/types.SimulationResponse'
+            type: array
+        "500":
+          description: Internal Server Error (e.g., gRPC call failed)
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get the playoff simulated n times for an Event
       tags:
       - predictions
   /predict/match/{match_key}:

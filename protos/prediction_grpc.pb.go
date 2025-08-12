@@ -25,6 +25,7 @@ type MatchpointClient interface {
 	// Un método RPC para obtener la predicción completa de un partido.
 	GetMatchPrediction(ctx context.Context, in *MatchPredictionRequest, opts ...grpc.CallOption) (*MatchPredictionResponse, error)
 	PredictAllEventMatches(ctx context.Context, in *EventPredictionRequest, opts ...grpc.CallOption) (*EventPredictionResponse, error)
+	SimulatePlayoffs(ctx context.Context, in *SimulationRequest, opts ...grpc.CallOption) (*SimulationResult, error)
 }
 
 type matchpointClient struct {
@@ -53,6 +54,15 @@ func (c *matchpointClient) PredictAllEventMatches(ctx context.Context, in *Event
 	return out, nil
 }
 
+func (c *matchpointClient) SimulatePlayoffs(ctx context.Context, in *SimulationRequest, opts ...grpc.CallOption) (*SimulationResult, error) {
+	out := new(SimulationResult)
+	err := c.cc.Invoke(ctx, "/matchpoint.Matchpoint/SimulatePlayoffs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MatchpointServer is the server API for Matchpoint service.
 // All implementations must embed UnimplementedMatchpointServer
 // for forward compatibility
@@ -60,6 +70,7 @@ type MatchpointServer interface {
 	// Un método RPC para obtener la predicción completa de un partido.
 	GetMatchPrediction(context.Context, *MatchPredictionRequest) (*MatchPredictionResponse, error)
 	PredictAllEventMatches(context.Context, *EventPredictionRequest) (*EventPredictionResponse, error)
+	SimulatePlayoffs(context.Context, *SimulationRequest) (*SimulationResult, error)
 	mustEmbedUnimplementedMatchpointServer()
 }
 
@@ -72,6 +83,9 @@ func (UnimplementedMatchpointServer) GetMatchPrediction(context.Context, *MatchP
 }
 func (UnimplementedMatchpointServer) PredictAllEventMatches(context.Context, *EventPredictionRequest) (*EventPredictionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PredictAllEventMatches not implemented")
+}
+func (UnimplementedMatchpointServer) SimulatePlayoffs(context.Context, *SimulationRequest) (*SimulationResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SimulatePlayoffs not implemented")
 }
 func (UnimplementedMatchpointServer) mustEmbedUnimplementedMatchpointServer() {}
 
@@ -122,6 +136,24 @@ func _Matchpoint_PredictAllEventMatches_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Matchpoint_SimulatePlayoffs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SimulationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MatchpointServer).SimulatePlayoffs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/matchpoint.Matchpoint/SimulatePlayoffs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MatchpointServer).SimulatePlayoffs(ctx, req.(*SimulationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Matchpoint_ServiceDesc is the grpc.ServiceDesc for Matchpoint service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -136,6 +168,10 @@ var Matchpoint_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PredictAllEventMatches",
 			Handler:    _Matchpoint_PredictAllEventMatches_Handler,
+		},
+		{
+			MethodName: "SimulatePlayoffs",
+			Handler:    _Matchpoint_SimulatePlayoffs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

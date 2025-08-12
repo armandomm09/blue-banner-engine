@@ -96,6 +96,54 @@
                 }
             }
         },
+        "/predict/event/{event_key}/playoff/{n_sims}": {
+            "get": {
+                "description": "Using matchpoint predictor, simulates the playoff results for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "predictions"
+                ],
+                "summary": "Get the playoff simulated n times for an Event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FRC Event Key (e.g., 2025mxle)",
+                        "name": "event_key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of desired simulations (e.g., 1000)",
+                        "name": "n_sims",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful prediction for all matches",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/types.SimulationResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error (e.g., gRPC call failed)",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/predict/match/{match_key}": {
             "get": {
                 "description": "Retrieves a detailed prediction for a single FRC match, including SHAP analysis for model explainability.",
@@ -233,6 +281,26 @@
                 }
             }
         },
+        "types.Result": {
+            "type": "object",
+            "properties": {
+                "alliance_number": {
+                    "type": "integer"
+                },
+                "teams": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "win_probability": {
+                    "type": "number"
+                },
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
         "types.ShapAnalysis": {
             "type": "object",
             "properties": {
@@ -256,6 +324,34 @@
                     "items": {
                         "type": "number"
                     }
+                }
+            }
+        },
+        "types.SimulationMetadata": {
+            "type": "object",
+            "properties": {
+                "timestamp_utc": {
+                    "type": "string"
+                },
+                "total_simulations_run": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.SimulationResponse": {
+            "type": "object",
+            "properties": {
+                "event_key": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Result"
+                    }
+                },
+                "simulation_metadata": {
+                    "$ref": "#/definitions/types.SimulationMetadata"
                 }
             }
         },

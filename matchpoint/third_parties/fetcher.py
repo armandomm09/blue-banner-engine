@@ -61,7 +61,7 @@ class Fetcher:
             sb_stats_dict = Fetcher.sb.get_all_sb_stats_for_event(
                 event_key, tuple(all_teams)
             )
-            tba_stats_dict = Fetcher.tba.get_all_tba_stats_for_event_concurrently(
+            tba_stats_dict = Fetcher.tba.get_all_tba_stats_for_event_from_single_call(
                 event_key, tuple(all_teams)
             )
 
@@ -113,16 +113,17 @@ class Fetcher:
         """
         raw_features = {"week": event_week}
 
+        print(all_tba_stats)
         for i in range(3):
             red_team = red_teams[i]
             blue_team = blue_teams[i]
 
             # Look up stats from the pre-fetched dictionaries
             red_team_sb_stats = all_sb_stats.get(red_team, {}) or {}
-            red_team_tba_stats = all_tba_stats.get(red_team, {}) or {}
-
+            red_team_tba_stats = all_tba_stats.get(str(red_team), {}) or {}
+            # print("RED TEAM STATS:", red_team, all_tba_stats[str(red_team)])
             blue_team_sb_stats = all_sb_stats.get(blue_team, {}) or {}
-            blue_team_tba_stats = all_tba_stats.get(blue_team, {}) or {}
+            blue_team_tba_stats = all_tba_stats.get(str(blue_team), {}) or {}
 
             # Combine Statbotics and TBA stats for each team using the dictionary union operator
             red_team_stats = red_team_sb_stats | red_team_tba_stats
@@ -140,7 +141,7 @@ class Fetcher:
 
         # Ensure all features from FEATURE_ORDER are present, defaulting to 0.0
         ordered_match_features = {
-            feature: raw_features.get(feature, 0.0) for feature in FEATURE_ORDER
+            feature: raw_features.get(feature, None) for feature in FEATURE_ORDER
         }
         
         missing_features = [
@@ -148,13 +149,12 @@ class Fetcher:
             for feature in FEATURE_ORDER
             if feature not in ordered_match_features
             or ordered_match_features[feature] is None
-            or ordered_match_features[feature] == 0
         ]
         if missing_features:
             # print(json.dumps(ordered_match_features, indent=4))
-            print(f"Missing required features in match features: {missing_features}")
-            # raise ValueError(
-            #     f"Missing required features in match features: {missing_features}")
+            # print(f"Missing required features in match features: {blue_teams} {missing_features}")
+            raise ValueError(
+                f"Missing required features in match features: {missing_features}")
 
         return ordered_match_features
 
@@ -206,7 +206,7 @@ class Fetcher:
             team_keys = tuple(key[3:] for key in req.json())
 
             all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event(event_key, team_keys)
-            all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_concurrently(
+            all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_from_single_call(
                 event_key, team_keys
             )
 

@@ -1,6 +1,9 @@
 package types
 
-import pb "blue-banner-engine/protos"
+import (
+	pb "blue-banner-engine/protos"
+	"time"
+)
 
 type ShapAnalysis struct {
 	BaseValue    float32   `json:"base_value"`
@@ -29,4 +32,21 @@ type PredictionHandler struct {
 type EventAnalysisResponse struct {
 	EventDetails *TbaEventDetails  `json:"event_details"`
 	Predictions  []MatchPrediction `json:"predictions"`
+}
+
+type SimulationMetadata struct {
+	TotalSimulationsRun int       `json:"total_simulations_run"`
+	TimestampUtc        time.Time `json:"timestamp_utc"`
+}
+
+type Result struct {
+	AllianceNumber int     `json:"alliance_number"`
+	Teams          []int   `json:"teams"`
+	Wins           int     `json:"wins"`
+	WinProbability float64 `json:"win_probability"`
+}
+type SimulationResponse struct {
+	EventKey string             `json:"event_key"`
+	Metadata SimulationMetadata `json:"simulation_metadata"`
+	Results  []Result           `json:"results"`
 }

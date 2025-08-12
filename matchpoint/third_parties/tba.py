@@ -1,3 +1,4 @@
+from typing import Any, Dict, Iterable, Tuple
 import requests
 from ..config import TBA_BASE_URL, TBA_HEADER
 import functools
@@ -7,6 +8,12 @@ class TBAService:
     """
     A service class for interacting with The Blue Alliance (TBA) API.
     """
+    
+    @staticmethod
+    def _normalize_team_key(team: str) -> str:
+        """Devuelve 'frcNNN' siempre (acepta 'NNN' o 'frcNNN')."""
+        t = str(team)
+        return t if t.startswith("frc") else f"frc{t}"
     
     @staticmethod
     def get_tba_oprs_event(event_key: str) -> dict:
@@ -124,42 +131,34 @@ class TBAService:
         except requests.ConnectionError as e:
             raise e
             
-    @functools.lru_cache(maxsize=32)
-    def get_all_tba_stats_for_event_concurrently(self, event_key: str, team_keys: tuple[str]) -> dict:
+    
+    @staticmethod
+    def get_all_tba_stats_for_event_from_single_call(event_key: str, team_keys: Tuple[str, ...]) -> Dict[str, Dict[str, Any]]:
         """
-        Fetches all TBA stats for a list of teams at an event concurrently.
+        Llama UNA sola vez a get_tba_oprs_event(event_key) y extrae stats
+        para los teams en team_keys (que debe ser una tuple[str, ...]).
 
-        Uses a thread pool to make multiple API requests in parallel. The results
-        are cached based on the event key and team keys.
-
-        Args:
-            event_key (str): The event key.
-            team_keys (tuple[str]): A tuple of team numbers to fetch data for.
-
-        Returns:
-            dict: A dictionary mapping each team key to its fetched TBA statistics.
+        Devuelve: {'5887': {'opr':..,'ccwm':..,..}, '3478': {...}}
         """
-        all_team_stats = {}
-        MAX_WORKERS = 20 
+        if not isinstance(team_keys, tuple):
+            raise TypeError("team_keys must be a tuple[str, ...]; call with tuple(team_keys) if needed")
 
-        print(f"Fetching TBA data for {len(team_keys)} teams using {MAX_WORKERS} workers...")
-        
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            # Create a future for each API call
-            # Use a dictionary to map the future back to the team key
-            future_to_team = {
-                executor.submit(self.get_tba_oprs_team_event, team_key, event_key): team_key
-                for team_key in team_keys
-            }
-            
-            for future in as_completed(future_to_team):
-                team_key = future_to_team[future]
-                try:
-                    result = future.result()
-                    if result:
-                        all_team_stats[team_key] = result
-                except Exception as exc:
-                    print(f"ERROR: Worker for team {team_key} generated an exception: {exc}")
-        
-        print("TBA data fetching complete.")
-        return all_team_stats
+        # 1 llamada para todo el evento
+        event_oprs = TBAService.get_tba_oprs_event(event_key)
+
+        out: Dict[str, Dict[str, Any]] = {}
+        for t in team_keys:
+            norm = TBAService._normalize_team_key(t)   # 'frcNNN'
+            team_id = norm[3:]                         # 'NNN' para la llave de salida
+            per_team: Dict[str, Any] = {}
+
+            # event_oprs tiene mapas tipo { "opr": { "frcXXX": value, ... }, ... }
+            for stat_name, stat_map in event_oprs.items():
+                if isinstance(stat_map, dict):
+                    per_team[stat_name] = stat_map.get(norm, 0.0)
+                else:
+                    per_team[stat_name] = 0.0
+
+            out[team_id] = per_team
+
+        return out

@@ -1,3 +1,5 @@
+import json
+from textwrap import indent
 from matchpoint.domain.simulation import SimulationTracker
 from ..third_parties.fetcher import Fetcher
 from .mp_prediction import MatchpointPredictor as MP
@@ -44,7 +46,7 @@ class Simulator:
         Pre-calculates win probabilities by passing pre-fetched data down
         to the feature assembly function.
         """
-        print("Pre-computing win probabilities for all possible matchups...")
+        # print("Pre-computing win probabilities for all possible matchups...")
         win_probs = {}
         num_alliances = len(alliances)
 
@@ -71,7 +73,7 @@ class Simulator:
                     1.0 - prob_red_wins
                 )
 
-        print("Pre-computation complete.")
+        # print("Pre-computation complete.")
         return win_probs
 
     def simulate_frc_tournament_fast(self, precomputed_probs):
@@ -150,10 +152,10 @@ class Simulator:
 
         # Get all team stats from both sources concurrently
         all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event(event_key, all_teams_flat)
-        all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_concurrently(event_key, all_teams_flat)
-        
+        all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_from_single_call(event_key, all_teams_flat)
+        all_tba_stats = dict(sorted(all_tba_stats.items()))  # Sort for consistency
         # --- END OF NETWORK CALLS ---
-
+        # print(all_tba_stats)
         # Pass the pre-fetched data to the pre-computation function
         precomputed_win_probs = self.precompute_win_probabilities(
             alliances=alliances,
