@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@g-loot/react-tournament-brackets": "^1.0.31-rc",
     "@tailwindcss/vite": "^4.1.11",
     "framer-motion": "^12.23.11",
     "gsap": "^3.13.0",
