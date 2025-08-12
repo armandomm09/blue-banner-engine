@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import PlayoffBracket from "../components/PlayoffBracket";
 import { PlayoffSimulations } from "../components/PlayoffSimulations";
 // import { FiGlobe, FiTv, FiMapPin, FiCalendar } from 'react-icons/fi'; // Iconos para los detalles
@@ -277,6 +277,19 @@ const UpcomingMatchRow: React.FC<{ p: Prediction }> = ({ p }) => {
 // --- Main Page Component ---
 const EventDetailPage: React.FC = () => {
   const { eventKey } = useParams<{ eventKey?: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Obtiene el view del query param o usa "list" como default
+  const defaultView = searchParams.get("view") as "list" | "bracket" | "simulations";
+  const [view, setView] = useState<"list" | "bracket" | "simulations">(
+    defaultView && ["list", "bracket", "simulations"].includes(defaultView) ? defaultView : "list"
+  );
+
+  // Modifica el setView para actualizar también la URL
+  const handleViewChange = (newView: typeof view) => {
+    setView(newView);
+    setSearchParams({ view: newView });
+  };
 
   const [analysisData, setAnalysisData] = useState<EventAnalysisData | null>(
     null
@@ -286,8 +299,6 @@ const EventDetailPage: React.FC = () => {
   const [predictionAccuracy, setPredictionAccuracy] = useState<number | null>(
     null
   );
-
-  const [view, setView] = useState<"list" | "bracket" | "simulations">("list");
 
   // Filter state
   const [selectedMatchType, setSelectedMatchType] = useState<string>("");
@@ -524,7 +535,7 @@ const EventDetailPage: React.FC = () => {
           {/* View Toggles */}
           <div className="flex items-center gap-2 p-1 rounded-lg bg-background/50 border border-border">
             <button
-              onClick={() => setView("list")}
+              onClick={() => handleViewChange("list")}
               className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
                 view === "list"
                   ? "bg-accent text-white"
@@ -534,7 +545,7 @@ const EventDetailPage: React.FC = () => {
               List View
             </button>
             <button
-              onClick={() => setView("bracket")}
+              onClick={() => handleViewChange("bracket")}
               className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
                 view === "bracket"
                   ? "bg-accent text-white"
@@ -543,9 +554,8 @@ const EventDetailPage: React.FC = () => {
             >
               Bracket View
             </button>
-            {/* --- NUEVO BOTÓN --- */}
             <button
-              onClick={() => setView("simulations")}
+              onClick={() => handleViewChange("simulations")}
               className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${
                 view === "simulations"
                   ? "bg-accent text-white"
