@@ -15,6 +15,14 @@ class Simulator:
         self.tba = TBAService()
         self.mp = MP()
 
+    def shrink(self, p, alpha):
+        """
+        Shrink probability p toward 0.5 by fraction alpha (0 = no shrink, 1 = full shrink).
+        alpha should be between 0 and 1.
+        """
+        alpha = 1 - alpha
+        return 0.5 + alpha * (p - 0.5)
+
     def determine_match_winner_fast(
         self, red_alliance_number, blue_alliance_number, precomputed_probs
     ):
@@ -32,11 +40,12 @@ class Simulator:
 
         return (
             red_alliance_number
-            if random.random() < prob_red_wins
+            if random.random() < self.shrink(prob_red_wins, 0.2)
             else blue_alliance_number
         )
 
-    def precompute_win_probabilities(self,
+    def precompute_win_probabilities(
+        self,
         alliances: list[list[int]],
         event_week: int,
         all_sb_stats: dict,
@@ -64,7 +73,7 @@ class Simulator:
                     all_tba_stats=all_tba_stats,
                 )
 
-                # The prediction logic 
+                # The prediction logic
                 prediction = self.mp.predict_match_by_features(ordered_features)
 
                 prob_red_wins = prediction.win_probability["red"]
@@ -75,6 +84,7 @@ class Simulator:
 
         # print("Pre-computation complete.")
         return win_probs
+
     def simulate_frc_tournament_fast(self, precomputed_probs):
         """
         Runs a full simulation using the ultra-fast winner determination function.
@@ -94,7 +104,7 @@ class Simulator:
             )
             match_results[match_number] = {"winner": winner, "loser": loser}
 
-        # The simulation logic 
+        # The simulation logic
         play_and_record_match("M1", 1, 8)
         play_and_record_match("M2", 4, 5)
         play_and_record_match("M3", 3, 6)
@@ -151,7 +161,9 @@ class Simulator:
 
         # Get all team stats from both sources concurrently
         all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event(event_key, all_teams_flat)
-        all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_from_single_call(event_key, all_teams_flat)
+        all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_from_single_call(
+            event_key, all_teams_flat
+        )
         all_tba_stats = dict(sorted(all_tba_stats.items()))  # Sort for consistency
         # --- END OF NETWORK CALLS ---
         # print(all_tba_stats)
@@ -160,14 +172,12 @@ class Simulator:
             alliances=alliances,
             event_week=event_week,
             all_sb_stats=all_sb_stats,
-            all_tba_stats=all_tba_stats
+            all_tba_stats=all_tba_stats,
         )
 
         results_tracker = SimulationTracker(
-        alliances=alliances,
-        total_simulations=n_times,
-        event_key=event_key
-    )
+            alliances=alliances, total_simulations=n_times, event_key=event_key
+        )
         initial_time = time()
         for i in range(n_times):
 

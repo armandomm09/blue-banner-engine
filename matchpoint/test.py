@@ -8,8 +8,7 @@ initial = time()
 alliance = sim.simulate_n_playoffs("2025iri", 1000)
 end_time = time() - initial
 
-for result in alliance.results:
-    print(result)
+print(alliance)
 print(end_time)
 
 # 3.0652077198028564
