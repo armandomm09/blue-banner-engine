@@ -43,7 +43,7 @@ Before you begin, ensure you have the following tools installed on your system w
 #### 1. Clone the Repository
 Clone the project to your local machine:
 ```bash
-git clone https://github.com/your-repo/blue-banner-engine.git
+git clone https://github.com/armandomm09/blue-banner-engine.git
 cd blue-banner-engine
 ```
 
