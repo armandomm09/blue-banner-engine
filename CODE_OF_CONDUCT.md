@@ -14,6 +14,8 @@ diverse, inclusive, and healthy community.
 
 ## Our Standards
 
+> Everything about Blue Banner Engine is operated strictly under Coopertition and Gracious Professionalism
+
 Examples of behavior that contributes to a positive environment for our
 community include:
 
