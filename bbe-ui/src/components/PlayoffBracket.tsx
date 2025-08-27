@@ -107,7 +107,7 @@ const MatchCard: React.FC<{
                  <h4 className="text-sm font-bold text-text-muted">{title}</h4>
                  {prediction.status === 'played' && (
                     <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${isPredictionCorrect ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-400'}`}>
-                        {isPredictionCorrect ? 'ACIERTO' : 'FALLO'}
+                        {isPredictionCorrect ? 'CORRECT' : 'INCORRECT'}
                     </span>
                  )}
             </div>
@@ -127,9 +127,30 @@ const MatchCard: React.FC<{
 
 const FinalsCard: React.FC<{ 
     finalMatch1: Prediction | null;
+    finalMatch2: Prediction | null;
+    finalMatch3: Prediction | null;
     cardRef: (el: HTMLDivElement | null) => void;
-}> = ({ finalMatch1, cardRef }) => {
-    const winner = finalMatch1?.status === 'played' ? finalMatch1.actual_winner : finalMatch1?.predicted_winner;
+}> = ({ finalMatch1, finalMatch2, finalMatch3, cardRef }) => {
+    const calculateWinner = () => {
+        let redWins = 0;
+        let blueWins = 0;
+
+        if (finalMatch1?.actual_winner === 'red') redWins++;
+        if (finalMatch1?.actual_winner === 'blue') blueWins++;
+
+        if (finalMatch2?.actual_winner === 'red') redWins++;
+        if (finalMatch2?.actual_winner === 'blue') blueWins++;
+
+        if (finalMatch3?.actual_winner === 'red') redWins++;
+        if (finalMatch3?.actual_winner === 'blue') blueWins++;
+
+        if (redWins >= 2) return 'red';
+        if (blueWins >= 2) return 'blue';
+        return null; // No winner yet
+    };
+
+    const winner = calculateWinner();
+
     return (
         <div ref={cardRef} className="bg-card border-2 border-accent/50 rounded-lg p-4 w-64 shadow-xl shadow-black/40 flex items-center gap-4 relative z-10">
             <div className="flex-grow">
@@ -224,7 +245,10 @@ export const PlayoffBracket: React.FC<{ predictions: Prediction[] }> = ({ predic
                     
                     {/* Finals */}
                     <div style={{gridArea: '6 / 7 / span 2 / span 1'}} className="flex items-center">
-                        <FinalsCard cardRef={setMatchRef('FINALS')} finalMatch1={findMatch(`${eventKey}_f1m1`)} />
+                        <FinalsCard cardRef={setMatchRef('FINALS')} 
+                                    finalMatch1={findMatch(`${eventKey}_f1m1`)} 
+                                    finalMatch2={findMatch(`${eventKey}_f1m2`)}
+                                    finalMatch3={findMatch(`${eventKey}_f1m3`)} />
                     </div>
                 </div>
             </div>
