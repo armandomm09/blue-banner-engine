@@ -89,6 +89,8 @@ export const PlayoffSimulations: React.FC<PlayoffSimulationsProps> = ({ eventKey
     if (actualWinnerTeams && actualWinnerTeams.length > 0 && sortedResults.length > 0) {
         const predictedWinnerAlliance = sortedResults[0];
         // Comparamos si los equipos del ganador real coinciden con los de la alianza mejor predicha
+        console.log("Predicted Winner Alliance:", predictedWinnerAlliance.teams.sort());
+        console.log("Actual Winner Teams:", actualWinnerTeams.sort());
         const isCorrect = JSON.stringify(predictedWinnerAlliance.teams.sort()) === JSON.stringify(actualWinnerTeams.sort());
 
         predictionCheck = {

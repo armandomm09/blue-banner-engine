@@ -685,10 +685,31 @@ const EventDetailPage: React.FC = () => {
           <PlayoffSimulations
             eventKey={eventKey!}
             actualWinnerTeams={(() => {
-              const finalMatch = predictions.find((p) => p.match_key.includes("_f1m"));
-              if (finalMatch && finalMatch.status === "played" && finalMatch.actual_winner) {
-                const winnerAllianceTeams = finalMatch.actual_winner !== 'tie' ? finalMatch.team_keys[finalMatch.actual_winner] : [];
-                return winnerAllianceTeams.map((teamKey) => parseInt(teamKey.replace("frc", ""), 10));
+              let redWins = 0;
+              let blueWins = 0;
+              let winnerAlliance: "red" | "blue" | null = null;
+            
+              const finalMatch1 = predictions.find((p) => p.match_key.includes("_f1m1"));
+              const finalMatch2 = predictions.find((p) => p.match_key.includes("_f1m2"));
+              const finalMatch3 = predictions.find((p) => p.match_key.includes("_f1m3"));
+            
+              if (finalMatch1?.actual_winner === 'red') redWins++;
+              if (finalMatch1?.actual_winner === 'blue') blueWins++;
+            
+              if (finalMatch2?.actual_winner === 'red') redWins++;
+              if (finalMatch2?.actual_winner === 'blue') blueWins++;
+            
+              if (finalMatch3?.actual_winner === 'red') redWins++;
+              if (finalMatch3?.actual_winner === 'blue') blueWins++;
+            
+              if (redWins >= 2) winnerAlliance = 'red';
+              if (blueWins >= 2) winnerAlliance = 'blue';
+            
+              if (winnerAlliance) {
+                const winningMatch = [finalMatch1, finalMatch2, finalMatch3].find(match => match?.actual_winner === winnerAlliance);
+                if (winningMatch) {
+                  return winningMatch.team_keys[winnerAlliance].map(teamKey => parseInt(teamKey.replace("frc", ""), 10));
+                }
               }
               return null;
             })()}
