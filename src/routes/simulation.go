@@ -25,13 +25,22 @@ import (
 func GetPlayoffSimulation(c *gin.Context) {
 	eventKey := c.Param("event_key")
 	nSims, err := strconv.Atoi(c.Param("n_sims"))
-	unSims := uint32(nSims)
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Cannot parse number of simulation string to integer",
 		})
 		return
 	}
+
+	if nSims > 10000 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Number of simulations exceeds the limit of 5000",
+		})
+		return
+	}
+	unSims := uint32(nSims)
+
 	log.Printf("Received API request for simulation: %s", eventKey)
 
 	grpcClient := c.MustGet("grpcClient").(pb.MatchpointClient)
