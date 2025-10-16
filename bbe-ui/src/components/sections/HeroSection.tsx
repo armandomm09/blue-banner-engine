@@ -86,7 +86,7 @@ interface HeroSectionProps {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10">
               <Link 
                 to="/matchpoint" 
-                className="px-8 py-3 bg-accent hover:bg-accent/90 text-white rounded-full font-bold text-lg transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-xl hover:shadow-accent/40 transform hover:-translate-y-1"
+                className="px-8 py-3 bg-accent/90 hover:bg-accent text-white rounded-full font-bold text-lg transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-xl hover:shadow-accent/40 transform hover:-translate-y-1"
               >
                 Start Predicting
               </Link>
@@ -95,6 +95,12 @@ interface HeroSectionProps {
                 className="px-8 py-3 border-2 border-accent/30 text-accent hover:bg-accent/10 rounded-full font-semibold text-lg transition-all duration-300 hover:border-accent"
               >
                 View API Docs
+              </Link>
+              <Link 
+                to="/radar" 
+                className="px-8 py-3 bg-accent/90 hover:bg-accent text-white rounded-full font-bold text-lg transition-all duration-300 shadow-lg shadow-accent/30 hover:shadow-xl hover:shadow-accent/40 transform hover:-translate-y-1"
+              >
+                Radarize Teams
               </Link>
             </div>
         </motion.div>

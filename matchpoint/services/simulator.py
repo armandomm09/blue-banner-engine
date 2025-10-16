@@ -24,7 +24,7 @@ class Simulator:
         return 0.5 + alpha * (p - 0.5)
 
     def determine_match_winner_fast(
-        self, red_alliance_number, blue_alliance_number, precomputed_probs
+        self, red_alliance_number, blue_alliance_number, precomputed_probs, alpha=0.2
     ):
         """
         Determines a winner based on pre-computed probabilities.
@@ -40,7 +40,7 @@ class Simulator:
 
         return (
             red_alliance_number
-            if random.random() < self.shrink(prob_red_wins, 0.2)
+            if random.random() < self.shrink(prob_red_wins, alpha)
             else blue_alliance_number
         )
 
@@ -85,7 +85,7 @@ class Simulator:
         # print("Pre-computation complete.")
         return win_probs
 
-    def simulate_frc_tournament_fast(self, precomputed_probs):
+    def simulate_frc_tournament_fast(self, precomputed_probs, alpha=0.2):
         """
         Runs a full simulation using the ultra-fast winner determination function.
         """
@@ -143,7 +143,7 @@ class Simulator:
         final_score = {upper_champion: 0, lower_champion: 0}
         for _ in range(3):  # Max 3 final matches
             match_winner = self.determine_match_winner_fast(
-                upper_champion, lower_champion, precomputed_probs
+                upper_champion, lower_champion, precomputed_probs, alpha
             )
             final_score[match_winner] += 1
             if final_score[match_winner] == 2:
@@ -151,7 +151,7 @@ class Simulator:
 
         return max(final_score, key=final_score.get)
 
-    def simulate_n_playoffs(self, event_key, n_times):
+    def simulate_n_playoffs(self, event_key, n_times, alpha=0.2):
 
         all_teams_flat, alliances = self.tba.get_alliances(event_key)
 
@@ -181,7 +181,42 @@ class Simulator:
         initial_time = time()
         for i in range(n_times):
 
-            winner = self.simulate_frc_tournament_fast(precomputed_win_probs)
+            winner = self.simulate_frc_tournament_fast(precomputed_win_probs, alpha)
+            results_tracker.add_win(winner)
+        end_time = time() - initial_time
+
+        return results_tracker
+
+    def theorize_n_playoffs(self, event_key, n_times, alliances, all_teams_flat, all_sb_stats=None, all_tba_stats=None, event_week=None, alpha=0.2):
+        if all_sb_stats is None or all_tba_stats is None:
+            print("Fetching stats from the web...")
+            event_week = Fetcher.tba.get_event_week(event_key)
+            if event_week is None:
+                event_week = 8  # Default week if not found
+
+            # Get all team stats from both sources concurrently
+            all_sb_stats = Fetcher.sb.get_all_sb_stats_for_event(event_key, all_teams_flat)
+            all_tba_stats = Fetcher.tba.get_all_tba_stats_for_event_from_single_call(
+                event_key, all_teams_flat
+            )
+            all_tba_stats = dict(sorted(all_tba_stats.items()))  # Sort for consistency
+        # --- END OF NETWORK CALLS ---
+        # print(all_tba_stats)
+        # Pass the pre-fetched data to the pre-computation function
+        precomputed_win_probs = self.precompute_win_probabilities(
+            alliances=alliances,
+            event_week=event_week,
+            all_sb_stats=all_sb_stats,
+            all_tba_stats=all_tba_stats,
+        )
+
+        results_tracker = SimulationTracker(
+            alliances=alliances, total_simulations=n_times, event_key=event_key
+        )
+        initial_time = time()
+        for i in range(n_times):
+
+            winner = self.simulate_frc_tournament_fast(precomputed_win_probs, alpha=alpha)
             results_tracker.add_win(winner)
         end_time = time() - initial_time
 

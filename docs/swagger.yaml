@@ -26,6 +26,16 @@ definitions:
       state_prov:
         type: string
     type: object
+  routes.TeamInfo:
+    properties:
+      alliance:
+        type: string
+      metrics:
+        additionalProperties: true
+        type: object
+      team_number:
+        type: integer
+    type: object
   types.MatchPrediction:
     properties:
       actual_scores:
@@ -139,6 +149,75 @@ info:
   title: Blue Banner Engine (BBE) API
   version: "1.0"
 paths:
+  /analytics/match/{match_key}/teamsinfo:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed analytics for all six teams participating in
+        a given FRC match from the Python service.
+      parameters:
+      - description: FRC Match Key (e.g., 2025mxle_f1m1)
+        in: path
+        name: match_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful retrieval of all team analytics
+          schema:
+            items:
+              $ref: '#/definitions/routes.TeamInfo'
+            type: array
+        "400":
+          description: Bad Request (e.g., missing match_key)
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error (e.g., gRPC call failed)
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get Analytics for All Teams in a Match
+      tags:
+      - analytics
+  /analytics/teams:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed analytics for a custom list of up to 6 teams
+        at a given event.
+      parameters:
+      - description: FRC Event Key (e.g., 2025mxle)
+        in: query
+        name: event_key
+        required: true
+        type: string
+      - description: Comma-separated list of team numbers (e.g., 3478,4400,4775)
+        in: query
+        name: teams
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful retrieval of custom team analytics
+          schema:
+            items:
+              $ref: '#/definitions/routes.TeamInfo'
+            type: array
+        "400":
+          description: Bad Request (e.g., missing params, too many teams)
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error (e.g., gRPC call failed)
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get Analytics for a Custom List of Teams
+      tags:
+      - analytics
   /events/{year}:
     get:
       description: Retrieves a simplified list of all FRC events for a given year

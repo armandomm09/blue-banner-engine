@@ -11,6 +11,8 @@ import (
 
 	"blue-banner-engine/docs"
 	pb "blue-banner-engine/protos"
+	pb_analytics "blue-banner-engine/protos/analytics"
+
 	"path/filepath"
 
 	"github.com/gin-contrib/cors"
@@ -103,6 +105,7 @@ func main() {
 		grpcClient: pb.NewMatchpointClient(conn),
 		tbaApiKey:  tbaKey,
 	}
+	analyticsClient := pb_analytics.NewAnalyticsClient(conn)
 
 	router := gin.Default()
 
@@ -128,6 +131,7 @@ func main() {
 		routes.RegisterMatchpointRoutes(v1, handler.grpcClient, tbaKey)
 		routes.RegisterTbaRoutes(v1, tbaKey)
 		routes.RegisterSimulationRoutes(v1, handler.grpcClient)
+		routes.RegisterAnalyticsRoutes(v1, analyticsClient)
 
 	}
 

@@ -1,0 +1,48 @@
+// protos/analytics.proto
+
+syntax = "proto3";
+
+package matchpoint;
+
+option go_package = "blue-banner-engine/protos/analytics"; // Asegúrate que esta ruta coincida con tu go.mod
+
+service Analytics {
+  rpc GetMatchAnalytics(GetMatchAnalyticsRequest) returns (GetMatchAnalyticsResponse);
+  
+  // --- NUEVO RPC ---
+  // Obtiene la información analítica para una lista personalizada de equipos en un evento.
+  rpc GetCustomTeamsAnalytics(GetCustomTeamsAnalyticsRequest) returns (GetCustomTeamsAnalyticsResponse);
+}
+
+message GetMatchAnalyticsRequest {
+  string match_key = 1;
+}
+
+message GetMatchAnalyticsResponse {
+  // Corresponde a 'ordered_match_features'
+  // Es un mapa de nombre_de_feature -> valor
+  // e.g., "red1_epa" -> 75.2
+  map<string, double> features = 1;
+
+  // Corresponde a 'team_mapping'
+  // Es un mapa de posición -> número de equipo
+  // e.g., "red1" -> 3478
+  map<string, int32> team_mapping = 2;
+}
+
+message GetCustomTeamsAnalyticsRequest {
+  string event_key = 1;
+  repeated int32 team_numbers = 2; // Lista de equipos a analizar
+}
+
+message GetCustomTeamsAnalyticsResponse {
+  // Devuelve una lista de objetos TeamAnalytics, uno por cada equipo solicitado.
+  repeated TeamAnalytics teams = 1; 
+}
+
+// Mensaje reutilizado para la data de un solo equipo
+message TeamAnalytics {
+  int32 team_number = 1;
+  string name = 2;
+  map<string, double> metrics = 3;
+}

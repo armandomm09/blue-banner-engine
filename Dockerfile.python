@@ -12,6 +12,9 @@ COPY ./matchpoint /app/matchpoint
 COPY ./models /app/models
 COPY ./matchpoint/data /app/matchpoint/data
 
+RUN mkdir -p /tmp/.matplotlib && chown -R app:app /tmp/.matplotlib /app
+ENV MPLCONFIGDIR=/tmp/.matplotlib
+
 RUN chown -R app:app /app
 
 USER app

@@ -37,7 +37,8 @@ class MatchpointPredictor:
             Optional[MatchPrediction]: A data object containing the prediction,
                                        probabilities, scores, and SHAP analysis.
         """
-        features_dict = Fetcher.get_match_features(match_key)
+        features_dict, team_mapping = Fetcher.get_match_features(match_key)
+        print("team mapping", team_mapping)
         if not features_dict:
             raise ValueError(f"Could not fetch features for match {match_key}")
         
@@ -49,7 +50,7 @@ class MatchpointPredictor:
         blue_score = loader.blue_regressor.predict(features_df)[0]
         
         # SHAP Analysis
-        shap_result = ShapAnalyzer.get_shap_analysis(features_df)
+        shap_result = ShapAnalyzer.get_shap_analysis(features_df, team_mapping)
         
         # Assemble result
         prob_red_win, prob_blue_win = win_probs[0], win_probs[1]

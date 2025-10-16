@@ -20,7 +20,7 @@ class Fetcher:
     tba = TBAService()
 
     @staticmethod
-    def get_match_features(match_key: str) -> dict | None:
+    def get_match_features(match_key: str) -> tuple[dict | None, dict]:
         """
         Fetches and compiles a feature set for a specific match.
 
@@ -32,9 +32,9 @@ class Fetcher:
             match_key (str): The key for the match (e.g., '2023cada_qm1').
 
         Returns:
-            dict | None: A dictionary with ordered features for the match.
-                        Returns None if an error occurs during data fetching
-                        or processing.
+            tuple[dict | None, dict]: A tuple containing:
+                - A dictionary with ordered features for the match (or None if error)
+                - A dictionary mapping alliance positions to team numbers
         """
         event_key = match_key.split("_")[0]
 
@@ -48,6 +48,14 @@ class Fetcher:
 
             red_teams = [team[3:] for team in alliances["red"]["team_keys"]]
             blue_teams = [team[3:] for team in alliances["blue"]["team_keys"]]
+
+            # Create team mapping dictionary
+            team_mapping = {
+                f"red{i+1}": int(team) for i, team in enumerate(red_teams)
+            }
+            team_mapping.update({
+                f"blue{i+1}": int(team) for i, team in enumerate(blue_teams)
+            })
 
             event_week = Fetcher.tba.get_event_week(event_key)
 
@@ -89,7 +97,7 @@ class Fetcher:
                 feature: raw_features.get(feature, 0.0) for feature in FEATURE_ORDER
             }
 
-            return ordered_match_features
+            return ordered_match_features, team_mapping
 
         except requests.exceptions.RequestException as e:
             print(f"Error fetching data for match {match_key}: {e}")
@@ -135,13 +143,12 @@ class Fetcher:
                 if stat_name not in ["team", "event"]:
                     raw_features[f"blue{i+1}_{stat_name}"] = value
                     
-        # print("FEATURES", json.dumps(raw_features, indent=4))
 
         # Ensure all features from FEATURE_ORDER are present, defaulting to 0.0
         ordered_match_features = {
             feature: raw_features.get(feature, 0.0) for feature in FEATURE_ORDER
         }
-        
+        # print(f"\n\nORDERED: {ordered_match_features}\n\n")
         missing_features = [
             feature
             for feature in FEATURE_ORDER
@@ -228,3 +235,38 @@ class Fetcher:
         except KeyError as e:
             print(f"ERROR: Missing key while fetching team data for {event_key}: {e}")
             return {}
+        
+    @staticmethod
+    def get_custom_teams_features(event_key: str, teams: list[int]) -> list[dict] | None:
+        """
+        Obtiene y compila un conjunto de características para una lista específica de equipos.
+        """
+        try:
+            team_strings = [str(t) for t in teams]
+            # Obtenemos todos los datos de Statbotics y TBA en llamadas masivas
+            sb_stats_dict = Fetcher.sb.get_all_sb_stats_for_event(event_key, tuple(team_strings))
+            tba_stats_dict = Fetcher.tba.get_all_tba_stats_for_event_from_single_call(event_key, tuple(team_strings))
+
+            # Obtenemos los nombres de los equipos
+            # (Esto puede requerir una nueva función en tu clase TBA para obtener varios equipos a la vez)
+            # team_names = Fetcher.tba.get_team_names(tuple(team_strings))
+
+            results = []
+            for team_num_str in team_strings:
+                # Combinamos las estadísticas para cada equipo
+                combined_stats = (sb_stats_dict.get(team_num_str, {}) or {}) | (tba_stats_dict.get(team_num_str, {}) or {})
+                
+                # Filtramos metadatos que no queremos
+                metrics = {k: v for k, v in combined_stats.items() if k not in ["team", "event"]}
+
+                results.append({
+                    "team_number": int(team_num_str),
+                    "name": team_num_str,
+                    "metrics": metrics,
+                })
+            
+            return results
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching bulk data for event {event_key}: {e}")
+            return None

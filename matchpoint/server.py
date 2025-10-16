@@ -5,6 +5,9 @@ import sys
 from datetime import datetime, timezone
 from concurrent import futures
 from google.protobuf.timestamp_pb2 import Timestamp
+
+from matchpoint.generated import analytics_pb2_grpc
+from matchpoint.services.analytics_service import AnalyticsService
 from .generated import prediction_pb2
 from .generated import prediction_pb2_grpc
 from .services.mp_prediction import MatchpointPredictor, MatchPrediction
@@ -190,6 +193,9 @@ def serve():
     """
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     prediction_pb2_grpc.add_MatchpointServicer_to_server(PredictorServicer(), server)
+    analytics_pb2_grpc.add_AnalyticsServicer_to_server(
+        AnalyticsService(), server
+    )
     server.add_insecure_port("[::]:50051")
     print("gRPC Matchpoint server started on port 50051.")
     server.start()

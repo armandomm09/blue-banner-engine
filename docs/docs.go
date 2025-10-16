@@ -24,6 +24,107 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/analytics/match/{match_key}/teamsinfo": {
+            "get": {
+                "description": "Retrieves detailed analytics for all six teams participating in a given FRC match from the Python service.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get Analytics for All Teams in a Match",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FRC Match Key (e.g., 2025mxle_f1m1)",
+                        "name": "match_key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval of all team analytics",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.TeamInfo"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request (e.g., missing match_key)",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error (e.g., gRPC call failed)",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/analytics/teams": {
+            "get": {
+                "description": "Retrieves detailed analytics for a custom list of up to 6 teams at a given event.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get Analytics for a Custom List of Teams",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FRC Event Key (e.g., 2025mxle)",
+                        "name": "event_key",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated list of team numbers (e.g., 3478,4400,4775)",
+                        "name": "teams",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful retrieval of custom team analytics",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.TeamInfo"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request (e.g., missing params, too many teams)",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error (e.g., gRPC call failed)",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/events/{year}": {
             "get": {
                 "description": "Retrieves a simplified list of all FRC events for a given year from The Blue Alliance.",
@@ -228,6 +329,21 @@ const docTemplate = `{
                 },
                 "state_prov": {
                     "type": "string"
+                }
+            }
+        },
+        "routes.TeamInfo": {
+            "type": "object",
+            "properties": {
+                "alliance": {
+                    "type": "string"
+                },
+                "metrics": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "team_number": {
+                    "type": "integer"
                 }
             }
         },

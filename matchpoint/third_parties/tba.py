@@ -141,6 +141,7 @@ class TBAService:
         Devuelve: {'5887': {'opr':..,'ccwm':..,..}, '3478': {...}}
         """
         if not isinstance(team_keys, tuple):
+            print(type(team_keys), team_keys)
             raise TypeError("team_keys must be a tuple[str, ...]; call with tuple(team_keys) if needed")
 
         # 1 llamada para todo el evento
@@ -162,3 +163,24 @@ class TBAService:
             out[team_id] = per_team
 
         return out
+    
+    @staticmethod
+    def get_ranked_teams(event_key: str) -> Iterable[int]:
+        """
+        Fetches the list of team keys ranked by their performance at the event.
+
+        Args:
+            event_key (str): The event key.
+
+        Returns:
+            Iterable[str]: A list of team keys in ranked order.
+        """
+        try:
+            req = requests.get(f"{TBA_BASE_URL}/event/{event_key}/rankings", TBA_HEADER)
+            # req.raise_for_status()
+            res = req.json()
+            rankings = res.get('rankings', [])
+            return [int(team_info['team_key'][3:]) for team_info in rankings]
+        except requests.ConnectionError as e:
+            print(f"Error fetching {event_key} rankings:\n{e}")
+            return []

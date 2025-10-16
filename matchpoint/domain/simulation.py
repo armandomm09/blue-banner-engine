@@ -188,6 +188,15 @@ class SimulationTracker:
             "results": results_data
         }
         return json.dumps(output_dict, indent=indent)
+    
+    def get_alliance_winner(self):
+        """Devuelve la alianza con más victorias (o None si no hay datos)."""
+        if not self._win_counts:
+            return None
+        max_wins = max(self._win_counts.values())
+        winners = [num for num, count in self._win_counts.items() if count == max_wins]
+        # Si hay empate, devuelve la primera (o podrías cambiar la lógica)
+        return self._alliances[winners[0]-1] 
 
     def __str__(self) -> str:
         """Representación legible (tabla) — construida desde alliances/win_counts."""
