@@ -105,6 +105,8 @@ const FilterControls: React.FC<{
   matchTypes: string[];
   selectedMatchType: string;
   selectedMatchNumber: string;
+  selectedTeamNumber: string;
+  onTeamNumberChange: (number: string) => void;
   onMatchTypeChange: (type: string) => void;
   onMatchNumberChange: (number: string) => void;
   onClearFilters: () => void;
@@ -112,6 +114,8 @@ const FilterControls: React.FC<{
   matchTypes,
   selectedMatchType,
   selectedMatchNumber,
+  selectedTeamNumber,
+  onTeamNumberChange,
   onMatchTypeChange,
   onMatchNumberChange,
   onClearFilters,
@@ -149,6 +153,17 @@ const FilterControls: React.FC<{
           min="1"
         />
       </div>
+      <label className="text-text-muted text-sm font-medium">
+          Filter by Team Number:
+        </label>
+      <input
+          type="number"
+          value={selectedTeamNumber}
+          onChange={(e) => onTeamNumberChange(e.target.value)}
+          placeholder="Team Number"
+          className="bg-background border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent w-24"
+          min="1"
+        />
 
       <button
         onClick={onClearFilters}
@@ -303,6 +318,7 @@ const EventDetailPage: React.FC = () => {
   // Filter state
   const [selectedMatchType, setSelectedMatchType] = useState<string>("");
   const [selectedMatchNumber, setSelectedMatchNumber] = useState<string>("");
+  const [selectedTeamNumber, setSelectedTeamNumber] = useState<string>("");
 
   useEffect(() => {
     if (!eventKey) {
@@ -398,7 +414,14 @@ const EventDetailPage: React.FC = () => {
         !selectedMatchNumber ||
         parsed.matchNumber === parseInt(selectedMatchNumber);
 
-      return matchesType && matchesNumber;
+        const matchesTeam = 
+        !selectedTeamNumber || 
+        p.team_keys.red.includes(`frc${selectedTeamNumber}`) || 
+        p.team_keys.blue.includes(`frc${selectedTeamNumber}`);
+
+      // Combina todas las condiciones
+      return matchesType && matchesNumber && matchesTeam;
+
     })
     .sort((a, b) => {
       const parsedA = parseMatchKey(a.match_key);
@@ -442,6 +465,8 @@ const EventDetailPage: React.FC = () => {
   const handleMatchNumberChange = (number: string) => {
     setSelectedMatchNumber(number);
   };
+
+  
 
   const handleClearFilters = () => {
     setSelectedMatchType("");
@@ -525,6 +550,8 @@ const EventDetailPage: React.FC = () => {
           matchTypes={matchTypes}
           selectedMatchType={selectedMatchType}
           selectedMatchNumber={selectedMatchNumber}
+          selectedTeamNumber={selectedTeamNumber}
+          onTeamNumberChange={setSelectedTeamNumber}
           onMatchTypeChange={handleMatchTypeChange}
           onMatchNumberChange={handleMatchNumberChange}
           onClearFilters={handleClearFilters}
