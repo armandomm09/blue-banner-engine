@@ -24,6 +24,11 @@ type TbaEvent struct {
 	EndDate   string `json:"end_date"`
 }
 
+// TeamKeysEvent representa la respuesta de claves de equipo para un evento
+type TeamKeysEvent struct {
+	TeamKeys []string `json:"team_keys"`
+}
+
 // ErrorResponse envuelve un mensaje de error
 type ErrorResponse struct {
 	Error string `json:"error"`
@@ -76,6 +81,53 @@ func GetAllEvents(c *gin.Context) {
 	c.JSON(http.StatusOK, events)
 }
 
+// GetAllTeamsByEvent godoc
+// @Summary      Get All Teams for an Event
+// @Description  Retrieves a list of all team keys participating in a given FRC event from The Blue Alliance.
+// @Tags         events
+// @Produce      json
+// @Param        eventKey   path      string  true  "FRC Event Key (e.g., 2025mexas)"
+// @Success      200    {array}   string
+// @Failure      500    {object}  ErrorResponse
+// @Router       /events/teams/{eventKey} [get]
+func GetAllTeamsByEvent(c *gin.Context) {
+	eventKey := c.Param("eventKey")
+
+	tbaApiKey := c.MustGet("tbaApiKey").(string)
+	if tbaApiKey == "" {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "TBA_API_KEY is not configured on the server"})
+		return
+	}
+
+	url := fmt.Sprintf("https://www.thebluealliance.com/api/v3/event/%s/teams/keys", eventKey)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("X-TBA-Auth-Key", tbaApiKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to contact The Blue Alliance API"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("TBA API returned status %s: %s", resp.Status, string(bodyBytes))
+		c.JSON(resp.StatusCode, ErrorResponse{Error: "Received an error from The Blue Alliance API"})
+		return
+	}
+
+	var teamKeys []string
+	if err := json.NewDecoder(resp.Body).Decode(&teamKeys); err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to parse response from The Blue Alliance API"})
+		return
+	}
+
+	c.JSON(http.StatusOK, teamKeys)
+
+}
+
 func RegisterTbaRoutes(router *gin.RouterGroup, tbaApiKey string) {
 	router.Use(func(c *gin.Context) {
 		c.Set("tbaApiKey", tbaApiKey)
@@ -83,4 +135,5 @@ func RegisterTbaRoutes(router *gin.RouterGroup, tbaApiKey string) {
 	})
 
 	router.GET("/events/:year", GetAllEvents)
+	router.GET("/events/teams/:eventKey", GetAllTeamsByEvent)
 }

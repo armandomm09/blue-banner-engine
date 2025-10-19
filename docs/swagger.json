@@ -118,6 +118,44 @@
                 }
             }
         },
+        "/events/teams/{eventKey}": {
+            "get": {
+                "description": "Retrieves a list of all team keys participating in a given FRC event from The Blue Alliance.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get All Teams for an Event",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FRC Event Key (e.g., 2025mexas)",
+                        "name": "eventKey",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/events/{year}": {
             "get": {
                 "description": "Retrieves a simplified list of all FRC events for a given year from The Blue Alliance.",

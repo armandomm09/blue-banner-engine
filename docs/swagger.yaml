@@ -244,6 +244,32 @@ paths:
       summary: Get All Events for a Year
       tags:
       - events
+  /events/teams/{eventKey}:
+    get:
+      description: Retrieves a list of all team keys participating in a given FRC
+        event from The Blue Alliance.
+      parameters:
+      - description: FRC Event Key (e.g., 2025mexas)
+        in: path
+        name: eventKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get All Teams for an Event
+      tags:
+      - events
   /predict/event/{event_key}:
     get:
       consumes:
