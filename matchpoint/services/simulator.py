@@ -20,7 +20,7 @@ class Simulator:
         Shrink probability p toward 0.5 by fraction alpha (0 = no shrink, 1 = full shrink).
         alpha should be between 0 and 1.
         """
-        alpha = 1 - alpha
+        alpha = 1 - 0.4
         return 0.5 + alpha * (p - 0.5)
 
     def determine_match_winner_fast(
