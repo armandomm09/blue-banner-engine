@@ -162,6 +162,8 @@ class MatchpointPredictor:
                 valid_matches_for_prediction.append(match)
             except KeyError as e:
                 print(f"WARN: Skipping match {match.get('key')} due to missing team data: {e}")
+            except IndexError as e:
+                print(f"WARN: Skipping prediction {match.get('key')} due to incomplete alliance data: {e}")
         
         if not features_list:
             print("Could not assemble features for any match.")
