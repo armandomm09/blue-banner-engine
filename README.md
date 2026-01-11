@@ -101,6 +101,8 @@ BBE is designed with a modern, decoupled, multi-container architecture, enabling
 
 For detailed instructions on running Blue Banner Engine locally or contributing to the project, please see our [CONTRIBUTING.md](https://github.com/armandomm09/blue-banner-engine?tab=contributing-ov-file) guide.
 
+Configuration for the Go API is centralized in `src/config`, which loads `.env` files, environment variables, and command-line flags in one place.
+
 
 
 ## License
@@ -113,6 +115,5 @@ This project is licensed under the MIT License - see the `LICENSE` file for deta
 
 -   **Pablo Armando Mac Beath Milián**
 -   **Rene Cumplido Feregrino**
-
 
 

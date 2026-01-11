@@ -17,12 +17,12 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"blue-banner-engine/src/config"
 	"blue-banner-engine/src/routes"
 )
 
@@ -80,22 +80,17 @@ type TbaEvent struct {
 // @BasePath  /api/v1
 func main() {
 
-	err := godotenv.Load() // Load .env file from current directory
+	cfg, err := config.Load()
 	if err != nil {
-		log.Println("Error loading .env file")
+		log.Fatalf("Config error: %v", err)
 	}
-	tbaKey := os.Getenv("TBA_API_KEY")
-	if tbaKey == "" {
+
+	if cfg.TBAAPIKey == "" {
 		log.Println("WARNING: TBA_API_KEY environment variable not set. Real match data will not be available.")
 	}
 
-	grpcServerAddress := os.Getenv("GRPC_SERVER_ADDRESS")
-	if grpcServerAddress == "" {
-		grpcServerAddress = "localhost:50051"
-	}
-
 	// gRPC Client Configuration
-	conn, err := grpc.Dial(grpcServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(cfg.GRPCServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -103,7 +98,7 @@ func main() {
 
 	handler := &PredictionHandler{
 		grpcClient: pb.NewMatchpointClient(conn),
-		tbaApiKey:  tbaKey,
+		tbaApiKey:  cfg.TBAAPIKey,
 	}
 	analyticsClient := pb_analytics.NewAnalyticsClient(conn)
 
@@ -119,17 +114,13 @@ func main() {
 	}))
 
 	// Configure Swagger host based on environment variable
-	swaggerHost := os.Getenv("SWAGGER_HOST")
-	if swaggerHost == "" {
-		swaggerHost = "localhost:8080" // default
-	}
-	docs.SwaggerInfo.Host = swaggerHost
+	docs.SwaggerInfo.Host = cfg.SwaggerHost
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
 	v1 := router.Group("/api/v1")
 	{
-		routes.RegisterMatchpointRoutes(v1, handler.grpcClient, tbaKey)
-		routes.RegisterTbaRoutes(v1, tbaKey)
+		routes.RegisterMatchpointRoutes(v1, handler.grpcClient, cfg.TBAAPIKey)
+		routes.RegisterTbaRoutes(v1, cfg.TBAAPIKey)
 		routes.RegisterSimulationRoutes(v1, handler.grpcClient)
 		routes.RegisterAnalyticsRoutes(v1, analyticsClient)
 
@@ -181,11 +172,9 @@ func main() {
 	log.Println("Access the UI at https://bbe-frc.com")
 	log.Println("API documentation at https://bbe-frc.com/swagger/index.html")
 
-	if os.Getenv("PRODUCTION") == "true" &&
-		os.Getenv("CERT_PATH") != "" &&
-		os.Getenv("KEY_PATH") != "" {
+	if cfg.Production {
 		log.Println("Running on production")
-		router.RunTLS(":8080", os.Getenv("CERT_PATH"), os.Getenv("KEY_PATH"))
+		router.RunTLS(":8080", cfg.CertPath, cfg.KeyPath)
 	} else {
 		log.Println("Running on testing")
 

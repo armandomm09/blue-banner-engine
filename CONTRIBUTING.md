@@ -59,6 +59,8 @@ SWAGGER_HOST=localhost:8080
 VITE_TESTING=true
 ```
 
+The Go API configuration is centralized in `src/config`. It loads `.env` files, environment variables, and command-line flags. You can override settings with flags such as `--grpc-server-address`, `--swagger-host`, or `--config /path/to/.env` when running the API.
+
 #### 3. Manually Download Project Assets (Models & Data)
 This project requires pre-trained models and a data file to function correctly. You must download these assets manually.
 
