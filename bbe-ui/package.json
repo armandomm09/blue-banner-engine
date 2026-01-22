@@ -12,9 +12,12 @@
   },
   "dependencies": {
     "@g-loot/react-tournament-brackets": "^1.0.31-rc",
+    "@supabase/supabase-js": "^2.90.1",
     "@tailwindcss/vite": "^4.1.11",
+    "@tanstack/react-virtual": "^3.13.18",
     "framer-motion": "^12.23.11",
     "gsap": "^3.13.0",
+    "keycloak-js": "^26.2.2",
     "ogl": "^1.0.11",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

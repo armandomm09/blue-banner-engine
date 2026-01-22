@@ -6,13 +6,13 @@ heatseeker/*
 
 __pycache__
 
-models
 
 .env
 
 .DS_Store
 
-
+supabase/
+models/
 docker-compose.prod.yml
 
 redeploy.sh

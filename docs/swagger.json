@@ -194,6 +194,29 @@
                 }
             }
         },
+        "/metrics/metadata": {
+            "get": {
+                "description": "Returns a list of all available metrics for visualization.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "metrics"
+                ],
+                "summary": "Get Metric Metadata",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.MetricDefinition"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/predict/event/{event_key}": {
             "get": {
                 "description": "Retrieves all match predictions for a given FRC event key from the BBE prediction service.",
@@ -320,13 +343,236 @@
                     }
                 }
             }
+        },
+        "/statbotics/team/{teamNumber}/metrics": {
+            "get": {
+                "description": "Fetches EPA and other metrics from Statbotics for a specific team and year.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "metrics"
+                ],
+                "summary": "Get Statbotics Metrics for a Team",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Team Number",
+                        "name": "teamNumber",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Year (default: current year)",
+                        "name": "year",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/clients.TeamYearMetric"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tba/team/{teamNumber}/metrics": {
+            "get": {
+                "description": "Fetches rankings and OPRs for a team at a specific event.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "metrics"
+                ],
+                "summary": "Get TBA Metrics for a Team",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Team Number",
+                        "name": "teamNumber",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Event Key",
+                        "name": "eventKey",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "clients.TeamYearMetric": {
+            "type": "object",
+            "properties": {
+                "competing": {
+                    "type": "object",
+                    "properties": {
+                        "next_event_key": {
+                            "type": "string"
+                        },
+                        "next_event_name": {
+                            "type": "string"
+                        },
+                        "next_event_week": {
+                            "type": "integer"
+                        },
+                        "this_week": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "country": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "epa": {
+                    "type": "object",
+                    "properties": {
+                        "auto_points": {
+                            "type": "number"
+                        },
+                        "endgame_points": {
+                            "type": "number"
+                        },
+                        "mean": {
+                            "type": "number"
+                        },
+                        "rp_1": {
+                            "type": "number"
+                        },
+                        "rp_2": {
+                            "type": "number"
+                        },
+                        "rp_3": {
+                            "type": "number"
+                        },
+                        "teleop_points": {
+                            "type": "number"
+                        },
+                        "tiebreaker_points": {
+                            "type": "number"
+                        },
+                        "total_points": {
+                            "type": "number"
+                        },
+                        "unitless": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "record": {
+                    "type": "object",
+                    "properties": {
+                        "count": {
+                            "type": "integer"
+                        },
+                        "losses": {
+                            "type": "integer"
+                        },
+                        "ties": {
+                            "type": "integer"
+                        },
+                        "winrate": {
+                            "type": "number"
+                        },
+                        "wins": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "rookie_year": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "team": {
+                    "type": "integer"
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
         "routes.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "routes.MetricDefinition": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "dimensions": {
+                    "description": "\"time\" (match-based), \"single\" (event-based)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "source": {
+                    "description": "\"tba\", \"statbotics\", \"pit\", \"match\"",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "\"number\", \"text\", \"boolean\", \"categorical\"",
                     "type": "string"
                 }
             }

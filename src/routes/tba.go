@@ -128,6 +128,85 @@ func GetAllTeamsByEvent(c *gin.Context) {
 
 }
 
+// @Summary      Get TBA Metrics for a Team
+// @Description  Fetches rankings and OPRs for a team at a specific event.
+// @Tags         metrics
+// @Produce      json
+// @Param        teamNumber path      int     true  "Team Number"
+// @Param        eventKey   query     string  true  "Event Key"
+// @Success      200        {object}  map[string]interface{}
+// @Failure      400        {object}  ErrorResponse
+// @Failure      500        {object}  ErrorResponse
+// @Router       /tba/team/{teamNumber}/metrics [get]
+func GetTeamMetrics(c *gin.Context) {
+	teamNumber := c.Param("teamNumber")
+	eventKey := c.Query("eventKey")
+
+	if eventKey == "" {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Error: "eventKey is required"})
+		return
+	}
+
+	tbaApiKey := c.MustGet("tbaApiKey").(string)
+
+	// Fetch Event Status for the team (includes rank, record, etc.)
+	url := fmt.Sprintf("https://www.thebluealliance.com/api/v3/team/frc%s/event/%s/status", teamNumber, eventKey)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("X-TBA-Auth-Key", tbaApiKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to contact TBA"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		c.JSON(resp.StatusCode, ErrorResponse{Error: "TBA Error"})
+		return
+	}
+
+	var status map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&status)
+
+	// Fetch Event OPRs (all teams) and filter
+	// This is inefficient if done per-team repeatedly, but simple for now.
+	// Caching should be added later.
+	urlOprs := fmt.Sprintf("https://www.thebluealliance.com/api/v3/event/%s/oprs", eventKey)
+	reqOprs, _ := http.NewRequest("GET", urlOprs, nil)
+	reqOprs.Header.Set("X-TBA-Auth-Key", tbaApiKey)
+	respOprs, err := client.Do(reqOprs)
+
+	var oprs map[string]interface{}
+	if err == nil && respOprs.StatusCode == http.StatusOK {
+		json.NewDecoder(respOprs.Body).Decode(&oprs)
+		respOprs.Body.Close()
+	}
+
+	// Construct result
+	result := gin.H{
+		"status": status,
+		"oprs":   gin.H{},
+	}
+
+	// Extract OPR/DPR/CCWM for this team
+	teamKey := fmt.Sprintf("frc%s", teamNumber)
+	if oprs != nil {
+		if val, ok := oprs["oprs"].(map[string]interface{})[teamKey]; ok {
+			result["oprs"].(gin.H)["opr"] = val
+		}
+		if val, ok := oprs["dprs"].(map[string]interface{})[teamKey]; ok {
+			result["oprs"].(gin.H)["dpr"] = val
+		}
+		if val, ok := oprs["ccwms"].(map[string]interface{})[teamKey]; ok {
+			result["oprs"].(gin.H)["ccwm"] = val
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func RegisterTbaRoutes(router *gin.RouterGroup, tbaApiKey string) {
 	router.Use(func(c *gin.Context) {
 		c.Set("tbaApiKey", tbaApiKey)
@@ -136,4 +215,5 @@ func RegisterTbaRoutes(router *gin.RouterGroup, tbaApiKey string) {
 
 	router.GET("/events/:year", GetAllEvents)
 	router.GET("/events/teams/:eventKey", GetAllTeamsByEvent)
+	router.GET("/tba/team/:teamNumber/metrics", GetTeamMetrics)
 }

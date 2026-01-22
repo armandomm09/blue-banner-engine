@@ -1,8 +1,5 @@
-// src/components/PredictionDashboard.tsx
-
 import React, { useState } from "react";
 
-// Define el tipo de dato para una sola predicción
 interface Prediction {
   match_key: string;
   predicted_winner: "red" | "blue";
@@ -10,8 +7,7 @@ interface Prediction {
   predicted_scores: { red: number; blue: number };
 }
 
-// Componente reutilizable para mostrar un ícono de carga
-const LoadingSpinner: React.FC = () => (
+export const LoadingSpinner: React.FC = () => (
   <svg
     className="animate-spin -ml-1 mr-3 h-5 w-5 text-background"
     xmlns="http://www.w3.org/2000/svg"
@@ -34,9 +30,7 @@ const LoadingSpinner: React.FC = () => (
   </svg>
 );
 
-// Componente principal del dashboard de predicciones
 export const PredictionDashboard: React.FC = () => {
-  // States para la predicción de un solo partido
   const [matchKey, setMatchKey] = useState<string>("2024mxle_qm1");
   const [singlePrediction, setSinglePrediction] = useState<Prediction | null>(
     null
@@ -44,13 +38,11 @@ export const PredictionDashboard: React.FC = () => {
   const [isMatchLoading, setIsMatchLoading] = useState<boolean>(false);
   const [matchError, setMatchError] = useState<string | null>(null);
 
-  // States para la predicción de un evento completo
   const [eventKey, setEventKey] = useState<string>("2024mxle");
   const [eventPredictions, setEventPredictions] = useState<Prediction[]>([]);
   const [isEventLoading, setIsEventLoading] = useState<boolean>(false);
   const [eventError, setEventError] = useState<string | null>(null);
 
-  // Handler para la predicción de un solo partido
   const handleMatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsMatchLoading(true);
@@ -75,7 +67,6 @@ export const PredictionDashboard: React.FC = () => {
     }
   };
 
-  // Handler para la predicción de un evento completo
   const handleEventSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsEventLoading(true);
@@ -100,7 +91,6 @@ export const PredictionDashboard: React.FC = () => {
     }
   };
 
-  // JSX para el dashboard
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 text-left">
       {/* Columna 1: Predicción de un Solo Partido */}

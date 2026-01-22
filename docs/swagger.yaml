@@ -1,8 +1,92 @@
 basePath: /api/v1
 definitions:
+  clients.TeamYearMetric:
+    properties:
+      competing:
+        properties:
+          next_event_key:
+            type: string
+          next_event_name:
+            type: string
+          next_event_week:
+            type: integer
+          this_week:
+            type: boolean
+        type: object
+      country:
+        type: string
+      district:
+        type: string
+      epa:
+        properties:
+          auto_points:
+            type: number
+          endgame_points:
+            type: number
+          mean:
+            type: number
+          rp_1:
+            type: number
+          rp_2:
+            type: number
+          rp_3:
+            type: number
+          teleop_points:
+            type: number
+          tiebreaker_points:
+            type: number
+          total_points:
+            type: number
+          unitless:
+            type: number
+        type: object
+      name:
+        type: string
+      record:
+        properties:
+          count:
+            type: integer
+          losses:
+            type: integer
+          ties:
+            type: integer
+          winrate:
+            type: number
+          wins:
+            type: integer
+        type: object
+      rookie_year:
+        type: integer
+      state:
+        type: string
+      team:
+        type: integer
+      year:
+        type: integer
+    type: object
   routes.ErrorResponse:
     properties:
       error:
+        type: string
+    type: object
+  routes.MetricDefinition:
+    properties:
+      description:
+        type: string
+      dimensions:
+        description: '"time" (match-based), "single" (event-based)'
+        items:
+          type: string
+        type: array
+      key:
+        type: string
+      name:
+        type: string
+      source:
+        description: '"tba", "statbotics", "pit", "match"'
+        type: string
+      type:
+        description: '"number", "text", "boolean", "categorical"'
         type: string
     type: object
   routes.TbaEvent:
@@ -270,6 +354,21 @@ paths:
       summary: Get All Teams for an Event
       tags:
       - events
+  /metrics/metadata:
+    get:
+      description: Returns a list of all available metrics for visualization.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.MetricDefinition'
+            type: array
+      summary: Get Metric Metadata
+      tags:
+      - metrics
   /predict/event/{event_key}:
     get:
       consumes:
@@ -357,4 +456,69 @@ paths:
       summary: Get Single Match Prediction with SHAP
       tags:
       - predictions
+  /statbotics/team/{teamNumber}/metrics:
+    get:
+      description: Fetches EPA and other metrics from Statbotics for a specific team
+        and year.
+      parameters:
+      - description: Team Number
+        in: path
+        name: teamNumber
+        required: true
+        type: integer
+      - description: 'Year (default: current year)'
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/clients.TeamYearMetric'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get Statbotics Metrics for a Team
+      tags:
+      - metrics
+  /tba/team/{teamNumber}/metrics:
+    get:
+      description: Fetches rankings and OPRs for a team at a specific event.
+      parameters:
+      - description: Team Number
+        in: path
+        name: teamNumber
+        required: true
+        type: integer
+      - description: Event Key
+        in: query
+        name: eventKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get TBA Metrics for a Team
+      tags:
+      - metrics
 swagger: "2.0"

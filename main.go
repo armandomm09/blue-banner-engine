@@ -128,18 +128,28 @@ func main() {
 
 	v1 := router.Group("/api/v1")
 	{
+		// ML and Analytics routes (no auth required for now)
+		// ML and Analytics routes (no auth required for now)
 		routes.RegisterMatchpointRoutes(v1, handler.grpcClient, tbaKey)
 		routes.RegisterTbaRoutes(v1, tbaKey)
 		routes.RegisterSimulationRoutes(v1, handler.grpcClient)
 		routes.RegisterAnalyticsRoutes(v1, analyticsClient)
 
+		// New Metrics Routes
+		routes.RegisterStatboticsRoutes(v1)
+		routes.RegisterMetricRoutes(v1)
 	}
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// Serve email templates
+	// router.Static("/static/templates", "./static/templates")
+
 	staticFiles := "bbe-ui/dist"
+	templatesFiles := "supabase/email-templates"
 
 	router.StaticFS("/static", http.Dir(filepath.Join(staticFiles, "static")))
+	router.StaticFS("/templates", http.Dir(filepath.Join(templatesFiles)))
 	router.StaticFS("/assets", http.Dir(filepath.Join(staticFiles, "assets")))
 	router.StaticFile("/manifest.json", filepath.Join(staticFiles, "manifest.json"))
 	router.StaticFile("/bbe_logo_no_name.png", filepath.Join(staticFiles, "bbe_logo_no_name.png"))
