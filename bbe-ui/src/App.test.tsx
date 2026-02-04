@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '../test/test-utils';
+import { render, screen, waitFor } from './test/test-utils';
 import App from './App';
 
 // Mock the AuthContext
@@ -63,7 +63,7 @@ describe('App Component', () => {
     // Navigate to login
     window.history.pushState({}, 'Login', '/login');
     render(<App />);
-    
+
     await waitFor(() => {
       const loginPage = screen.queryByTestId('login-page');
       if (loginPage) {

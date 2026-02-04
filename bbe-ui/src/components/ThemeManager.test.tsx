@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from '../test/test-utils';
 import ThemeManager from './ThemeManager';
 import { useAuth } from '../auth/AuthContext';

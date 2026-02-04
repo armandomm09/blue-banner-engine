@@ -5,538 +5,538 @@ import { supabase } from "../../lib/supabase";
 import Stopwatch from "../../components/Scouting/Stopwatch";
 
 const MatchScoutPage = () => {
-  const [searchParams] = useSearchParams();
-  const formId = searchParams.get("form");
-  const editId = searchParams.get("edit");
-  const navigate = useNavigate();
-  const { team, user } = useAuth();
+    const [searchParams] = useSearchParams();
+    const formId = searchParams.get("form");
+    const editId = searchParams.get("edit");
+    const navigate = useNavigate();
+    const { team, user } = useAuth();
 
-  const [formVersion, setFormVersion] = useState<any>(null);
-  const [scoutMeta, setScoutMeta] = useState({
-    scouted_team_number: "",
-    event_key: "",
-    match_key: "",
-    alliance: "red" as "red" | "blue",
-  });
-  const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+    const [formVersion, setFormVersion] = useState<any>(null);
+    const [scoutMeta, setScoutMeta] = useState({
+        scouted_team_number: "",
+        event_key: "",
+        match_key: "",
+        alliance: "red" as "red" | "blue",
+    });
+    const [answers, setAnswers] = useState<Record<string, any>>({});
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (editId) {
-      fetchSubmissionForEdit();
-    } else if (formId) {
-      fetchPublishedVersion();
-    } else {
-      fetchDefaultForm();
-    }
-  }, [formId, editId]);
+    useEffect(() => {
+        if (editId) {
+            fetchSubmissionForEdit();
+        } else if (formId) {
+            fetchPublishedVersion();
+        } else {
+            fetchDefaultForm();
+        }
+    }, [formId, editId]);
 
-  const fetchSubmissionForEdit = async () => {
-    try {
-      const { data: sub, error: subError } = await supabase
-        .from("match_submissions")
-        .select("*, version:form_versions(*, forms(name))")
-        .eq("id", editId)
-        .single();
+    const fetchSubmissionForEdit = async () => {
+        try {
+            const { data: sub, error: subError } = await supabase
+                .from("match_submissions")
+                .select("*, version:form_versions(*, forms(name))")
+                .eq("id", editId)
+                .single();
 
-      if (subError) throw subError;
+            if (subError) throw subError;
 
-      setFormVersion(sub.version);
-      setScoutMeta({
-        scouted_team_number: sub.scouted_team_number.toString(),
-        event_key: sub.event_key,
-        match_key: sub.match_key,
-        alliance: sub.alliance,
-      });
-      setAnswers(sub.answers);
-    } catch (_error) {
-      console.error("Error fetching submission for edit:", _error);
-      alert("Failed to load submission for editing");
-      navigate("/forms/submissions");
-    } finally {
-      setLoading(false);
-    }
-  };
+            setFormVersion(sub.version);
+            setScoutMeta({
+                scouted_team_number: sub.scouted_team_number.toString(),
+                event_key: sub.event_key,
+                match_key: sub.match_key,
+                alliance: sub.alliance,
+            });
+            setAnswers(sub.answers);
+        } catch (_error) {
+            console.error("Error fetching submission for edit:", _error);
+            alert("Failed to load submission for editing");
+            navigate("/forms/submissions");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const fetchPublishedVersion = async (id?: string) => {
-    const targetId = id || formId;
-    try {
-      const { data, error } = await supabase
-        .from("form_versions")
-        .select("*, forms(name)")
-        .eq("form_id", targetId)
-        .eq("is_published", true)
-        .order("version", { ascending: false })
-        .limit(1)
-        .single();
+    const fetchPublishedVersion = async (id?: string) => {
+        const targetId = id || formId;
+        try {
+            const { data, error } = await supabase
+                .from("form_versions")
+                .select("*, forms(name)")
+                .eq("form_id", targetId)
+                .eq("is_published", true)
+                .order("version", { ascending: false })
+                .limit(1)
+                .single();
 
-      if (error) throw error;
-      setFormVersion(data);
-    } catch (_error) {
-      console.error("Error fetching published form:", _error);
-      alert("No published version found for this form.");
-      navigate("/forms");
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (error) throw error;
+            setFormVersion(data);
+        } catch (_error) {
+            console.error("Error fetching published form:", _error);
+            alert("No published version found for this form.");
+            navigate("/forms");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const fetchDefaultForm = async () => {
-    if (!team) return;
-    try {
-      const { data } = await supabase
-        .from("forms")
-        .select("id")
-        .eq("team_id", team.id)
-        .eq("type", "match")
-        .eq("status", "published")
-        .limit(1)
-        .single();
+    const fetchDefaultForm = async () => {
+        if (!team) return;
+        try {
+            const { data } = await supabase
+                .from("forms")
+                .select("id")
+                .eq("team_id", team.id)
+                .eq("type", "match")
+                .eq("status", "published")
+                .limit(1)
+                .single();
 
-      if (data) {
-        fetchPublishedVersion(data.id);
-      } else {
-        setLoading(false);
-      }
-    } catch (_error) {
-      setLoading(false);
-    }
-  };
+            if (data) {
+                fetchPublishedVersion(data.id);
+            } else {
+                setLoading(false);
+            }
+        } catch (_error) {
+            setLoading(false);
+        }
+    };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!team || !user || !formVersion) return;
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!team || !user || !formVersion) return;
 
-    // Basic validation
-    if (
-      !scoutMeta.scouted_team_number ||
-      !scoutMeta.event_key ||
-      !scoutMeta.match_key
-    ) {
-      alert("Please fill out match metadata.");
-      return;
-    }
+        // Basic validation
+        if (
+            !scoutMeta.scouted_team_number ||
+            !scoutMeta.event_key ||
+            !scoutMeta.match_key
+        ) {
+            alert("Please fill out match metadata.");
+            return;
+        }
 
-    const missing = formVersion.schema.fields
-      .filter((f: any) => f.required && !answers[f.id])
-      .map((f: any) => f.label);
+        const missing = formVersion.schema.fields
+            .filter((f: any) => f.required && !answers[f.id])
+            .map((f: any) => f.label);
 
-    if (missing.length > 0) {
-      alert(`Please fill required fields: ${missing.join(", ")}`);
-      return;
-    }
+        if (missing.length > 0) {
+            alert(`Please fill required fields: ${missing.join(", ")}`);
+            return;
+        }
 
-    setSubmitting(true);
-    try {
-      const submissionData = {
-        team_id: team.id,
-        form_version_id: formVersion.id,
-        event_key: scoutMeta.event_key,
-        match_key: scoutMeta.match_key,
-        alliance: scoutMeta.alliance,
-        scouted_team_number: parseInt(scoutMeta.scouted_team_number),
-        answers,
-        created_by: user.id,
-      };
+        setSubmitting(true);
+        try {
+            const submissionData = {
+                team_id: team.id,
+                form_version_id: formVersion.id,
+                event_key: scoutMeta.event_key,
+                match_key: scoutMeta.match_key,
+                alliance: scoutMeta.alliance,
+                scouted_team_number: parseInt(scoutMeta.scouted_team_number),
+                answers,
+                created_by: user.id,
+            };
 
-      const { error } = editId
-        ? await supabase
-          .from("match_submissions")
-          .update(submissionData)
-          .eq("id", editId)
-        : await supabase.from("match_submissions").insert(submissionData);
+            const { error } = editId
+                ? await supabase
+                    .from("match_submissions")
+                    .update(submissionData)
+                    .eq("id", editId)
+                : await supabase.from("match_submissions").insert(submissionData);
 
-      if (error) throw error;
-      alert(
-        editId ? "Match submission updated!" : "Match submission successful!"
-      );
-      navigate("/forms/submissions");
-    } catch (_error) {
-      console.error("Error submitting:", _error);
-      alert("Failed to save submission");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+            if (error) throw error;
+            alert(
+                editId ? "Match submission updated!" : "Match submission successful!"
+            );
+            navigate("/forms/submissions");
+        } catch (_error) {
+            console.error("Error submitting:", _error);
+            alert("Failed to save submission");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
-  if (loading)
-    return (
-      <div className="p-10 text-center text-text-muted">Loading form...</div>
-    );
+    if (loading)
+        return (
+            <div className="p-10 text-center text-text-muted">Loading form...</div>
+        );
 
-  if (!formVersion)
-    return (
-      <div className="max-w-xl mx-auto p-10 mt-10 bg-card border border-border rounded-2xl text-center">
-        <h2 className="text-xl font-bold text-white mb-4">
-          No Published Form Found
-        </h2>
-        <p className="text-text-muted mb-6">
-          Your team needs to publish a Match Scouting form before you can start
-          scouting.
-        </p>
-        <button
-          onClick={() => navigate("/forms")}
-          className="px-6 py-2 bg-accent text-background rounded-lg font-bold"
-        >
-          Go to Forms
-        </button>
-      </div>
-    );
-
-  return (
-    <div className="min-h-screen bg-background text-text font-['Poppins'] animate-fade-in">
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="relative mb-10 rounded-2xl overflow-hidden border border-border">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-500/30 to-blue-500/30" />
-
-          <div className="relative bg-black/60 backdrop-blur-sm p-8">
-            <div className="flex items-center justify-between gap-6">
-              <div>
-                <h1 className="text-4xl font-bold text-white">
-                  Match Scouting
-                </h1>
-                {formVersion && (
-                  <p className="text-text-muted mt-1">
-                    {formVersion.forms.name} · Version{" "}
-                    <span className="text-white font-semibold">
-                      v{formVersion.version}
-                    </span>
-                  </p>
-                )}
-              </div>
-
-              <div className="text-right">
-                <p className="text-xs uppercase tracking-widest text-text-muted">
-                  Mode
+    if (!formVersion)
+        return (
+            <div className="max-w-xl mx-auto p-10 mt-10 bg-card border border-border rounded-2xl text-center">
+                <h2 className="text-xl font-bold text-white mb-4">
+                    No Published Form Found
+                </h2>
+                <p className="text-text-muted mb-6">
+                    Your team needs to publish a Match Scouting form before you can start
+                    scouting.
                 </p>
-                <p className="text-sm font-semibold text-white">
-                  {editId ? "Edit Submission" : "New Submission"}
-                </p>
-              </div>
+                <button
+                    onClick={() => navigate("/forms")}
+                    className="px-6 py-2 bg-accent text-background rounded-lg font-bold"
+                >
+                    Go to Forms
+                </button>
             </div>
-          </div>
-        </div>
+        );
 
-        {!formVersion ? (
-          <div className="max-w-xl mx-auto p-12 bg-card border border-border rounded-2xl text-center">
-            <h2 className="text-xl font-bold text-white mb-4">
-              No Published Match Form
-            </h2>
-            <p className="text-text-muted mb-6">
-              Your team must publish a Match Scouting form before submitting
-              data.
-            </p>
-            <button
-              onClick={() => navigate("/forms")}
-              className="px-6 py-3 bg-accent text-background rounded-xl font-bold"
-            >
-              Go to Forms
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="bg-card border border-border p-6 rounded-2xl">
-              <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">
-                Match Metadata
-              </h3>
+    return (
+        <div className="min-h-screen bg-background text-text font-['Poppins'] animate-fade-in">
+            <div className="max-w-5xl mx-auto px-6 py-8">
+                <div className="relative mb-10 rounded-2xl overflow-hidden border border-border">
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500/30 to-blue-500/30" />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
-                    Event Key
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={scoutMeta.event_key}
-                    onChange={(e) =>
-                      setScoutMeta({ ...scoutMeta, event_key: e.target.value })
-                    }
-                    placeholder="2024mxmo"
-                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
-                    Match Key
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={scoutMeta.match_key}
-                    onChange={(e) =>
-                      setScoutMeta({ ...scoutMeta, match_key: e.target.value })
-                    }
-                    placeholder="qm12"
-                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
-                    Scouted Team #
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={scoutMeta.scouted_team_number}
-                    onChange={(e) =>
-                      setScoutMeta({
-                        ...scoutMeta,
-                        scouted_team_number: e.target.value,
-                      })
-                    }
-                    placeholder="254"
-                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
-                    Alliance
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setScoutMeta({ ...scoutMeta, alliance: "red" })
-                      }
-                      className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${scoutMeta.alliance === "red"
-                        ? "bg-red-500/20 border-red-500 text-red-400"
-                        : "bg-background border-border text-text-muted"
-                        }`}
-                    >
-                      Red
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setScoutMeta({ ...scoutMeta, alliance: "blue" })
-                      }
-                      className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${scoutMeta.alliance === "blue"
-                        ? "bg-blue-500/20 border-blue-500 text-blue-400"
-                        : "bg-background border-border text-text-muted"
-                        }`}
-                    >
-                      Blue
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border p-8 rounded-2xl space-y-8">
-              {formVersion.schema.fields.map((field: any) => (
-                <div key={field.id} className="space-y-2">
-                  <label className="text-sm font-medium text-white flex gap-1">
-                    {field.label}
-                    {field.required && <span className="text-accent">*</span>}
-                  </label>
-
-                  {field.type === "number" && (
-                    <input
-                      type="number"
-                      value={answers[field.id] || ""}
-                      onChange={(e) =>
-                        setAnswers({ ...answers, [field.id]: e.target.value })
-                      }
-                      className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white focus:ring-1 focus:ring-accent"
-                    />
-                  )}
-
-                  {field.type === "boolean" && (
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setAnswers({ ...answers, [field.id]: true })
-                        }
-                        className={`py-2 rounded-lg border font-bold transition-all ${answers[field.id] === true
-                          ? "bg-accent/20 border-accent text-accent"
-                          : "bg-background border-border text-text-muted hover:border-accent/30"
-                          }`}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setAnswers({ ...answers, [field.id]: false })
-                        }
-                        className={`py-2 rounded-lg border font-bold transition-all ${answers[field.id] === false
-                          ? "bg-accent/20 border-accent text-accent"
-                          : "bg-background border-border text-text-muted hover:border-accent/30"
-                          }`}
-                      >
-                        No
-                      </button>
-                    </div>
-                  )}
-
-                  {(field.type === "single_select" ||
-                    field.type === "multi_select") && (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-2">
-                          {field.options?.map((opt: string) => (
-                            <button
-                              key={opt}
-                              type="button"
-                              onClick={() => {
-                                if (field.type === "single_select") {
-                                  setAnswers({ ...answers, [field.id]: opt });
-                                } else {
-                                  const current = Array.isArray(answers[field.id])
-                                    ? answers[field.id]
-                                    : [];
-                                  const next = current.includes(opt)
-                                    ? current.filter((o: any) => o !== opt)
-                                    : [...current, opt];
-                                  setAnswers({ ...answers, [field.id]: next });
-                                }
-                              }}
-                              className={`py-2 px-3 rounded-lg border text-xs font-bold transition-all ${field.type === "single_select"
-                                ? answers[field.id] === opt
-                                  ? "bg-accent/20 border-accent text-accent"
-                                  : "bg-background border-border text-text-muted hover:border-accent/30"
-                                : Array.isArray(answers[field.id]) &&
-                                  answers[field.id].includes(opt)
-                                  ? "bg-accent/20 border-accent text-accent"
-                                  : "bg-background border-border text-text-muted hover:border-accent/30"
-                                }`}
-                            >
-                              {opt}
-                            </button>
-                          ))}
-                          {field.allow_other && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (field.type === "single_select") {
-                                  setAnswers({ ...answers, [field.id]: "Other" });
-                                } else {
-                                  const current = Array.isArray(answers[field.id])
-                                    ? answers[field.id]
-                                    : [];
-                                  const next = current.includes("Other")
-                                    ? current.filter((o: any) => o !== "Other")
-                                    : [...current, "Other"];
-                                  setAnswers({ ...answers, [field.id]: next });
-                                }
-                              }}
-                              className={`py-2 px-3 rounded-lg border text-xs font-bold transition-all ${field.type === "single_select"
-                                ? answers[field.id] === "Other"
-                                  ? "bg-accent/20 border-accent text-accent"
-                                  : "bg-background border-border text-text-muted hover:border-accent/30"
-                                : Array.isArray(answers[field.id]) &&
-                                  answers[field.id].includes("Other")
-                                  ? "bg-accent/20 border-accent text-accent"
-                                  : "bg-background border-border text-text-muted hover:border-accent/30"
-                                }`}
-                            >
-                              Other
-                            </button>
-                          )}
-                        </div>
-
-                        {field.allow_other &&
-                          (field.type === "single_select"
-                            ? answers[field.id] === "Other"
-                            : Array.isArray(answers[field.id]) &&
-                            answers[field.id].includes("Other")) && (
-                            <div className="mt-2 animate-fade-in">
-                              <label className="text-[10px] text-text-muted uppercase font-bold tracking-wider mb-1 block">
-                                Please specify "Other"
-                              </label>
-                              <input
-                                type="text"
-                                value={answers[`${field.id}_other`] || ""}
-                                onChange={(e) =>
-                                  setAnswers({
-                                    ...answers,
-                                    [`${field.id}_other`]: e.target.value,
-                                  })
-                                }
-                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-accent"
-                                placeholder="Specify..."
-                                required={field.required}
-                              />
+                    <div className="relative bg-black/60 backdrop-blur-sm p-8">
+                        <div className="flex items-center justify-between gap-6">
+                            <div>
+                                <h1 className="text-4xl font-bold text-white">
+                                    Match Scouting
+                                </h1>
+                                {formVersion && (
+                                    <p className="text-text-muted mt-1">
+                                        {formVersion.forms.name} · Version{" "}
+                                        <span className="text-white font-semibold">
+                                            v{formVersion.version}
+                                        </span>
+                                    </p>
+                                )}
                             </div>
-                          )}
-                      </div>
-                    )}
 
-                  {field.type === "rating" && (
-                    <div className="grid grid-cols-5 gap-2 items-start bg-background/50 p-4 rounded-xl border border-border justify-items-center">
-                      {[1, 2, 3, 4, 5].map((num, idx) => (
-                        <div key={num} className="flex flex-col items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setAnswers({ ...answers, [field.id]: num })
-                            }
-                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${answers[field.id] === num
-                              ? "bg-accent text-background scale-110 shadow-[0_0_15px_rgba(0,238,228,0.5)]"
-                              : "bg-background border border-border text-text-muted hover:border-accent/50"
-                              }`}
-                          >
-                            {num}
-                          </button>
-                          {field.rating_labels?.[idx] && (
-                            <span className="text-[10px] text-text-muted text-center font-bold uppercase whitespace-nowrap px-1">
-                              {field.rating_labels[idx]}
-                            </span>
-                          )}
+                            <div className="text-right">
+                                <p className="text-xs uppercase tracking-widest text-text-muted">
+                                    Mode
+                                </p>
+                                <p className="text-sm font-semibold text-white">
+                                    {editId ? "Edit Submission" : "New Submission"}
+                                </p>
+                            </div>
                         </div>
-                      ))}
                     </div>
-                  )}
-
-                  {field.type === "time_seconds" && (
-                    <Stopwatch
-                      value={answers[field.id] || 0}
-                      onChange={(val: number) =>
-                        setAnswers({ ...answers, [field.id]: val })
-                      }
-                    />
-                  )}
-
-                  {field.type !== "number" &&
-                    field.type !== "boolean" &&
-                    field.type !== "single_select" &&
-                    field.type !== "multi_select" &&
-                    field.type !== "rating" &&
-                    field.type !== "time_seconds" && (
-                      <input
-                        type="text"
-                        value={answers[field.id] || ""}
-                        onChange={(e) =>
-                          setAnswers({ ...answers, [field.id]: e.target.value })
-                        }
-                        className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white focus:ring-1 focus:ring-accent"
-                      />
-                    )}
                 </div>
-              ))}
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-4 bg-accent text-background rounded-xl font-bold text-lg hover:shadow-[0_0_25px_rgba(0,238,228,0.4)] transition-all disabled:opacity-50"
-              >
-                {submitting
-                  ? "Saving…"
-                  : editId
-                    ? "Update Match Submission"
-                    : "Save Match Data"}
-              </button>
+                {!formVersion ? (
+                    <div className="max-w-xl mx-auto p-12 bg-card border border-border rounded-2xl text-center">
+                        <h2 className="text-xl font-bold text-white mb-4">
+                            No Published Match Form
+                        </h2>
+                        <p className="text-text-muted mb-6">
+                            Your team must publish a Match Scouting form before submitting
+                            data.
+                        </p>
+                        <button
+                            onClick={() => navigate("/forms")}
+                            className="px-6 py-3 bg-accent text-background rounded-xl font-bold"
+                        >
+                            Go to Forms
+                        </button>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        <div className="bg-card border border-border p-6 rounded-2xl">
+                            <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">
+                                Match Metadata
+                            </h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
+                                        Event Key
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={scoutMeta.event_key}
+                                        onChange={(e) =>
+                                            setScoutMeta({ ...scoutMeta, event_key: e.target.value })
+                                        }
+                                        placeholder="2024mxmo"
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
+                                        Match Key
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={scoutMeta.match_key}
+                                        onChange={(e) =>
+                                            setScoutMeta({ ...scoutMeta, match_key: e.target.value })
+                                        }
+                                        placeholder="qm12"
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
+                                        Scouted Team #
+                                    </label>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={scoutMeta.scouted_team_number}
+                                        onChange={(e) =>
+                                            setScoutMeta({
+                                                ...scoutMeta,
+                                                scouted_team_number: e.target.value,
+                                            })
+                                        }
+                                        placeholder="254"
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
+                                        Alliance
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setScoutMeta({ ...scoutMeta, alliance: "red" })
+                                            }
+                                            className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${scoutMeta.alliance === "red"
+                                                ? "bg-red-500/20 border-red-500 text-red-400"
+                                                : "bg-background border-border text-text-muted"
+                                                }`}
+                                        >
+                                            Red
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setScoutMeta({ ...scoutMeta, alliance: "blue" })
+                                            }
+                                            className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${scoutMeta.alliance === "blue"
+                                                ? "bg-blue-500/20 border-blue-500 text-blue-400"
+                                                : "bg-background border-border text-text-muted"
+                                                }`}
+                                        >
+                                            Blue
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-card border border-border p-8 rounded-2xl space-y-8">
+                            {formVersion.schema.fields.map((field: any) => (
+                                <div key={field.id} className="space-y-2">
+                                    <label className="text-sm font-medium text-white flex gap-1">
+                                        {field.label}
+                                        {field.required && <span className="text-accent">*</span>}
+                                    </label>
+
+                                    {field.type === "number" && (
+                                        <input
+                                            type="number"
+                                            value={answers[field.id] || ""}
+                                            onChange={(e) =>
+                                                setAnswers({ ...answers, [field.id]: e.target.value })
+                                            }
+                                            className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white focus:ring-1 focus:ring-accent"
+                                        />
+                                    )}
+
+                                    {field.type === "boolean" && (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setAnswers({ ...answers, [field.id]: true })
+                                                }
+                                                className={`py-2 rounded-lg border font-bold transition-all ${answers[field.id] === true
+                                                    ? "bg-accent/20 border-accent text-accent"
+                                                    : "bg-background border-border text-text-muted hover:border-accent/30"
+                                                    }`}
+                                            >
+                                                Yes
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setAnswers({ ...answers, [field.id]: false })
+                                                }
+                                                className={`py-2 rounded-lg border font-bold transition-all ${answers[field.id] === false
+                                                    ? "bg-accent/20 border-accent text-accent"
+                                                    : "bg-background border-border text-text-muted hover:border-accent/30"
+                                                    }`}
+                                            >
+                                                No
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {(field.type === "single_select" ||
+                                        field.type === "multi_select") && (
+                                            <div className="space-y-3">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {field.options?.map((opt: string) => (
+                                                        <button
+                                                            key={opt}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (field.type === "single_select") {
+                                                                    setAnswers({ ...answers, [field.id]: opt });
+                                                                } else {
+                                                                    const current = Array.isArray(answers[field.id])
+                                                                        ? answers[field.id]
+                                                                        : [];
+                                                                    const next = current.includes(opt)
+                                                                        ? current.filter((o: any) => o !== opt)
+                                                                        : [...current, opt];
+                                                                    setAnswers({ ...answers, [field.id]: next });
+                                                                }
+                                                            }}
+                                                            className={`py-2 px-3 rounded-lg border text-xs font-bold transition-all ${field.type === "single_select"
+                                                                ? answers[field.id] === opt
+                                                                    ? "bg-accent/20 border-accent text-accent"
+                                                                    : "bg-background border-border text-text-muted hover:border-accent/30"
+                                                                : Array.isArray(answers[field.id]) &&
+                                                                    answers[field.id].includes(opt)
+                                                                    ? "bg-accent/20 border-accent text-accent"
+                                                                    : "bg-background border-border text-text-muted hover:border-accent/30"
+                                                                }`}
+                                                        >
+                                                            {opt}
+                                                        </button>
+                                                    ))}
+                                                    {field.allow_other && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (field.type === "single_select") {
+                                                                    setAnswers({ ...answers, [field.id]: "Other" });
+                                                                } else {
+                                                                    const current = Array.isArray(answers[field.id])
+                                                                        ? answers[field.id]
+                                                                        : [];
+                                                                    const next = current.includes("Other")
+                                                                        ? current.filter((o: any) => o !== "Other")
+                                                                        : [...current, "Other"];
+                                                                    setAnswers({ ...answers, [field.id]: next });
+                                                                }
+                                                            }}
+                                                            className={`py-2 px-3 rounded-lg border text-xs font-bold transition-all ${field.type === "single_select"
+                                                                ? answers[field.id] === "Other"
+                                                                    ? "bg-accent/20 border-accent text-accent"
+                                                                    : "bg-background border-border text-text-muted hover:border-accent/30"
+                                                                : Array.isArray(answers[field.id]) &&
+                                                                    answers[field.id].includes("Other")
+                                                                    ? "bg-accent/20 border-accent text-accent"
+                                                                    : "bg-background border-border text-text-muted hover:border-accent/30"
+                                                                }`}
+                                                        >
+                                                            Other
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {field.allow_other &&
+                                                    (field.type === "single_select"
+                                                        ? answers[field.id] === "Other"
+                                                        : Array.isArray(answers[field.id]) &&
+                                                        answers[field.id].includes("Other")) && (
+                                                        <div className="mt-2 animate-fade-in">
+                                                            <label className="text-[10px] text-text-muted uppercase font-bold tracking-wider mb-1 block">
+                                                                Please specify "Other"
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={answers[`${field.id}_other`] || ""}
+                                                                onChange={(e) =>
+                                                                    setAnswers({
+                                                                        ...answers,
+                                                                        [`${field.id}_other`]: e.target.value,
+                                                                    })
+                                                                }
+                                                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-accent"
+                                                                placeholder="Specify..."
+                                                                required={field.required}
+                                                            />
+                                                        </div>
+                                                    )}
+                                            </div>
+                                        )}
+
+                                    {field.type === "rating" && (
+                                        <div className="grid grid-cols-5 gap-2 items-start bg-background/50 p-4 rounded-xl border border-border justify-items-center">
+                                            {[1, 2, 3, 4, 5].map((num, idx) => (
+                                                <div key={num} className="flex flex-col items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setAnswers({ ...answers, [field.id]: num })
+                                                        }
+                                                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${answers[field.id] === num
+                                                            ? "bg-accent text-background scale-110 shadow-[0_0_15px_rgba(0,238,228,0.5)]"
+                                                            : "bg-background border border-border text-text-muted hover:border-accent/50"
+                                                            }`}
+                                                    >
+                                                        {num}
+                                                    </button>
+                                                    {field.rating_labels?.[idx] && (
+                                                        <span className="text-[10px] text-text-muted text-center font-bold uppercase whitespace-nowrap px-1">
+                                                            {field.rating_labels[idx]}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {field.type === "time_seconds" && (
+                                        <Stopwatch
+                                            value={answers[field.id] || 0}
+                                            onChange={(val: number) =>
+                                                setAnswers({ ...answers, [field.id]: val })
+                                            }
+                                        />
+                                    )}
+
+                                    {field.type !== "number" &&
+                                        field.type !== "boolean" &&
+                                        field.type !== "single_select" &&
+                                        field.type !== "multi_select" &&
+                                        field.type !== "rating" &&
+                                        field.type !== "time_seconds" && (
+                                            <input
+                                                type="text"
+                                                value={answers[field.id] || ""}
+                                                onChange={(e) =>
+                                                    setAnswers({ ...answers, [field.id]: e.target.value })
+                                                }
+                                                className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white focus:ring-1 focus:ring-accent"
+                                            />
+                                        )}
+                                </div>
+                            ))}
+
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className="w-full py-4 bg-accent text-background rounded-xl font-bold text-lg hover:shadow-[0_0_25px_rgba(0,238,228,0.4)] transition-all disabled:opacity-50"
+                            >
+                                {submitting
+                                    ? "Saving…"
+                                    : editId
+                                        ? "Update Match Submission"
+                                        : "Save Match Data"}
+                            </button>
+                        </div>
+                    </form>
+                )}
             </div>
-          </form>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default MatchScoutPage;
