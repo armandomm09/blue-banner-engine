@@ -27,6 +27,7 @@
 - [Core Features & Modules](#core-features--modules)
 - [System Architecture](#system-architecture)
 - [Tech Stack](#tech-stack)
+- [Testing & CI/CD](#testing--cicd)
 - [Getting Started & Setup](#getting-started--setup)
   - [Prerequisites](#prerequisites)
   - [Configuration](#configuration)
@@ -94,6 +95,43 @@ BBE is designed with a modern, decoupled, multi-container architecture, enabling
 | **ML/Data Science**        | Scikit-learn, XGBoost, SHAP, Pandas, NumPy      |
 | **Computer Vision**        | OpenCV, PyTorch, YOLOv8                         |
 | **DevOps & Deployment**    | Docker, Docker Compose, GitHub Actions          |
+| **Testing**                | Vitest, Go Testing, Pytest, React Testing Library |
+
+---
+
+## Testing & CI/CD
+
+BBE includes comprehensive automated testing and continuous deployment:
+
+- **Frontend Tests**: Vitest + React Testing Library
+- **Backend Tests**: Go native testing with race detection
+- **Python Tests**: Pytest with gRPC integration tests
+- **CI/CD Pipeline**: GitHub Actions that runs all tests before deployment
+- **Coverage Requirements**: Minimum 70% across all services
+- **Deployment**: Automatic deployment to production only when all tests pass on `main` branch
+
+### Quick Commands
+
+```bash
+# Run all tests locally
+./scripts/run-tests.sh
+
+# Run with coverage reports
+./scripts/run-tests.sh --coverage
+
+# Run specific test suite
+./scripts/run-tests.sh --test frontend
+
+# Individual test runners
+npm run test              # Frontend
+go test ./...             # Backend
+pytest -v                 # Python
+```
+
+**For detailed testing documentation, see:**
+- [TESTING.md](TESTING.md) - Test organization and running tests
+- [CI_CD_SETUP.md](CI_CD_SETUP.md) - Complete CI/CD pipeline guide
+- [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) - GitHub Actions configuration
 
 ---
 

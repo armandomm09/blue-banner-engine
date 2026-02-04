@@ -95,7 +95,7 @@ func GetAllTeamsByEvent(c *gin.Context) {
 
 	tbaApiKey := c.MustGet("tbaApiKey").(string)
 	if tbaApiKey == "" {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "TBA_API_KEY is not configured on the server"})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "TBA_API_KEY is not configured on the serveCan r"})
 		return
 	}
 

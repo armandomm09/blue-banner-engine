@@ -20,3 +20,5 @@ redeploy.sh
 models.zip
 dev/
 dev
+
+.github/workflows/test.yml

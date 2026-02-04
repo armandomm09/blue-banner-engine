@@ -142,9 +142,9 @@ const MatchScoutPage = () => {
 
       const { error } = editId
         ? await supabase
-            .from("match_submissions")
-            .update(submissionData)
-            .eq("id", editId)
+          .from("match_submissions")
+          .update(submissionData)
+          .eq("id", editId)
         : await supabase.from("match_submissions").insert(submissionData);
 
       if (error) throw error;
@@ -303,11 +303,10 @@ const MatchScoutPage = () => {
                       onClick={() =>
                         setScoutMeta({ ...scoutMeta, alliance: "red" })
                       }
-                      className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${
-                        scoutMeta.alliance === "red"
-                          ? "bg-red-500/20 border-red-500 text-red-400"
-                          : "bg-background border-border text-text-muted"
-                      }`}
+                      className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${scoutMeta.alliance === "red"
+                        ? "bg-red-500/20 border-red-500 text-red-400"
+                        : "bg-background border-border text-text-muted"
+                        }`}
                     >
                       Red
                     </button>
@@ -316,11 +315,10 @@ const MatchScoutPage = () => {
                       onClick={() =>
                         setScoutMeta({ ...scoutMeta, alliance: "blue" })
                       }
-                      className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${
-                        scoutMeta.alliance === "blue"
-                          ? "bg-blue-500/20 border-blue-500 text-blue-400"
-                          : "bg-background border-border text-text-muted"
-                      }`}
+                      className={`flex-1 py-2 rounded-lg border text-xs font-bold transition-all ${scoutMeta.alliance === "blue"
+                        ? "bg-blue-500/20 border-blue-500 text-blue-400"
+                        : "bg-background border-border text-text-muted"
+                        }`}
                     >
                       Blue
                     </button>
@@ -355,11 +353,10 @@ const MatchScoutPage = () => {
                         onClick={() =>
                           setAnswers({ ...answers, [field.id]: true })
                         }
-                        className={`py-2 rounded-lg border font-bold transition-all ${
-                          answers[field.id] === true
-                            ? "bg-accent/20 border-accent text-accent"
-                            : "bg-background border-border text-text-muted hover:border-accent/30"
-                        }`}
+                        className={`py-2 rounded-lg border font-bold transition-all ${answers[field.id] === true
+                          ? "bg-accent/20 border-accent text-accent"
+                          : "bg-background border-border text-text-muted hover:border-accent/30"
+                          }`}
                       >
                         Yes
                       </button>
@@ -368,11 +365,10 @@ const MatchScoutPage = () => {
                         onClick={() =>
                           setAnswers({ ...answers, [field.id]: false })
                         }
-                        className={`py-2 rounded-lg border font-bold transition-all ${
-                          answers[field.id] === false
-                            ? "bg-accent/20 border-accent text-accent"
-                            : "bg-background border-border text-text-muted hover:border-accent/30"
-                        }`}
+                        className={`py-2 rounded-lg border font-bold transition-all ${answers[field.id] === false
+                          ? "bg-accent/20 border-accent text-accent"
+                          : "bg-background border-border text-text-muted hover:border-accent/30"
+                          }`}
                       >
                         No
                       </button>
@@ -381,58 +377,118 @@ const MatchScoutPage = () => {
 
                   {(field.type === "single_select" ||
                     field.type === "multi_select") && (
-                    <div className="grid grid-cols-2 gap-2">
-                      {field.options?.map((opt: string) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => {
-                            if (field.type === "single_select") {
-                              setAnswers({ ...answers, [field.id]: opt });
-                            } else {
-                              const current = Array.isArray(answers[field.id])
-                                ? answers[field.id]
-                                : [];
-                              const next = current.includes(opt)
-                                ? current.filter((o: any) => o !== opt)
-                                : [...current, opt];
-                              setAnswers({ ...answers, [field.id]: next });
-                            }
-                          }}
-                          className={`py-2 px-3 rounded-lg border text-xs font-bold transition-all ${
-                            field.type === "single_select"
-                              ? answers[field.id] === opt
-                                ? "bg-accent/20 border-accent text-accent"
-                                : "bg-background border-border text-text-muted hover:border-accent/30"
-                              : Array.isArray(answers[field.id]) &&
-                                answers[field.id].includes(opt)
-                              ? "bg-accent/20 border-accent text-accent"
-                              : "bg-background border-border text-text-muted hover:border-accent/30"
-                          }`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          {field.options?.map((opt: string) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => {
+                                if (field.type === "single_select") {
+                                  setAnswers({ ...answers, [field.id]: opt });
+                                } else {
+                                  const current = Array.isArray(answers[field.id])
+                                    ? answers[field.id]
+                                    : [];
+                                  const next = current.includes(opt)
+                                    ? current.filter((o: any) => o !== opt)
+                                    : [...current, opt];
+                                  setAnswers({ ...answers, [field.id]: next });
+                                }
+                              }}
+                              className={`py-2 px-3 rounded-lg border text-xs font-bold transition-all ${field.type === "single_select"
+                                ? answers[field.id] === opt
+                                  ? "bg-accent/20 border-accent text-accent"
+                                  : "bg-background border-border text-text-muted hover:border-accent/30"
+                                : Array.isArray(answers[field.id]) &&
+                                  answers[field.id].includes(opt)
+                                  ? "bg-accent/20 border-accent text-accent"
+                                  : "bg-background border-border text-text-muted hover:border-accent/30"
+                                }`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                          {field.allow_other && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (field.type === "single_select") {
+                                  setAnswers({ ...answers, [field.id]: "Other" });
+                                } else {
+                                  const current = Array.isArray(answers[field.id])
+                                    ? answers[field.id]
+                                    : [];
+                                  const next = current.includes("Other")
+                                    ? current.filter((o: any) => o !== "Other")
+                                    : [...current, "Other"];
+                                  setAnswers({ ...answers, [field.id]: next });
+                                }
+                              }}
+                              className={`py-2 px-3 rounded-lg border text-xs font-bold transition-all ${field.type === "single_select"
+                                ? answers[field.id] === "Other"
+                                  ? "bg-accent/20 border-accent text-accent"
+                                  : "bg-background border-border text-text-muted hover:border-accent/30"
+                                : Array.isArray(answers[field.id]) &&
+                                  answers[field.id].includes("Other")
+                                  ? "bg-accent/20 border-accent text-accent"
+                                  : "bg-background border-border text-text-muted hover:border-accent/30"
+                                }`}
+                            >
+                              Other
+                            </button>
+                          )}
+                        </div>
+
+                        {field.allow_other &&
+                          (field.type === "single_select"
+                            ? answers[field.id] === "Other"
+                            : Array.isArray(answers[field.id]) &&
+                            answers[field.id].includes("Other")) && (
+                            <div className="mt-2 animate-fade-in">
+                              <label className="text-[10px] text-text-muted uppercase font-bold tracking-wider mb-1 block">
+                                Please specify "Other"
+                              </label>
+                              <input
+                                type="text"
+                                value={answers[`${field.id}_other`] || ""}
+                                onChange={(e) =>
+                                  setAnswers({
+                                    ...answers,
+                                    [`${field.id}_other`]: e.target.value,
+                                  })
+                                }
+                                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-accent"
+                                placeholder="Specify..."
+                                required={field.required}
+                              />
+                            </div>
+                          )}
+                      </div>
+                    )}
 
                   {field.type === "rating" && (
-                    <div className="flex gap-4 items-center bg-background/50 p-4 rounded-xl border border-border justify-center">
-                      {[1, 2, 3, 4, 5].map((num) => (
-                        <button
-                          key={num}
-                          type="button"
-                          onClick={() =>
-                            setAnswers({ ...answers, [field.id]: num })
-                          }
-                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                            answers[field.id] === num
+                    <div className="grid grid-cols-5 gap-2 items-start bg-background/50 p-4 rounded-xl border border-border justify-items-center">
+                      {[1, 2, 3, 4, 5].map((num, idx) => (
+                        <div key={num} className="flex flex-col items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAnswers({ ...answers, [field.id]: num })
+                            }
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${answers[field.id] === num
                               ? "bg-accent text-background scale-110 shadow-[0_0_15px_rgba(0,238,228,0.5)]"
                               : "bg-background border border-border text-text-muted hover:border-accent/50"
-                          }`}
-                        >
-                          {num}
-                        </button>
+                              }`}
+                          >
+                            {num}
+                          </button>
+                          {field.rating_labels?.[idx] && (
+                            <span className="text-[10px] text-text-muted text-center font-bold uppercase whitespace-nowrap px-1">
+                              {field.rating_labels[idx]}
+                            </span>
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}
@@ -472,8 +528,8 @@ const MatchScoutPage = () => {
                 {submitting
                   ? "Saving…"
                   : editId
-                  ? "Update Match Submission"
-                  : "Save Match Data"}
+                    ? "Update Match Submission"
+                    : "Save Match Data"}
               </button>
             </div>
           </form>

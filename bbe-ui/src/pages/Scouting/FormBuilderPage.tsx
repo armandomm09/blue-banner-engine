@@ -10,6 +10,8 @@ interface Field {
   type: string;
   required: boolean;
   options?: string[];
+  allow_other?: boolean;
+  rating_labels?: string[];
   min?: number;
   max?: number;
   help_text?: string;
@@ -285,21 +287,141 @@ const FormBuilderPage = () => {
 
                 {(field.type === "single_select" ||
                   field.type === "multi_select") && (
-                  <div className="mt-4 space-y-2">
-                    <label className="text-xs text-text-muted">Options</label>
-                    <input
-                      type="text"
-                      value={field.options?.join(", ") || ""}
-                      onChange={(e) =>
-                        updateField(field.id, {
-                          options: e.target.value
-                            .split(",")
-                            .map((s) => s.trim()),
-                        })
-                      }
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-accent"
-                      placeholder="Option 1, Option 2, Option 3"
-                    />
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-text-muted font-bold uppercase tracking-wider">
+                          Options
+                        </label>
+                        <button
+                          onClick={() => {
+                            const currentOptions = field.options || [];
+                            updateField(field.id, {
+                              options: [...currentOptions, ""],
+                            });
+                          }}
+                          className="text-[10px] bg-accent/10 text-accent px-2 py-1 rounded hover:bg-accent/20 transition-all font-bold uppercase"
+                        >
+                          + Add Option
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        {(field.options || []).map((opt, optIdx) => (
+                          <div key={optIdx} className="flex gap-2">
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={(e) => {
+                                const newOptions = [...(field.options || [])];
+                                newOptions[optIdx] = e.target.value;
+                                updateField(field.id, { options: newOptions });
+                              }}
+                              className="flex-1 bg-background border border-border rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-accent"
+                              placeholder={`Option ${optIdx + 1}`}
+                            />
+                            <button
+                              onClick={() => {
+                                const newOptions = (field.options || []).filter(
+                                  (_, i) => i !== optIdx
+                                );
+                                updateField(field.id, { options: newOptions });
+                              }}
+                              className="text-red-400 hover:text-red-300 p-1"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-4 w-4"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2">
+                        <input
+                          type="checkbox"
+                          id={`allow-other-${field.id}`}
+                          checked={field.allow_other || false}
+                          onChange={(e) =>
+                            updateField(field.id, {
+                              allow_other: e.target.checked,
+                            })
+                          }
+                          className="accent-accent h-4 w-4"
+                        />
+                        <label
+                          htmlFor={`allow-other-${field.id}`}
+                          className="text-xs text-text-muted cursor-pointer"
+                        >
+                          Include "Other" option with text field
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                {field.type === "rating" && (
+                  <div className="mt-4 space-y-3">
+                    <label className="text-xs text-text-muted font-bold uppercase tracking-wider">
+                      Reference Labels (Optional)
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-text-muted">
+                          Value 1
+                        </label>
+                        <input
+                          type="text"
+                          value={field.rating_labels?.[0] || ""}
+                          onChange={(e) => {
+                            const labels = [...(field.rating_labels || ["", "", "", "", ""])];
+                            labels[0] = e.target.value;
+                            updateField(field.id, { rating_labels: labels });
+                          }}
+                          className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent"
+                          placeholder="e.g. Bad"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-text-muted">
+                          Value 3
+                        </label>
+                        <input
+                          type="text"
+                          value={field.rating_labels?.[2] || ""}
+                          onChange={(e) => {
+                            const labels = [...(field.rating_labels || ["", "", "", "", ""])];
+                            labels[2] = e.target.value;
+                            updateField(field.id, { rating_labels: labels });
+                          }}
+                          className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent"
+                          placeholder="e.g. Mid"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-text-muted">
+                          Value 5
+                        </label>
+                        <input
+                          type="text"
+                          value={field.rating_labels?.[4] || ""}
+                          onChange={(e) => {
+                            const labels = [...(field.rating_labels || ["", "", "", "", ""])];
+                            labels[4] = e.target.value;
+                            updateField(field.id, { rating_labels: labels });
+                          }}
+                          className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent"
+                          placeholder="e.g. Good"
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
 

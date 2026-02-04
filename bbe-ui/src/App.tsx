@@ -31,6 +31,8 @@ import MatchScoutPage from "./pages/Scouting/MatchScoutPage";
 
 // Dashboard
 import SubmissionsDashboard from "./pages/Dashboard/SubmissionsDashboard";
+import { TeamDashboard } from "./pages/Dashboard/TeamDashboard";
+import { CompareDashboard } from "./pages/Dashboard/CompareDashboard";
 
 function App() {
   return (
@@ -129,8 +131,8 @@ function App() {
                 }
               />
 
-              {/* <Route path="/team/:teamNumber" element={<TeamDashboard />} />
-              <Route path="/teams" element={<CompareDashboard />} /> */}
+              <Route path="/team/:teamNumber" element={<TeamDashboard />} />
+              <Route path="/teams" element={<CompareDashboard />} /> 
 
               <Route
                 path="/welcome"
