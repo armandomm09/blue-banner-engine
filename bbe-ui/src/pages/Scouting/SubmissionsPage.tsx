@@ -100,14 +100,12 @@ const SubmissionsPage = () => {
               </span>
               <button
                 onClick={() => setShowAll(!showAll)}
-                className={`w-10 h-6 rounded-full transition-all relative ${
-                  showAll ? "bg-accent" : "bg-border"
-                }`}
+                className={`w-10 h-6 rounded-full transition-all relative ${showAll ? "bg-accent" : "bg-border"
+                  }`}
               >
                 <div
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
-                    showAll ? "left-5" : "left-1"
-                  }`}
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${showAll ? "left-5" : "left-1"
+                    }`}
                 ></div>
               </button>
             </div>
@@ -116,21 +114,19 @@ const SubmissionsPage = () => {
           <div className="flex bg-card border border-border rounded-xl p-1">
             <button
               onClick={() => setView("pit")}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                view === "pit"
-                  ? "bg-accent text-background"
-                  : "text-text-muted hover:text-white"
-              }`}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === "pit"
+                ? "bg-accent text-background"
+                : "text-text-muted hover:text-white"
+                }`}
             >
               Pit Data
             </button>
             <button
               onClick={() => setView("match")}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                view === "match"
-                  ? "bg-accent text-background"
-                  : "text-text-muted hover:text-white"
-              }`}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === "match"
+                ? "bg-accent text-background"
+                : "text-text-muted hover:text-white"
+                }`}
             >
               Match Data
             </button>
@@ -157,7 +153,10 @@ const SubmissionsPage = () => {
                         Event
                       </th>
                       <th className="px-6 py-4 text-xs font-bold text-accent uppercase tracking-wider">
-                        Match
+                        Match #
+                      </th>
+                      <th className="px-6 py-4 text-xs font-bold text-accent uppercase tracking-wider">
+                        Type
                       </th>
                     </>
                   )}
@@ -190,6 +189,14 @@ const SubmissionsPage = () => {
                           <td className="px-6 py-4 text-text-muted text-sm">
                             {sub.match_key}
                           </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${sub.match_type === 'practice' ? 'border-yellow-500/50 text-yellow-400 bg-yellow-400/10' :
+                              sub.match_type === 'playoffs' ? 'border-purple-500/50 text-purple-400 bg-purple-400/10' :
+                                'border-accent/50 text-accent bg-accent/10'
+                              } uppercase font-bold tracking-wider`}>
+                              {sub.match_type || 'quals'}
+                            </span>
+                          </td>
                         </>
                       )}
                       <td className="px-6 py-4 text-text-muted text-xs">
@@ -219,10 +226,10 @@ const SubmissionsPage = () => {
             </table>
             {(view === "pit" ? pitSubmissions : matchSubmissions).length ===
               0 && (
-              <div className="p-20 text-center">
-                <p className="text-text-muted italic">No submissions found.</p>
-              </div>
-            )}
+                <div className="p-20 text-center">
+                  <p className="text-text-muted italic">No submissions found.</p>
+                </div>
+              )}
           </div>
         </div>
       )}

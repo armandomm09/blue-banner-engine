@@ -17,6 +17,7 @@ const MatchScoutPage = () => {
         event_key: "",
         match_key: "",
         alliance: "red" as "red" | "blue",
+        match_type: "quals" as "practice" | "quals" | "playoffs",
     });
     const [answers, setAnswers] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true);
@@ -94,6 +95,7 @@ const MatchScoutPage = () => {
                 event_key: sub.event_key,
                 match_key: sub.match_key,
                 alliance: sub.alliance,
+                match_type: sub.match_type || "quals",
             });
             setAnswers(sub.answers);
         } catch (_error) {
@@ -181,6 +183,7 @@ const MatchScoutPage = () => {
                 event_key: scoutMeta.event_key,
                 match_key: scoutMeta.match_key,
                 alliance: scoutMeta.alliance,
+                match_type: scoutMeta.match_type,
                 scouted_team_number: parseInt(scoutMeta.scouted_team_number),
                 answers,
                 created_by: user.id,
@@ -306,7 +309,7 @@ const MatchScoutPage = () => {
 
                                 <div>
                                     <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
-                                        Match Key
+                                        Match Number
                                     </label>
                                     <input
                                         type="text"
@@ -315,9 +318,30 @@ const MatchScoutPage = () => {
                                         onChange={(e) =>
                                             setScoutMeta({ ...scoutMeta, match_key: e.target.value })
                                         }
-                                        placeholder="qm12"
+                                        placeholder="12"
                                         className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
+                                        Match Type
+                                    </label>
+                                    <div className="flex gap-2">
+                                        {['practice', 'quals', 'playoffs'].map((type) => (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                onClick={() => setScoutMeta({ ...scoutMeta, match_type: type as any })}
+                                                className={`flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${scoutMeta.match_type === type
+                                                    ? "bg-accent/20 border-accent text-accent"
+                                                    : "bg-background border-border text-text-muted hover:border-accent/30"
+                                                    }`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <div>

@@ -122,15 +122,24 @@ if __name__ == "__main__":
     
     # Change these to real values to test
     SEASON = 2025
-    EVENT = "USARBEQ"
+    EVENT = "MXCMP"
     
     print(f"--- Testing FTC Direct Client for {SEASON} {EVENT} ---")
     
     # Try fetching teams as a test
-    teams = client.get_event_teams(SEASON, EVENT)
-    if teams:
-        print(f"Success! Found {len(teams)} teams.")
-        for team in teams[:3]: # Print first 3
-            print(f"- {team['teamNumber']}: {team['nameShort']}")
+    # teams = client.get_event_teams(SEASON, EVENT)
+    # if teams:
+    #     print(f"Success! Found {len(teams)} teams.")
+    #     for team in teams[:3]: # Print first 3
+    #         print(f"- {team['teamNumber']}: {team['nameShort']}")
+    # else:
+    #     print("Could not fetch teams. Check your FTC_API_KEY and event code.")
+
+    team_matches = client.get_team_matches(SEASON, EVENT, 31661)
+    if team_matches:
+        print(f"Success! Found {len(team_matches)} matches for team 31661.")
+        for match in team_matches[:3]: # Print first 3
+            print(f"- {match['matchNumber']}: {match['description']}")
     else:
-        print("Could not fetch teams. Check your FTC_API_KEY and event code.")
+        print("Could not fetch matches. Check your FTC_API_KEY and event code.")
+        print(team_matches)
