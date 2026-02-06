@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { ColumnDef } from "../../utils/schemaToColumns";
 import type { NormalizedRow } from "../../utils/normalizeSubmissions";
@@ -25,6 +25,15 @@ interface DataGridProps {
   ) => void;
 }
 
+interface ClickedCell {
+  rowId: string;
+  columnId: string;
+  value: any;
+  displayValue: string;
+  x: number;
+  y: number;
+}
+
 const DataGrid: React.FC<DataGridProps> = ({
   columns,
   data,
@@ -41,6 +50,9 @@ const DataGrid: React.FC<DataGridProps> = ({
   const [resizingColumn, setResizingColumn] = useState<string | null>(null);
   const [resizeStartWidth, setResizeStartWidth] = useState(0);
   const [hoveredColumn, setHoveredColumn] = useState<string | null>(null);
+  const [clickedCell, setClickedCell] = useState<ClickedCell | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   const visibleCols = useMemo(
     () => columns.filter((col) => visibleColumns.includes(col.id)),
@@ -63,13 +75,32 @@ const DataGrid: React.FC<DataGridProps> = ({
     [visibleCols, columnWidths]
   );
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target as Node)
+      ) {
+        setClickedCell(null);
+        setCopySuccess(false);
+      }
+    };
+
+    if (clickedCell) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [clickedCell]);
+
   const handleResizeStart = (columnId: string, e: React.MouseEvent) => {
     e.preventDefault();
     setResizingColumn(columnId);
     setResizeStartWidth(
       columnWidths[columnId] ||
-        columns.find((c) => c.id === columnId)?.width ||
-        120
+      columns.find((c) => c.id === columnId)?.width ||
+      120
     );
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
@@ -86,6 +117,27 @@ const DataGrid: React.FC<DataGridProps> = ({
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleCellClick = (e: React.MouseEvent, row: any, col: any, displayValue: string) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setClickedCell({
+      rowId: row.id,
+      columnId: col.id,
+      value: row[col.id],
+      displayValue,
+      x: rect.left + window.scrollX,
+      y: rect.bottom + window.scrollY,
+    });
+    setCopySuccess(false);
+  };
+
+  const handleCopy = () => {
+    if (clickedCell) {
+      navigator.clipboard.writeText(clickedCell.displayValue);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
   };
 
   return (
@@ -153,25 +205,24 @@ const DataGrid: React.FC<DataGridProps> = ({
                     const value = row[col.id];
                     const displayValue = formatCellValue(value, col.fieldType);
                     const isHovered = hoveredColumn === col.id;
+                    const isClicked = clickedCell?.rowId === row.id && clickedCell?.columnId === col.id;
 
                     return (
                       <div
                         key={col.id}
                         onMouseEnter={() => setHoveredColumn(col.id)}
                         onMouseLeave={() => setHoveredColumn(null)}
-                        className={`px-4 py-3 flex items-center text-sm text-white truncate transition-colors ${
-                          isHovered ? "bg-accent/[0.07]" : ""
-                        }`}
+                        onClick={(e) => handleCellClick(e, row, col, String(displayValue))}
+                        className={`px-4 py-3 flex items-center text-sm text-white truncate cursor-pointer transition-all ${isHovered ? "bg-accent/[0.07]" : ""
+                          } ${isClicked ? "bg-accent/20 ring-1 ring-accent/50 inset-y-0" : ""}`}
                         style={{ width, minWidth: col.minWidth || 60 }}
-                        title={displayValue}
                       >
                         {col.id === "alliance" && value ? (
                           <span
-                            className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
-                              value === "red"
-                                ? "bg-red-500/20 text-red-400"
-                                : "bg-blue-500/20 text-blue-400"
-                            }`}
+                            className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${value === "red"
+                              ? "bg-red-500/20 text-red-400"
+                              : "bg-blue-500/20 text-blue-400"
+                              }`}
                           >
                             {value}
                           </span>
@@ -195,6 +246,53 @@ const DataGrid: React.FC<DataGridProps> = ({
           )}
         </div>
       </div>
+
+      {/* Cell Detail Popover */}
+      {clickedCell && (
+        <div
+          ref={popoverRef}
+          className="fixed z-[100] bg-card border border-accent/30 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-4 min-w-[300px] max-w-[450px] animate-fade-in"
+          style={{
+            left: Math.min(clickedCell.x, window.innerWidth - 320),
+            top: Math.min(clickedCell.y + 10, window.innerHeight - 200),
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[10px] font-black text-accent uppercase tracking-widest opacity-50">
+              Cell Details
+            </div>
+            <button
+              onClick={handleCopy}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${copySuccess
+                ? "bg-green-500/20 text-green-400"
+                : "bg-accent/10 text-accent hover:bg-accent/20"
+                }`}
+            >
+              {copySuccess ? (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                  </svg>
+                  Copied
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                    <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12a1.5 1.5 0 01.439 1.061V16.5A1.5 1.5 0 0115.5 18h-7A1.5 1.5 0 017 16.5V3.5z" />
+                    <path d="M5.5 5A1.5 1.5 0 004 6.5v10A1.5 1.5 0 005.5 18h8a1.5 1.5 0 001.5-1.5V14h-1v2.5a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-10a.5.5 0 01.5-.5H7V5H5.5z" />
+                  </svg>
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
+          <div className="bg-background/50 rounded-xl p-3 border border-border/50 max-h-[300px] overflow-y-auto">
+            <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">
+              {clickedCell.displayValue || <span className="opacity-30 italic">No value</span>}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
