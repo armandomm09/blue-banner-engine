@@ -660,11 +660,10 @@ const WelcomePage = () => {
                     Subteam
                   </p>
                   <p
-                    className={`text-base ${
-                      userProfile?.subteam
+                    className={`text-base ${userProfile?.subteam
                         ? "text-accent font-semibold"
                         : "text-white"
-                    }`}
+                      }`}
                   >
                     {userProfile?.subteam || "Not assigned"}
                   </p>
@@ -954,13 +953,12 @@ const WelcomePage = () => {
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                            inv.status === "pending"
+                          className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${inv.status === "pending"
                               ? "bg-yellow-500/10 text-yellow-400"
                               : inv.status === "accepted"
-                              ? "bg-green-500/10 text-green-400"
-                              : "bg-red-500/10 text-red-400"
-                          }`}
+                                ? "bg-green-500/10 text-green-400"
+                                : "bg-red-500/10 text-red-400"
+                            }`}
                         >
                           {inv.status}
                         </span>
@@ -997,32 +995,85 @@ const WelcomePage = () => {
           </div>
         )}
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+          <Link
+            to="/scout/dashboard"
+            className="rounded-xl border border-border p-4 sm:p-5 bg-accent/10 hover:bg-accent/20 transition-all group group-hover:border-accent/50"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-white">Scout Dashboard</h3>
+              <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m.75-12H6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 006 21h12a2.25 2.25 0 002.25-2.25V7.5L14.25 3z" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-sm text-text-muted">View pending tasks & assignments</p>
+          </Link>
+
           <Link
             to="/scout/pit"
-            className="rounded-xl border border-border p-4 sm:p-5 bg-blue-500/10 hover:bg-blue-500/20"
+            className="rounded-xl border border-border p-4 sm:p-5 bg-blue-500/10 hover:bg-blue-500/20 transition-all group"
           >
-            <h3 className="font-semibold text-white">Pit Scouting</h3>
-            <p className="text-sm text-text-muted">
-              Robot hardware & capabilities
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-white">Pit Scouting</h3>
+              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75a4.5 4.5 0 01-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 016.336-4.486l-3.276 3.276a3.004 3.004 0 002.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852z" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-sm text-text-muted">Robot hardware & specs</p>
           </Link>
 
           <Link
             to="/scout/match"
-            className="rounded-xl border border-border p-4 sm:p-5 bg-purple-500/10 hover:bg-purple-500/20"
+            className="rounded-xl border border-border p-4 sm:p-5 bg-purple-500/10 hover:bg-purple-500/20 transition-all group"
           >
-            <h3 className="font-semibold text-white">Match Scouting</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-white">Match Scouting</h3>
+              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                </svg>
+              </div>
+            </div>
             <p className="text-sm text-text-muted">Live match performance</p>
           </Link>
 
-          <Link
-            to="/forms"
-            className="rounded-xl border border-border p-4 sm:p-5 bg-accent/10 hover:bg-accent/20"
-          >
-            <h3 className="font-semibold text-white">Forms Manager</h3>
-            <p className="text-sm text-text-muted">Customize scouting forms</p>
-          </Link>
+          {teamMember?.role === "admin" && (
+            <Link
+              to="/admin/assignments"
+              className="rounded-xl border border-border p-4 sm:p-5 bg-orange-500/10 hover:bg-orange-500/20 transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-white">Scout Assignments</h3>
+                <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.998 5.998 0 00-5.48-1.518M6 18.719a7.488 7.488 0 00-2.399-5.54m5.654-2.84a3.75 3.75 0 117.332 0m-7.332 0c.13.59.27 1.18.43 1.77L5.5 20.35m9.907-10.46l-4.113 8.318" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-sm text-text-muted">Manage scout tasks & team control</p>
+            </Link>
+          )}
+
+          {teamMember?.role === "admin" && (
+            <Link
+              to="/forms"
+              className="rounded-xl border border-border p-4 sm:p-5 bg-white/5 hover:bg-white/10 transition-all group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-white">Forms Manager</h3>
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 group-hover:scale-110 transition-transform">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0m-3.75 0H3.75" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-sm text-text-muted">Customize scouting schema</p>
+            </Link>
+          )}
         </div>
       </div>
 

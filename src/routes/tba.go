@@ -207,6 +207,100 @@ func GetTeamMetrics(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+// GetEventSchedule fetches the match schedule for an FRC event
+// @Summary      Get TBA Event Schedule
+// @Description  Retrieves the match schedule for an FRC event from The Blue Alliance
+// @Tags         events
+// @Produce      json
+// @Param        eventKey path      string  true  "FRC Event Key (e.g., 2025mxmo)"
+// @Success      200      {array}   map[string]interface{}
+// @Failure      500      {object}  ErrorResponse
+// @Router       /tba/event/{eventKey}/schedule [get]
+func GetEventSchedule(c *gin.Context) {
+	eventKey := c.Param("eventKey")
+
+	tbaApiKey := c.MustGet("tbaApiKey").(string)
+	if tbaApiKey == "" {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "TBA_API_KEY is not configured on the server"})
+		return
+	}
+
+	url := fmt.Sprintf("https://www.thebluealliance.com/api/v3/event/%s/matches/simple", eventKey)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("X-TBA-Auth-Key", tbaApiKey)
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to contact The Blue Alliance API"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("TBA API returned status %s: %s", resp.Status, string(bodyBytes))
+		c.JSON(resp.StatusCode, ErrorResponse{Error: "Received an error from The Blue Alliance API"})
+		return
+	}
+
+	var matches []map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&matches); err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to parse response from The Blue Alliance API"})
+		return
+	}
+
+	c.JSON(http.StatusOK, matches)
+}
+
+// GetTeamEventMatches fetches matches for a specific team at an FRC event
+// @Summary      Get Team Event Matches
+// @Description  Retrieves matches for a specific team at an FRC event from The Blue Alliance
+// @Tags         events
+// @Produce      json
+// @Param        eventKey   path      string  true  "FRC Event Key (e.g., 2025mxmo)"
+// @Param        teamNumber path      int     true  "Team Number"
+// @Success      200        {array}   map[string]interface{}
+// @Failure      500        {object}  ErrorResponse
+// @Router       /tba/event/{eventKey}/team/{teamNumber}/matches [get]
+func GetTeamEventMatches(c *gin.Context) {
+	eventKey := c.Param("eventKey")
+	teamNumber := c.Param("teamNumber")
+
+	tbaApiKey := c.MustGet("tbaApiKey").(string)
+	if tbaApiKey == "" {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "TBA_API_KEY is not configured on the server"})
+		return
+	}
+
+	url := fmt.Sprintf("https://www.thebluealliance.com/api/v3/team/frc%s/event/%s/matches/simple", teamNumber, eventKey)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("X-TBA-Auth-Key", tbaApiKey)
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to contact The Blue Alliance API"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("TBA API returned status %s: %s", resp.Status, string(bodyBytes))
+		c.JSON(resp.StatusCode, ErrorResponse{Error: "Received an error from The Blue Alliance API"})
+		return
+	}
+
+	var matches []map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&matches); err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to parse response from The Blue Alliance API"})
+		return
+	}
+
+	c.JSON(http.StatusOK, matches)
+}
+
 func RegisterTbaRoutes(router *gin.RouterGroup, tbaApiKey string) {
 	router.Use(func(c *gin.Context) {
 		c.Set("tbaApiKey", tbaApiKey)
@@ -216,4 +310,6 @@ func RegisterTbaRoutes(router *gin.RouterGroup, tbaApiKey string) {
 	router.GET("/events/:year", GetAllEvents)
 	router.GET("/events/teams/:eventKey", GetAllTeamsByEvent)
 	router.GET("/tba/team/:teamNumber/metrics", GetTeamMetrics)
+	router.GET("/tba/event/:eventKey/schedule", GetEventSchedule)
+	router.GET("/tba/event/:eventKey/team/:teamNumber/matches", GetTeamEventMatches)
 }

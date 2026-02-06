@@ -16,6 +16,11 @@ const PitScoutPage = () => {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [assignedTeams, setAssignedTeams] = useState<number[]>([]);
+  const [eventSettings, setEventSettings] = useState<{
+    competition_type: string;
+    require_assignments: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (editId) {
@@ -26,6 +31,41 @@ const PitScoutPage = () => {
       fetchDefaultForm();
     }
   }, [formId, editId]);
+
+  useEffect(() => {
+    if (team?.id && user?.id) {
+      fetchAssignmentsAndSettings();
+    }
+  }, [team?.id, user?.id]);
+
+  const fetchAssignmentsAndSettings = async () => {
+    if (!team || !user) return;
+    try {
+      // Fetch event settings
+      const { data: settings } = await supabase
+        .from("event_settings")
+        .select("competition_type, require_assignments")
+        .eq("team_id", team.id)
+        .single();
+
+      if (settings) {
+        setEventSettings(settings);
+      }
+
+      // Fetch user's assignments
+      const { data: assignments } = await supabase
+        .from("scout_team_assignments")
+        .select("assigned_team_number")
+        .eq("team_id", team.id)
+        .eq("scout_user_id", user.id);
+
+      if (assignments) {
+        setAssignedTeams(assignments.map(a => a.assigned_team_number));
+      }
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+    }
+  };
 
   const fetchSubmissionForEdit = async () => {
     try {
@@ -208,16 +248,36 @@ const PitScoutPage = () => {
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="bg-card border border-border p-6 rounded-2xl">
               <label className="text-xs uppercase tracking-widest text-accent font-bold mb-2 block">
-                Scouted FRC Team
+                Scouted {eventSettings?.competition_type === 'ftc' ? 'FTC' : 'FRC'} Team
               </label>
-              <input
-                type="number"
-                required
-                value={scoutedTeam}
-                onChange={(e) => setScoutedTeam(e.target.value)}
-                placeholder="e.g. 254"
-                className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent/50"
-              />
+              {eventSettings?.require_assignments && assignedTeams.length > 0 ? (
+                <select
+                  required
+                  value={scoutedTeam}
+                  onChange={(e) => setScoutedTeam(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent/50"
+                >
+                  <option value="">Select a team...</option>
+                  {assignedTeams.map((num) => (
+                    <option key={num} value={num}>
+                      {eventSettings?.competition_type !== 'ftc' && 'FRC '}{num}
+                    </option>
+                  ))}
+                </select>
+              ) : eventSettings?.require_assignments && assignedTeams.length === 0 ? (
+                <div className="text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-xl px-4 py-3">
+                  You have no team assignments. Please contact your team admin.
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  required
+                  value={scoutedTeam}
+                  onChange={(e) => setScoutedTeam(e.target.value)}
+                  placeholder="e.g. 254"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent/50"
+                />
+              )}
             </div>
 
             <div className="bg-card border border-border p-8 rounded-2xl space-y-8">

@@ -21,6 +21,12 @@ const MatchScoutPage = () => {
     const [answers, setAnswers] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [assignedTeams, setAssignedTeams] = useState<number[]>([]);
+    const [eventSettings, setEventSettings] = useState<{
+        current_event_key: string;
+        competition_type: string;
+        require_assignments: boolean;
+    } | null>(null);
 
     useEffect(() => {
         if (editId) {
@@ -31,6 +37,46 @@ const MatchScoutPage = () => {
             fetchDefaultForm();
         }
     }, [formId, editId]);
+
+    useEffect(() => {
+        if (team?.id && user?.id) {
+            fetchAssignmentsAndSettings();
+        }
+    }, [team?.id, user?.id]);
+
+    const fetchAssignmentsAndSettings = async () => {
+        if (!team || !user) return;
+        try {
+            const { data: settings } = await supabase
+                .from("event_settings")
+                .select("current_event_key, competition_type, require_assignments")
+                .eq("team_id", team.id)
+                .single();
+
+            if (settings) {
+                setEventSettings(settings);
+                // Auto-populate event key from settings if not editing
+                if (!editId && settings.current_event_key) {
+                    setScoutMeta(prev => ({
+                        ...prev,
+                        event_key: prev.event_key || settings.current_event_key
+                    }));
+                }
+            }
+
+            const { data: assignments } = await supabase
+                .from("scout_team_assignments")
+                .select("assigned_team_number")
+                .eq("team_id", team.id)
+                .eq("scout_user_id", user.id);
+
+            if (assignments) {
+                setAssignedTeams(assignments.map(a => a.assigned_team_number));
+            }
+        } catch (error) {
+            console.error("Error fetching assignments:", error);
+        }
+    };
 
     const fetchSubmissionForEdit = async () => {
         try {
@@ -276,21 +322,46 @@ const MatchScoutPage = () => {
 
                                 <div>
                                     <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-1">
-                                        Scouted Team #
+                                        Scouted {eventSettings?.competition_type === 'ftc' ? 'FTC' : 'FRC'} Team #
                                     </label>
-                                    <input
-                                        type="number"
-                                        required
-                                        value={scoutMeta.scouted_team_number}
-                                        onChange={(e) =>
-                                            setScoutMeta({
-                                                ...scoutMeta,
-                                                scouted_team_number: e.target.value,
-                                            })
-                                        }
-                                        placeholder="254"
-                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
-                                    />
+                                    {eventSettings?.require_assignments && assignedTeams.length > 0 ? (
+                                        <select
+                                            required
+                                            value={scoutMeta.scouted_team_number}
+                                            onChange={(e) =>
+                                                setScoutMeta({
+                                                    ...scoutMeta,
+                                                    scouted_team_number: e.target.value,
+                                                })
+                                            }
+                                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
+                                        >
+                                            <option value="">Select a team...</option>
+                                            {assignedTeams.map((num) => (
+                                                <option key={num} value={num}>
+                                                    {eventSettings?.competition_type !== 'ftc' && 'FRC '}{num}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : eventSettings?.require_assignments && assignedTeams.length === 0 ? (
+                                        <div className="text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-lg px-3 py-2 text-sm">
+                                            No assignments
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type="number"
+                                            required
+                                            value={scoutMeta.scouted_team_number}
+                                            onChange={(e) =>
+                                                setScoutMeta({
+                                                    ...scoutMeta,
+                                                    scouted_team_number: e.target.value,
+                                                })
+                                            }
+                                            placeholder="254"
+                                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm"
+                                        />
+                                    )}
                                 </div>
 
                                 <div>

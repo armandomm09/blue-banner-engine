@@ -28,11 +28,15 @@ import FormsListPage from "./pages/Scouting/FormsListPage";
 import FormBuilderPage from "./pages/Scouting/FormBuilderPage";
 import PitScoutPage from "./pages/Scouting/PitScoutPage";
 import MatchScoutPage from "./pages/Scouting/MatchScoutPage";
+import ScoutDashboardPage from "./pages/Scouting/ScoutDashboardPage";
 
 // Dashboard
 import SubmissionsDashboard from "./pages/Dashboard/SubmissionsDashboard";
 import { TeamDashboard } from "./pages/Dashboard/TeamDashboard";
 import { CompareDashboard } from "./pages/Dashboard/CompareDashboard";
+
+// Admin
+import AdminAssignmentsPage from "./pages/Admin/AdminAssignmentsPage";
 
 function App() {
   return (
@@ -105,6 +109,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/scout/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <ScoutDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/dashboard/submissions/:type"
@@ -132,7 +144,16 @@ function App() {
               />
 
               <Route path="/team/:teamNumber" element={<TeamDashboard />} />
-              <Route path="/teams" element={<CompareDashboard />} /> 
+              <Route path="/teams" element={<CompareDashboard />} />
+
+              <Route
+                path="/admin/assignments"
+                element={
+                  <ProtectedRoute>
+                    <AdminAssignmentsPage />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/welcome"

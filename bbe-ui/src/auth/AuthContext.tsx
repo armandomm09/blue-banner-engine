@@ -16,6 +16,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, metadata?: any) => Promise<void>;
   signOut: () => Promise<void>;
   team: { id: string; name: string; accent_color: string } | null;
+  userRole: 'admin' | 'scout' | 'strategist' | 'viewer' | 'team_lead' | null;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: string;
     accent_color: string;
   } | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'scout' | 'strategist' | 'viewer' | 'team_lead' | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else {
         setTeam(null);
+        setUserRole(null);
       }
 
       setLoading(false);
@@ -97,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from("team_members")
         .select(
           `
+                    role,
                     team:teams (
                         id,
                         name,
@@ -111,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error.code !== "PGRST116")
           console.error("Error fetching team in AuthContext:", error);
         setTeam(null);
+        setUserRole(null);
         return;
       }
 
@@ -121,12 +127,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: teamData.name,
           accent_color: teamData.accent_color || "#00eee4",
         });
+        setUserRole(data.role as 'admin' | 'scout' | 'strategist' | 'viewer' | 'team_lead');
       } else {
         setTeam(null);
+        setUserRole(null);
       }
     } catch (err) {
       console.error("Unexpected error fetching team:", err);
       setTeam(null);
+      setUserRole(null);
     }
   };
 
@@ -154,9 +163,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
+  const isAdmin = userRole === 'admin' || userRole === 'team_lead';
+
   return (
     <AuthContext.Provider
-      value={{ user, session, loading, signIn, signUp, signOut, team }}
+      value={{ user, session, loading, signIn, signUp, signOut, team, userRole, isAdmin }}
     >
       {children}
     </AuthContext.Provider>

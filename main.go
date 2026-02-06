@@ -89,6 +89,11 @@ func main() {
 		log.Println("WARNING: TBA_API_KEY environment variable not set. Real match data will not be available.")
 	}
 
+	ftcKey := os.Getenv("FTC_API_KEY")
+	if ftcKey == "" {
+		log.Println("WARNING: FTC_API_KEY environment variable not set. FTC event data will not be available.")
+	}
+
 	grpcServerAddress := os.Getenv("GRPC_SERVER_ADDRESS")
 	if grpcServerAddress == "" {
 		grpcServerAddress = "localhost:50051"
@@ -132,6 +137,7 @@ func main() {
 		// ML and Analytics routes (no auth required for now)
 		routes.RegisterMatchpointRoutes(v1, handler.grpcClient, tbaKey)
 		routes.RegisterTbaRoutes(v1, tbaKey)
+		routes.RegisterFtcRoutes(v1, ftcKey)
 		routes.RegisterSimulationRoutes(v1, handler.grpcClient)
 		routes.RegisterAnalyticsRoutes(v1, analyticsClient)
 
