@@ -201,6 +201,148 @@ const docTemplate = `{
                 }
             }
         },
+        "/ftc/event/{season}/{eventCode}/matches": {
+            "get": {
+                "description": "Retrieves the match schedule for an FTC event from the FIRST FTC API",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ftc"
+                ],
+                "summary": "Get FTC Event Match Schedule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FTC Season (e.g., 2024)",
+                        "name": "season",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "FTC Event Code (e.g., TXHOU)",
+                        "name": "eventCode",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.FTCMatch"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ftc/event/{season}/{eventCode}/team/{teamNumber}/matches": {
+            "get": {
+                "description": "Retrieves matches for a specific team at an FTC event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ftc"
+                ],
+                "summary": "Get FTC Team Matches",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FTC Season (e.g., 2024)",
+                        "name": "season",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "FTC Event Code (e.g., TXHOU)",
+                        "name": "eventCode",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team Number",
+                        "name": "teamNumber",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.FTCMatch"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ftc/event/{season}/{eventCode}/teams": {
+            "get": {
+                "description": "Retrieves the list of teams at an FTC event from the FIRST FTC API",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ftc"
+                ],
+                "summary": "Get FTC Event Teams",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FTC Season (e.g., 2024)",
+                        "name": "season",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "FTC Event Code (e.g., TXHOU)",
+                        "name": "eventCode",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/routes.FTCTeam"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/metrics/metadata": {
             "get": {
                 "description": "Returns a list of all available metrics for visualization.",
@@ -398,6 +540,91 @@ const docTemplate = `{
                 }
             }
         },
+        "/tba/event/{eventKey}/schedule": {
+            "get": {
+                "description": "Retrieves the match schedule for an FRC event from The Blue Alliance",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get TBA Event Schedule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FRC Event Key (e.g., 2025mxmo)",
+                        "name": "eventKey",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tba/event/{eventKey}/team/{teamNumber}/matches": {
+            "get": {
+                "description": "Retrieves matches for a specific team at an FRC event from The Blue Alliance",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Get Team Event Matches",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FRC Event Key (e.g., 2025mxmo)",
+                        "name": "eventKey",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team Number",
+                        "name": "teamNumber",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/tba/team/{teamNumber}/metrics": {
             "get": {
                 "description": "Fetches rankings and OPRs for a team at a specific event.",
@@ -552,6 +779,63 @@ const docTemplate = `{
             "properties": {
                 "error": {
                     "type": "string"
+                }
+            }
+        },
+        "routes.FTCMatch": {
+            "type": "object",
+            "properties": {
+                "actualStartTime": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "matchNumber": {
+                    "type": "integer"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "teams": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "station": {
+                                "type": "string"
+                            },
+                            "teamNumber": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "tournamentLevel": {
+                    "type": "string"
+                }
+            }
+        },
+        "routes.FTCTeam": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "nameFull": {
+                    "type": "string"
+                },
+                "nameShort": {
+                    "type": "string"
+                },
+                "stateprov": {
+                    "type": "string"
+                },
+                "teamNumber": {
+                    "type": "integer"
                 }
             }
         },

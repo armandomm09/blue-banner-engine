@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,15 +59,15 @@ func GetFTCEventMatches(c *gin.Context) {
 	season := c.Param("season")
 	eventCode := c.Param("eventCode")
 
-	ftcApiKey := c.MustGet("ftcApiKey").(string)
-	if ftcApiKey == "" {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "FTC_API_KEY is not configured on the server"})
+	ftcAuthToken := c.MustGet("ftcAuthToken").(string)
+	if ftcAuthToken == "" {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "FTC_API authentication is not configured on the server"})
 		return
 	}
 
 	// Try to get qualification matches first
 	url := fmt.Sprintf("https://ftc-api.firstinspires.org/v2.0/%s/schedule/%s/qual/hybrid", season, eventCode)
-	matches, err := fetchFTCSchedule(url, ftcApiKey)
+	matches, err := fetchFTCSchedule(url, ftcAuthToken)
 	if err != nil {
 		log.Printf("Error fetching FTC qual schedule: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch FTC event schedule"})
@@ -90,15 +91,17 @@ func GetFTCEventTeams(c *gin.Context) {
 	season := c.Param("season")
 	eventCode := c.Param("eventCode")
 
-	ftcApiKey := c.MustGet("ftcApiKey").(string)
-	if ftcApiKey == "" {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "FTC_API_KEY is not configured on the server"})
+	ftcAuthToken := c.MustGet("ftcAuthToken").(string)
+	if ftcAuthToken == "" {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "FTC_API authentication is not configured on the server"})
 		return
 	}
 
 	url := fmt.Sprintf("https://ftc-api.firstinspires.org/v2.0/%s/teams?eventCode=%s", season, eventCode)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", "Basic "+ftcApiKey)
+	req.Header.Set("Authorization", "Basic "+ftcAuthToken)
+	req.Header.Set("User-Agent", "FTCDirectClient/1.0")
+	req.Header.Set("Accept", "application/json")
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
@@ -126,6 +129,63 @@ func GetFTCEventTeams(c *gin.Context) {
 	c.JSON(http.StatusOK, teamsResp.Teams)
 }
 
+// GetFTCEventTeamNumbers fetches team numbers at an FTC event
+// @Summary      Get FTC Event Team Numbers
+// @Description  Retrieves the list of team numbers at an FTC event from the FIRST FTC API
+// @Tags         ftc
+// @Produce      json
+// @Param        season    path      string  true  "FTC Season (e.g., 2024)"
+// @Param        eventCode path      string  true  "FTC Event Code (e.g., TXHOU)"
+// @Success      200       {array}   int
+// @Failure      500       {object}  ErrorResponse
+// @Router       /ftc/event/{season}/{eventCode}/teams/numbers [get]
+func GetFTCEventTeamNumbers(c *gin.Context) {
+	season := c.Param("season")
+	eventCode := c.Param("eventCode")
+
+	ftcAuthToken := c.MustGet("ftcAuthToken").(string)
+	if ftcAuthToken == "" {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "FTC_API authentication is not configured on the server"})
+		return
+	}
+
+	url := fmt.Sprintf("https://ftc-api.firstinspires.org/v2.0/%s/teams?eventCode=%s", season, eventCode)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Authorization", "Basic "+ftcAuthToken)
+	req.Header.Set("User-Agent", "FTCDirectClient/1.0")
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Error contacting FTC API: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to contact FTC API"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("FTC API returned status %s: %s", resp.Status, string(bodyBytes))
+		c.JSON(resp.StatusCode, ErrorResponse{Error: "Received an error from FTC API"})
+		return
+	}
+
+	var teamsResp FTCTeamsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&teamsResp); err != nil {
+		log.Printf("Error parsing FTC teams response: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to parse FTC API response"})
+		return
+	}
+
+	teamNumbers := make([]int, len(teamsResp.Teams))
+	for i, t := range teamsResp.Teams {
+		teamNumbers[i] = t.TeamNumber
+	}
+
+	c.JSON(http.StatusOK, teamNumbers)
+}
+
 // GetFTCTeamMatches fetches matches for a specific team at an FTC event
 // @Summary      Get FTC Team Matches
 // @Description  Retrieves matches for a specific team at an FTC event
@@ -142,14 +202,14 @@ func GetFTCTeamMatches(c *gin.Context) {
 	eventCode := c.Param("eventCode")
 	teamNumber := c.Param("teamNumber")
 
-	ftcApiKey := c.MustGet("ftcApiKey").(string)
-	if ftcApiKey == "" {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "FTC_API_KEY is not configured on the server"})
+	ftcAuthToken := c.MustGet("ftcAuthToken").(string)
+	if ftcAuthToken == "" {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "FTC_API authentication is not configured on the server"})
 		return
 	}
 
 	url := fmt.Sprintf("https://ftc-api.firstinspires.org/v2.0/%s/schedule/%s/qual/hybrid?teamNumber=%s", season, eventCode, teamNumber)
-	matches, err := fetchFTCSchedule(url, ftcApiKey)
+	matches, err := fetchFTCSchedule(url, ftcAuthToken)
 	if err != nil {
 		log.Printf("Error fetching FTC team matches: %v", err)
 		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch FTC team matches"})
@@ -159,9 +219,11 @@ func GetFTCTeamMatches(c *gin.Context) {
 	c.JSON(http.StatusOK, matches)
 }
 
-func fetchFTCSchedule(url string, apiKey string) ([]FTCMatch, error) {
+func fetchFTCSchedule(url string, authToken string) ([]FTCMatch, error) {
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Authorization", "Basic "+apiKey)
+	req.Header.Set("Authorization", "Basic "+authToken)
+	req.Header.Set("User-Agent", "FTCDirectClient/1.0")
+	req.Header.Set("Accept", "application/json")
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
@@ -184,13 +246,21 @@ func fetchFTCSchedule(url string, apiKey string) ([]FTCMatch, error) {
 }
 
 // RegisterFtcRoutes registers all FTC API proxy routes
-func RegisterFtcRoutes(router *gin.RouterGroup, ftcApiKey string) {
+func RegisterFtcRoutes(router *gin.RouterGroup, ftcUser string, ftcKey string) {
+	// Pre-calculate the Basic Auth token
+	authToken := ""
+	if ftcUser != "" && ftcKey != "" {
+		authStr := fmt.Sprintf("%s:%s", ftcUser, ftcKey)
+		authToken = base64.StdEncoding.EncodeToString([]byte(authStr))
+	}
+
 	router.Use(func(c *gin.Context) {
-		c.Set("ftcApiKey", ftcApiKey)
+		c.Set("ftcAuthToken", authToken)
 		c.Next()
 	})
 
 	router.GET("/ftc/event/:season/:eventCode/matches", GetFTCEventMatches)
 	router.GET("/ftc/event/:season/:eventCode/teams", GetFTCEventTeams)
+	router.GET("/ftc/event/:season/:eventCode/teams/numbers", GetFTCEventTeamNumbers)
 	router.GET("/ftc/event/:season/:eventCode/team/:teamNumber/matches", GetFTCTeamMatches)
 }

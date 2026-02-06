@@ -69,6 +69,43 @@ definitions:
       error:
         type: string
     type: object
+  routes.FTCMatch:
+    properties:
+      actualStartTime:
+        type: string
+      description:
+        type: string
+      matchNumber:
+        type: integer
+      startTime:
+        type: string
+      teams:
+        items:
+          properties:
+            station:
+              type: string
+            teamNumber:
+              type: integer
+          type: object
+        type: array
+      tournamentLevel:
+        type: string
+    type: object
+  routes.FTCTeam:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      nameFull:
+        type: string
+      nameShort:
+        type: string
+      stateprov:
+        type: string
+      teamNumber:
+        type: integer
+    type: object
   routes.MetricDefinition:
     properties:
       description:
@@ -354,6 +391,103 @@ paths:
       summary: Get All Teams for an Event
       tags:
       - events
+  /ftc/event/{season}/{eventCode}/matches:
+    get:
+      description: Retrieves the match schedule for an FTC event from the FIRST FTC
+        API
+      parameters:
+      - description: FTC Season (e.g., 2024)
+        in: path
+        name: season
+        required: true
+        type: string
+      - description: FTC Event Code (e.g., TXHOU)
+        in: path
+        name: eventCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.FTCMatch'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get FTC Event Match Schedule
+      tags:
+      - ftc
+  /ftc/event/{season}/{eventCode}/team/{teamNumber}/matches:
+    get:
+      description: Retrieves matches for a specific team at an FTC event
+      parameters:
+      - description: FTC Season (e.g., 2024)
+        in: path
+        name: season
+        required: true
+        type: string
+      - description: FTC Event Code (e.g., TXHOU)
+        in: path
+        name: eventCode
+        required: true
+        type: string
+      - description: Team Number
+        in: path
+        name: teamNumber
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.FTCMatch'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get FTC Team Matches
+      tags:
+      - ftc
+  /ftc/event/{season}/{eventCode}/teams:
+    get:
+      description: Retrieves the list of teams at an FTC event from the FIRST FTC
+        API
+      parameters:
+      - description: FTC Season (e.g., 2024)
+        in: path
+        name: season
+        required: true
+        type: string
+      - description: FTC Event Code (e.g., TXHOU)
+        in: path
+        name: eventCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.FTCTeam'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get FTC Event Teams
+      tags:
+      - ftc
   /metrics/metadata:
     get:
       description: Returns a list of all available metrics for visualization.
@@ -488,6 +622,64 @@ paths:
       summary: Get Statbotics Metrics for a Team
       tags:
       - metrics
+  /tba/event/{eventKey}/schedule:
+    get:
+      description: Retrieves the match schedule for an FRC event from The Blue Alliance
+      parameters:
+      - description: FRC Event Key (e.g., 2025mxmo)
+        in: path
+        name: eventKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get TBA Event Schedule
+      tags:
+      - events
+  /tba/event/{eventKey}/team/{teamNumber}/matches:
+    get:
+      description: Retrieves matches for a specific team at an FRC event from The
+        Blue Alliance
+      parameters:
+      - description: FRC Event Key (e.g., 2025mxmo)
+        in: path
+        name: eventKey
+        required: true
+        type: string
+      - description: Team Number
+        in: path
+        name: teamNumber
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrorResponse'
+      summary: Get Team Event Matches
+      tags:
+      - events
   /tba/team/{teamNumber}/metrics:
     get:
       description: Fetches rankings and OPRs for a team at a specific event.

@@ -29,6 +29,16 @@ type TeamKeysEvent struct {
 	TeamKeys []string `json:"team_keys"`
 }
 
+// TbaTeam represents a team at an FRC event (aligned with FTC structure)
+type TbaTeam struct {
+	TeamNumber int    `json:"teamNumber"`
+	NameShort  string `json:"nameShort"`
+	NameFull   string `json:"nameFull"`
+	City       string `json:"city"`
+	StateProv  string `json:"stateprov"`
+	Country    string `json:"country"`
+}
+
 // ErrorResponse envuelve un mensaje de error
 type ErrorResponse struct {
 	Error string `json:"error"`
@@ -83,11 +93,11 @@ func GetAllEvents(c *gin.Context) {
 
 // GetAllTeamsByEvent godoc
 // @Summary      Get All Teams for an Event
-// @Description  Retrieves a list of all team keys participating in a given FRC event from The Blue Alliance.
+// @Description  Retrieves a list of all teams participating in a given FRC event from The Blue Alliance.
 // @Tags         events
 // @Produce      json
 // @Param        eventKey   path      string  true  "FRC Event Key (e.g., 2025mexas)"
-// @Success      200    {array}   string
+// @Success      200    {array}   TbaTeam
 // @Failure      500    {object}  ErrorResponse
 // @Router       /events/teams/{eventKey} [get]
 func GetAllTeamsByEvent(c *gin.Context) {
@@ -95,7 +105,72 @@ func GetAllTeamsByEvent(c *gin.Context) {
 
 	tbaApiKey := c.MustGet("tbaApiKey").(string)
 	if tbaApiKey == "" {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "TBA_API_KEY is not configured on the serveCan r"})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "TBA_API_KEY is not configured on the server"})
+		return
+	}
+
+	url := fmt.Sprintf("https://www.thebluealliance.com/api/v3/event/%s/teams/simple", eventKey)
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("X-TBA-Auth-Key", tbaApiKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to contact The Blue Alliance API"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("TBA API returned status %s: %s", resp.Status, string(bodyBytes))
+		c.JSON(resp.StatusCode, ErrorResponse{Error: "Received an error from The Blue Alliance API"})
+		return
+	}
+
+	var tbaTeams []struct {
+		TeamNumber int    `json:"team_number"`
+		Nickname   string `json:"nickname"`
+		Name       string `json:"name"`
+		City       string `json:"city"`
+		StateProv  string `json:"state_prov"`
+		Country    string `json:"country"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tbaTeams); err != nil {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to parse response from The Blue Alliance API"})
+		return
+	}
+
+	result := make([]TbaTeam, len(tbaTeams))
+	for i, t := range tbaTeams {
+		result[i] = TbaTeam{
+			TeamNumber: t.TeamNumber,
+			NameShort:  t.Nickname,
+			NameFull:   t.Name,
+			City:       t.City,
+			StateProv:  t.StateProv,
+			Country:    t.Country,
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// GetAllTeamNumbersByEvent godoc
+// @Summary      Get All Team Numbers for an Event
+// @Description  Retrieves a list of all team numbers participating in a given FRC event from The Blue Alliance.
+// @Tags         events
+// @Produce      json
+// @Param        eventKey   path      string  true  "FRC Event Key (e.g., 2025mexas)"
+// @Success      200    {array}   int
+// @Failure      500    {object}  ErrorResponse
+// @Router       /events/teams/{eventKey}/numbers [get]
+func GetAllTeamNumbersByEvent(c *gin.Context) {
+	eventKey := c.Param("eventKey")
+
+	tbaApiKey := c.MustGet("tbaApiKey").(string)
+	if tbaApiKey == "" {
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "TBA_API_KEY is not configured on the server"})
 		return
 	}
 
@@ -124,8 +199,12 @@ func GetAllTeamsByEvent(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, teamKeys)
+	teamNumbers := make([]int, len(teamKeys))
+	for i, key := range teamKeys {
+		fmt.Sscanf(key, "frc%d", &teamNumbers[i])
+	}
 
+	c.JSON(http.StatusOK, teamNumbers)
 }
 
 // @Summary      Get TBA Metrics for a Team
@@ -309,6 +388,7 @@ func RegisterTbaRoutes(router *gin.RouterGroup, tbaApiKey string) {
 
 	router.GET("/events/:year", GetAllEvents)
 	router.GET("/events/teams/:eventKey", GetAllTeamsByEvent)
+	router.GET("/events/teams/:eventKey/numbers", GetAllTeamNumbersByEvent)
 	router.GET("/tba/team/:teamNumber/metrics", GetTeamMetrics)
 	router.GET("/tba/event/:eventKey/schedule", GetEventSchedule)
 	router.GET("/tba/event/:eventKey/team/:teamNumber/matches", GetTeamEventMatches)

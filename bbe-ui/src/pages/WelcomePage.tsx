@@ -119,9 +119,6 @@ const WelcomePage = () => {
         console.error("Error fetching team:", memberError);
       }
 
-      console.log("Member data fetched:", memberData);
-      console.log("User ID:", user.id);
-
       if (memberData && memberData.team) {
         // Determine if team is an object or an array (sometimes PostgREST returns array)
         const team = Array.isArray(memberData.team)
@@ -661,8 +658,8 @@ const WelcomePage = () => {
                   </p>
                   <p
                     className={`text-base ${userProfile?.subteam
-                        ? "text-accent font-semibold"
-                        : "text-white"
+                      ? "text-accent font-semibold"
+                      : "text-white"
                       }`}
                   >
                     {userProfile?.subteam || "Not assigned"}
@@ -954,10 +951,10 @@ const WelcomePage = () => {
                       <td className="py-4 px-4">
                         <span
                           className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${inv.status === "pending"
-                              ? "bg-yellow-500/10 text-yellow-400"
-                              : inv.status === "accepted"
-                                ? "bg-green-500/10 text-green-400"
-                                : "bg-red-500/10 text-red-400"
+                            ? "bg-yellow-500/10 text-yellow-400"
+                            : inv.status === "accepted"
+                              ? "bg-green-500/10 text-green-400"
+                              : "bg-red-500/10 text-red-400"
                             }`}
                         >
                           {inv.status}

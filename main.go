@@ -90,8 +90,9 @@ func main() {
 	}
 
 	ftcKey := os.Getenv("FTC_API_KEY")
-	if ftcKey == "" {
-		log.Println("WARNING: FTC_API_KEY environment variable not set. FTC event data will not be available.")
+	ftcUser := os.Getenv("FTC_USER")
+	if ftcKey == "" || ftcUser == "" {
+		log.Println("WARNING: FTC_API_KEY or FTC_USER environment variable not set. FTC event data will not be available.")
 	}
 
 	grpcServerAddress := os.Getenv("GRPC_SERVER_ADDRESS")
@@ -137,7 +138,7 @@ func main() {
 		// ML and Analytics routes (no auth required for now)
 		routes.RegisterMatchpointRoutes(v1, handler.grpcClient, tbaKey)
 		routes.RegisterTbaRoutes(v1, tbaKey)
-		routes.RegisterFtcRoutes(v1, ftcKey)
+		routes.RegisterFtcRoutes(v1, ftcUser, ftcKey)
 		routes.RegisterSimulationRoutes(v1, handler.grpcClient)
 		routes.RegisterAnalyticsRoutes(v1, analyticsClient)
 

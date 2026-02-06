@@ -129,10 +129,10 @@ const ScoutDashboardPage = () => {
             // Fetch event schedule based on competition type
             let matches: any[] = [];
             if (competitionType === "ftc") {
-                const season = eventKey.substring(0, 4);
-                const eventCode = eventKey.substring(4);
+                // const season = eventKey.substring(0, 4);
+                const eventCode = eventKey;
                 const response = await fetch(
-                    `/api/v1/ftc/event/${season}/${eventCode}/matches`
+                    `/api/v1/ftc/event/2025/${eventCode}/matches`
                 );
                 if (response.ok) {
                     matches = await response.json();

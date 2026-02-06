@@ -11,6 +11,15 @@ interface Scout {
     full_name: string;
 }
 
+interface TeamData {
+    teamNumber: number;
+    nameShort: string;
+    nameFull: string;
+    city?: string;
+    stateprov?: string;
+    country?: string;
+}
+
 interface Assignment {
     id: string;
     scout_user_id: string;
@@ -35,7 +44,7 @@ const AdminAssignmentsPage = () => {
         competition_type: "",
         require_assignments: false,
     });
-    const [eventTeams, setEventTeams] = useState<number[]>([]);
+    const [eventTeams, setEventTeams] = useState<TeamData[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [newAssignment, setNewAssignment] = useState<{
@@ -44,6 +53,8 @@ const AdminAssignmentsPage = () => {
     }>({ scoutId: "", teamNumber: "" });
     const [scoutSearch, setScoutSearch] = useState("");
     const [scoutDropdownOpen, setScoutDropdownOpen] = useState(false);
+    const [teamSearch, setTeamSearch] = useState("");
+    const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
 
     useEffect(() => {
         // Wait until auth is loaded AND userRole has been fetched
@@ -152,8 +163,8 @@ const AdminAssignmentsPage = () => {
             let url = "";
             if (competitionType === "ftc") {
                 // Extract season from event key (first 4 chars)
-                const season = eventKey.substring(0, 4);
-                const eventCode = eventKey.substring(4);
+                const season = 2025 //eventKey.substring(0, 4);
+                const eventCode = eventKey;
                 url = `/api/v1/ftc/event/${season}/${eventCode}/teams`;
             } else {
                 url = `/api/v1/events/teams/${eventKey}`;
@@ -162,14 +173,7 @@ const AdminAssignmentsPage = () => {
             const response = await fetch(url);
             if (response.ok) {
                 const data = await response.json();
-                if (competitionType === "ftc") {
-                    setEventTeams(data.map((t: any) => t.teamNumber));
-                } else {
-                    // TBA returns team keys like "frc254"
-                    setEventTeams(
-                        data.map((key: string) => parseInt(key.replace("frc", "")))
-                    );
-                }
+                setEventTeams(data);
             }
         } catch (error) {
             console.error("Error fetching event teams:", error);
@@ -236,6 +240,8 @@ const AdminAssignmentsPage = () => {
 
             fetchData();
             setNewAssignment({ scoutId: "", teamNumber: "" });
+            setScoutSearch("");
+            setTeamSearch("");
         } catch (error: any) {
             if (error.code === "23505") {
                 alert("This scout is already assigned to this team.");
@@ -452,40 +458,84 @@ const AdminAssignmentsPage = () => {
                             )}
                         </div>
 
-                        <div>
-                            <label className="text-xs font-bold text-accent uppercase tracking-wider block mb-2">
+                        <div className="relative">
+                            <label className="block text-text-muted text-xs uppercase font-bold tracking-wider mb-2">
                                 Team Number
                             </label>
-                            {eventTeams.length > 0 ? (
-                                <select
-                                    value={newAssignment.teamNumber}
-                                    onChange={(e) =>
-                                        setNewAssignment({
-                                            ...newAssignment,
-                                            teamNumber: e.target.value,
-                                        })
-                                    }
-                                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white"
-                                >
-                                    <option value="">Select Team...</option>
-                                    {eventTeams.map((num) => (
-                                        <option key={num} value={num}>
-                                            {num}
-                                        </option>
-                                    ))}
-                                </select>
-                            ) : (
+                            <div className="relative">
                                 <input
-                                    type="number"
-                                    value={newAssignment.teamNumber}
-                                    onChange={(e) =>
-                                        setNewAssignment({
-                                            ...newAssignment,
-                                            teamNumber: e.target.value,
-                                        })
-                                    }
-                                    placeholder="Enter team number"
-                                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white"
+                                    type="text"
+                                    value={teamSearch}
+                                    onChange={(e) => {
+                                        setTeamSearch(e.target.value);
+                                        setTeamDropdownOpen(true);
+                                    }}
+                                    onFocus={() => setTeamDropdownOpen(true)}
+                                    placeholder="Search by team # or name..."
+                                    className="w-full bg-background border border-border rounded-lg px-4 py-2 text-white outline-none focus:border-accent/50 transition-all"
+                                />
+                                {teamSearch && (
+                                    <button
+                                        onClick={() => {
+                                            setTeamSearch("");
+                                            setNewAssignment({ ...newAssignment, teamNumber: "" });
+                                        }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+
+                            {teamDropdownOpen && (
+                                <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                    {eventTeams
+                                        .filter((team) =>
+                                            team.teamNumber.toString().includes(teamSearch.toLowerCase()) ||
+                                            team.nameShort.toLowerCase().includes(teamSearch.toLowerCase()) ||
+                                            team.nameFull.toLowerCase().includes(teamSearch.toLowerCase())
+                                        )
+                                        .map((team) => (
+                                            <button
+                                                key={team.teamNumber}
+                                                onClick={() => {
+                                                    setNewAssignment({ ...newAssignment, teamNumber: team.teamNumber.toString() });
+                                                    setTeamSearch(`Team ${team.teamNumber} - ${team.nameShort}`);
+                                                    setTeamDropdownOpen(false);
+                                                }}
+                                                className="w-full px-4 py-3 text-left hover:bg-white/5 border-b border-border/50 last:border-none flex items-center justify-between group"
+                                            >
+                                                <div className="flex flex-col">
+                                                    <span className="text-white font-medium group-hover:text-accent transition-colors">
+                                                        Team {team.teamNumber}
+                                                    </span>
+                                                    <span className="text-xs text-text-muted">
+                                                        {team.nameShort}
+                                                    </span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-[10px] text-text-muted uppercase">
+                                                        {team.city}, {team.stateprov || team.country}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    {eventTeams.filter((team) =>
+                                        team.teamNumber.toString().includes(teamSearch.toLowerCase()) ||
+                                        team.nameShort.toLowerCase().includes(teamSearch.toLowerCase())
+                                    ).length === 0 && (
+                                            <div className="px-4 py-3 text-text-muted text-sm italic">
+                                                No teams found for the current event.
+                                            </div>
+                                        )}
+                                </div>
+                            )}
+                            {teamDropdownOpen && (
+                                <div
+                                    className="fixed inset-0 z-0"
+                                    onClick={() => setTeamDropdownOpen(false)}
                                 />
                             )}
                         </div>
@@ -542,10 +592,12 @@ const AdminAssignmentsPage = () => {
                                                         className="flex items-center gap-2 px-3 py-1 bg-background border border-border rounded-lg"
                                                     >
                                                         <span className="text-white font-mono">
-                                                            {eventSettings.competition_type === "ftc"
-                                                                ? ""
-                                                                : "FRC "}
-                                                            {assignment.assigned_team_number}
+                                                            Team {assignment.assigned_team_number}
+                                                            {eventTeams.find(t => t.teamNumber === assignment.assigned_team_number) && (
+                                                                <span className="text-text-muted text-[10px] ml-1">
+                                                                    ({eventTeams.find(t => t.teamNumber === assignment.assigned_team_number)?.nameShort})
+                                                                </span>
+                                                            )}
                                                         </span>
                                                         <button
                                                             onClick={() => removeAssignment(assignment.id)}
