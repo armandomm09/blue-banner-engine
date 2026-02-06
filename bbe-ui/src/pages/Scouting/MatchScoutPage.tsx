@@ -51,7 +51,7 @@ const MatchScoutPage = () => {
                 .from("event_settings")
                 .select("current_event_key, competition_type, require_assignments")
                 .eq("team_id", team.id)
-                .single();
+                .maybeSingle();
 
             if (settings) {
                 setEventSettings(settings);

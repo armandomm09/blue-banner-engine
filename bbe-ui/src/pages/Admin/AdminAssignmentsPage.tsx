@@ -111,11 +111,15 @@ const AdminAssignmentsPage = () => {
             }
 
             // Fetch event settings
-            const { data: settingsData } = await supabase
+            const { data: settingsData, error: settingsError } = await supabase
                 .from("event_settings")
                 .select("*")
                 .eq("team_id", team.id)
-                .single();
+                .maybeSingle();
+
+            if (settingsError && settingsError.code !== 'PGRST116') {
+                console.error("Error fetching event settings:", settingsError);
+            }
 
             if (settingsData) {
                 setEventSettings({

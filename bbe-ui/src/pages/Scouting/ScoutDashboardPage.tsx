@@ -59,7 +59,7 @@ const ScoutDashboardPage = () => {
                 .from("event_settings")
                 .select("*")
                 .eq("team_id", team.id)
-                .single();
+                .maybeSingle();
 
             if (settingsData) {
                 setEventSettings({
@@ -302,8 +302,8 @@ const ScoutDashboardPage = () => {
                                 <div
                                     key={pit.teamNumber}
                                     className={`flex items-center justify-between px-4 py-3 rounded-lg border ${pit.completed
-                                            ? "bg-green-500/10 border-green-500/30"
-                                            : "bg-background border-border"
+                                        ? "bg-green-500/10 border-green-500/30"
+                                        : "bg-background border-border"
                                         }`}
                                 >
                                     <span
@@ -314,8 +314,8 @@ const ScoutDashboardPage = () => {
                                     </span>
                                     <span
                                         className={`text-xs px-2 py-1 rounded-full ${pit.completed
-                                                ? "bg-green-500/20 text-green-400"
-                                                : "bg-yellow-500/20 text-yellow-400"
+                                            ? "bg-green-500/20 text-green-400"
+                                            : "bg-yellow-500/20 text-yellow-400"
                                             }`}
                                     >
                                         {pit.completed ? "Completed" : "Pending"}
@@ -354,8 +354,8 @@ const ScoutDashboardPage = () => {
                                     <div
                                         key={`${match.matchKey}-${match.teamNumber}-${idx}`}
                                         className={`flex items-center justify-between px-4 py-3 rounded-lg border ${match.completed
-                                                ? "bg-green-500/10 border-green-500/30"
-                                                : "bg-background border-border"
+                                            ? "bg-green-500/10 border-green-500/30"
+                                            : "bg-background border-border"
                                             }`}
                                     >
                                         <div>
@@ -371,8 +371,8 @@ const ScoutDashboardPage = () => {
                                         </div>
                                         <span
                                             className={`text-xs px-2 py-1 rounded-full ${match.completed
-                                                    ? "bg-green-500/20 text-green-400"
-                                                    : "bg-orange-500/20 text-orange-400"
+                                                ? "bg-green-500/20 text-green-400"
+                                                : "bg-orange-500/20 text-orange-400"
                                                 }`}
                                         >
                                             {match.completed ? "Completed" : "Pending"}

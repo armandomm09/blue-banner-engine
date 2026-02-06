@@ -46,7 +46,7 @@ const PitScoutPage = () => {
         .from("event_settings")
         .select("competition_type, require_assignments")
         .eq("team_id", team.id)
-        .single();
+        .maybeSingle();
 
       if (settings) {
         setEventSettings(settings);
