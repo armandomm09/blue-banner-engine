@@ -7,6 +7,7 @@ import {
   fetchMetricMetadata,
   fetchTeamStatboticsMetrics,
 } from "../../services/metricsApi";
+import { trackEvent } from "../../utils/analytics";
 
 export const TeamDashboard: React.FC = () => {
   const { teamNumber } = useParams<{ teamNumber: string }>();
@@ -64,7 +65,22 @@ export const TeamDashboard: React.FC = () => {
     loadData();
   }, [teamNumber]);
 
+  useEffect(() => {
+    if (teamNumber) {
+      trackEvent("page_view_custom", {
+        page: "Team Dashboard",
+        teamNumber,
+      });
+    }
+  }, [teamNumber]);
+
   const handleAddChart = (config: ChartConfig) => {
+    trackEvent("chart_added", {
+      chartId: config.id,
+      chartType: config.type,
+      metrics: config.metrics,
+      teamNumber,
+    });
     setCharts([...charts, config]);
     setShowBuilder(false);
   };

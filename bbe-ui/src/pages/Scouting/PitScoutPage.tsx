@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { supabase } from "../../lib/supabase";
 import Stopwatch from "../../components/Scouting/Stopwatch";
+import { trackEvent } from "../../utils/analytics";
 
 const PitScoutPage = () => {
   const [searchParams] = useSearchParams();
@@ -23,6 +24,11 @@ const PitScoutPage = () => {
   } | null>(null);
 
   useEffect(() => {
+    trackEvent("page_view_custom", {
+      page: "Pit Scout",
+      formId: formId || "default",
+      editId: editId || null,
+    });
     if (editId) {
       fetchSubmissionForEdit();
     } else if (formId) {
@@ -166,9 +172,22 @@ const PitScoutPage = () => {
         : await supabase.from("pit_submissions").insert(submissionData);
 
       if (error) throw error;
+
+      trackEvent("pit_form_submit", {
+        teamId: team.id,
+        scoutedTeam: parseInt(scoutedTeam),
+        isEdit: !!editId,
+        numFields: Object.keys(answers).length
+      });
+
       alert(editId ? "Submission updated!" : "Submission successful!");
       navigate("/forms/submissions");
+      navigate("/forms/submissions");
     } catch (_error) {
+      trackEvent("form_submit_error", {
+        type: "pit",
+        error: _error instanceof Error ? _error.message : "Unknown error"
+      });
       console.error("Error submitting:", _error);
       alert("Failed to save submission");
     } finally {

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { trackEvent } from "../../utils/analytics";
 
 interface Scout {
     id: string;
@@ -57,6 +58,7 @@ const AdminAssignmentsPage = () => {
     const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
 
     useEffect(() => {
+        trackEvent("page_view_custom", { page: "Admin Assignments" });
         // Wait until auth is loaded AND userRole has been fetched
         // userRole will be null initially, then set after fetchTeam completes
         if (!authLoading && user && userRole !== null && !isAdmin) {
@@ -159,6 +161,7 @@ const AdminAssignmentsPage = () => {
         eventKey: string,
         competitionType: string
     ) => {
+        const eventName = competitionType === "ftc" ? "ftc_data_requested" : "tba_data_requested";
         try {
             let url = "";
             if (competitionType === "ftc") {
@@ -174,8 +177,24 @@ const AdminAssignmentsPage = () => {
             if (response.ok) {
                 const data = await response.json();
                 setEventTeams(data);
+                trackEvent(eventName, {
+                    eventKey,
+                    success: true,
+                    count: data.length
+                });
+            } else {
+                trackEvent(eventName, {
+                    eventKey,
+                    success: false,
+                    error: `HTTP ${response.status}`
+                });
             }
         } catch (error) {
+            trackEvent(eventName, {
+                eventKey,
+                success: false,
+                error: error instanceof Error ? error.message : "Unknown error"
+            });
             console.error("Error fetching event teams:", error);
         }
     };
@@ -217,6 +236,13 @@ const AdminAssignmentsPage = () => {
                 );
             }
 
+            trackEvent("admin_settings_saved", {
+                teamId: team.id,
+                eventKey: eventSettings.current_event_key,
+                competitionType: eventSettings.competition_type,
+                requireAssignments: eventSettings.require_assignments
+            });
+
             alert("Settings saved!");
         } catch (error) {
             console.error("Error saving settings:", error);
@@ -238,6 +264,12 @@ const AdminAssignmentsPage = () => {
 
             if (error) throw error;
 
+            trackEvent("scout_assignment_added", {
+                teamId: team.id,
+                scoutId: newAssignment.scoutId,
+                assignedTeam: newAssignment.teamNumber
+            });
+
             fetchData();
             setNewAssignment({ scoutId: "", teamNumber: "" });
             setScoutSearch("");
@@ -258,6 +290,11 @@ const AdminAssignmentsPage = () => {
                 .from("scout_team_assignments")
                 .delete()
                 .eq("id", assignmentId);
+
+            trackEvent("scout_assignment_removed", {
+                assignmentId
+            });
+
             fetchData();
         } catch (error) {
             console.error("Error removing assignment:", error);

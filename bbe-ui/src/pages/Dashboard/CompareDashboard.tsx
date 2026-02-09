@@ -8,6 +8,7 @@ import {
   fetchTeamStatboticsMetrics,
 } from "../../services/metricsApi";
 import type { ApiTeamInfo } from "../TeamAnalytics/types";
+import { trackEvent } from "../../utils/analytics";
 
 export const CompareDashboard: React.FC = () => {
   const [selectedTeams, setSelectedTeams] = useState<ApiTeamInfo[]>([]);
@@ -25,6 +26,7 @@ export const CompareDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchMetricMetadata().then(setMetricsMetadata);
+    trackEvent("page_view_custom", { page: "Compare Dashboard" });
   }, []);
 
   const handleLoadMatch = async () => {
@@ -36,6 +38,8 @@ export const CompareDashboard: React.FC = () => {
   const handleAddTeam = async (_: string, teamNumStr: string) => {
     const teamNum = parseInt(teamNumStr);
     if (selectedTeams.find((t) => t.team_number === teamNum)) return;
+
+    trackEvent("compare_team_added", { teamNumber: teamNum });
 
     const newTeam: ApiTeamInfo = {
       team_number: teamNum,
@@ -57,11 +61,20 @@ export const CompareDashboard: React.FC = () => {
   };
 
   const handleClearTeams = () => {
+    trackEvent("compare_teams_cleared", {
+      teamCount: selectedTeams.length,
+    });
     setSelectedTeams([]);
     setDashboardData([]);
   };
 
   const handleAddChart = (config: ChartConfig) => {
+    trackEvent("chart_added", {
+      chartId: config.id,
+      chartType: config.type,
+      metrics: config.metrics,
+      context: "Compare",
+    });
     setCharts([...charts, config]);
     setShowBuilder(false);
   };

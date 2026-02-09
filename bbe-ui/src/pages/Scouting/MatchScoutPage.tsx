@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { supabase } from "../../lib/supabase";
 import Stopwatch from "../../components/Scouting/Stopwatch";
+import { trackEvent } from "../../utils/analytics";
 
 const MatchScoutPage = () => {
     const [searchParams] = useSearchParams();
@@ -30,6 +31,11 @@ const MatchScoutPage = () => {
     } | null>(null);
 
     useEffect(() => {
+        trackEvent("page_view_custom", {
+            page: "Match Scout",
+            formId: formId || "default",
+            editId: editId || null,
+        });
         if (editId) {
             fetchSubmissionForEdit();
         } else if (formId) {
@@ -38,6 +44,10 @@ const MatchScoutPage = () => {
             fetchDefaultForm();
         }
     }, [formId, editId]);
+
+    // ...
+
+
 
     useEffect(() => {
         if (team?.id && user?.id) {
@@ -197,11 +207,25 @@ const MatchScoutPage = () => {
                 : await supabase.from("match_submissions").insert(submissionData);
 
             if (error) throw error;
+
+            trackEvent("match_form_submit", {
+                teamId: team.id,
+                eventKey: scoutMeta.event_key,
+                matchKey: scoutMeta.match_key,
+                scoutedTeam: scoutMeta.scouted_team_number,
+                isEdit: !!editId,
+                numFields: Object.keys(answers).length
+            });
+
             alert(
                 editId ? "Match submission updated!" : "Match submission successful!"
             );
             navigate("/forms/submissions");
         } catch (_error) {
+            trackEvent("form_submit_error", {
+                type: "match",
+                error: _error instanceof Error ? _error.message : "Unknown error"
+            });
             console.error("Error submitting:", _error);
             alert("Failed to save submission");
         } finally {

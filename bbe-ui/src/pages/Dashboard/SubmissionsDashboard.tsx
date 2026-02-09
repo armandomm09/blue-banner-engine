@@ -15,6 +15,7 @@ import {
   filterByColumns,
   formatCellValue,
 } from "../../utils/normalizeSubmissions";
+import { trackEvent } from "../../utils/analytics";
 
 const SubmissionsDashboard = () => {
   const { team } = useAuth();
@@ -91,6 +92,10 @@ const SubmissionsDashboard = () => {
     if (team) {
       fetchData();
     }
+    trackEvent("page_view_custom", {
+      page: "Submissions Dashboard",
+      type: view,
+    });
   }, [team, view]);
 
   const fetchData = async () => {
@@ -219,6 +224,22 @@ const SubmissionsDashboard = () => {
 
   const handleSort = useCallback(
     (columnId: string) => {
+      let direction: "asc" | "desc" | null = "asc";
+      if (sortColumn === columnId) {
+        if (sortDirection === "asc") {
+          direction = "desc";
+        } else if (sortDirection === "desc") {
+          direction = null;
+        }
+      }
+
+      if (direction) {
+        trackEvent("dashboard_sort", {
+          column: columnId,
+          direction,
+        });
+      }
+
       if (sortColumn === columnId) {
         if (sortDirection === "asc") {
           setSortDirection("desc");
@@ -236,6 +257,10 @@ const SubmissionsDashboard = () => {
 
   const handleColumnVisibilityChange = useCallback(
     (columnId: string, visible: boolean) => {
+      trackEvent("dashboard_column_visibility", {
+        column: columnId,
+        visible,
+      });
       if (visible) {
         setVisibleColumns((prev) => [...prev, columnId]);
       } else {
@@ -254,6 +279,13 @@ const SubmissionsDashboard = () => {
       columnId: string,
       filter: { operator: "equals" | "contains"; value: string } | null
     ) => {
+      if (filter) {
+        trackEvent("filter_applied", {
+          filterName: columnId,
+          filterValue: filter.value,
+          operator: filter.operator,
+        });
+      }
       setColumnFilters((prev) => {
         if (filter) {
           return { ...prev, [columnId]: filter };
@@ -345,21 +377,19 @@ const SubmissionsDashboard = () => {
                 <div className="flex bg-card border border-border rounded-xl p-1">
                   <button
                     onClick={() => navigate("/dashboard/submissions/pit")}
-                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                      view === "pit"
-                        ? "bg-accent text-background"
-                        : "text-text-muted hover:text-white"
-                    }`}
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === "pit"
+                      ? "bg-accent text-background"
+                      : "text-text-muted hover:text-white"
+                      }`}
                   >
                     PIT
                   </button>
                   <button
                     onClick={() => navigate("/dashboard/submissions/match")}
-                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                      view === "match"
-                        ? "bg-accent text-background"
-                        : "text-text-muted hover:text-white"
-                    }`}
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === "match"
+                      ? "bg-accent text-background"
+                      : "text-text-muted hover:text-white"
+                      }`}
                   >
                     MATCH
                   </button>
@@ -436,20 +466,20 @@ const SubmissionsDashboard = () => {
               matchFilter ||
               scoutFilter ||
               Object.keys(columnFilters).length > 0) && (
-              <button
-                onClick={() => {
-                  setGlobalSearch("");
-                  setTeamFilter("");
-                  setEventFilter("");
-                  setMatchFilter("");
-                  setScoutFilter("");
-                  setColumnFilters({});
-                }}
-                className="px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 transition-colors"
-              >
-                Clear All
-              </button>
-            )}
+                <button
+                  onClick={() => {
+                    setGlobalSearch("");
+                    setTeamFilter("");
+                    setEventFilter("");
+                    setMatchFilter("");
+                    setScoutFilter("");
+                    setColumnFilters({});
+                  }}
+                  className="px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Clear All
+                </button>
+              )}
           </div>
         </div>
 
