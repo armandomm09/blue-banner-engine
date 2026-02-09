@@ -3,12 +3,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
 
-declare global {
-  interface Window {
-    _paq: unknown[];
-  }
-}
-
 // Layouts
 import MainLayout from "./layouts/MainLayout";
 
@@ -43,30 +37,8 @@ import { CompareDashboard } from "./pages/Dashboard/CompareDashboard";
 
 // Admin
 import AdminAssignmentsPage from "./pages/Admin/AdminAssignmentsPage";
-import { useEffect } from "react";
 
 function App() {
-
-  useEffect(() => {
-      var _paq = (window._paq = window._paq || []);
-      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-      _paq.push(["trackPageView"]);
-      _paq.push(["enableLinkTracking"]);
-      (function () {
-        var u = "https://bbefrc.matomo.cloud/";
-        _paq.push(["setTrackerUrl", u + "matomo.php"]);
-        _paq.push(["setSiteId", "1"]);
-        var d = document,
-          g = d.createElement("script"),
-          s = d.getElementsByTagName("script")[0];
-        g.async = true;
-        g.src = "https://cdn.matomo.cloud/bbefrc.matomo.cloud/matomo.js";
-        if (s && s.parentNode) {
-          s.parentNode.insertBefore(g, s);
-        }
-      })();
-
-  }, [])
   return (
     <Router>
       <AuthProvider>
