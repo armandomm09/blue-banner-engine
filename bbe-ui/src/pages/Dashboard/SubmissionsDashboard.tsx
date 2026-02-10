@@ -92,10 +92,6 @@ const SubmissionsDashboard = () => {
     if (team) {
       fetchData();
     }
-    trackEvent("page_view_custom", {
-      page: "Submissions Dashboard",
-      type: view,
-    });
   }, [team, view]);
 
   const fetchData = async () => {

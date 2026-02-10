@@ -58,7 +58,6 @@ const AdminAssignmentsPage = () => {
     const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
 
     useEffect(() => {
-        trackEvent("page_view_custom", { page: "Admin Assignments" });
         // Wait until auth is loaded AND userRole has been fetched
         // userRole will be null initially, then set after fetchTeam completes
         if (!authLoading && user && userRole !== null && !isAdmin) {

@@ -3,6 +3,7 @@ import { useAuth } from "../auth/AuthContext";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import InviteModal from "../components/InviteModal";
+import { trackEvent } from "../utils/analytics";
 
 interface Invitation {
   id: string;
@@ -302,6 +303,9 @@ const WelcomePage = () => {
       if (error) throw error;
 
       setEditingPersonal(false);
+      trackEvent("profile_updated", {
+        userId: user.id
+      });
       fetchData(); // Refresh data
     } catch (error: any) {
       console.error("Error saving profile:", error);
@@ -329,6 +333,9 @@ const WelcomePage = () => {
       if (error) throw error;
 
       setEditingTeam(false);
+      trackEvent("team_updated", {
+        teamId: teamMember.team.id
+      });
       fetchData(); // Refresh data
     } catch (error: any) {
       console.error("Error saving team:", error);

@@ -24,11 +24,6 @@ const PitScoutPage = () => {
   } | null>(null);
 
   useEffect(() => {
-    trackEvent("page_view_custom", {
-      page: "Pit Scout",
-      formId: formId || "default",
-      editId: editId || null,
-    });
     if (editId) {
       fetchSubmissionForEdit();
     } else if (formId) {

@@ -26,7 +26,6 @@ export const CompareDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchMetricMetadata().then(setMetricsMetadata);
-    trackEvent("page_view_custom", { page: "Compare Dashboard" });
   }, []);
 
   const handleLoadMatch = async () => {

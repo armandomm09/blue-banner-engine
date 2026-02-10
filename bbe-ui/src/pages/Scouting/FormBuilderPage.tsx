@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../auth/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { trackEvent } from "../../utils/analytics";
 
 interface Field {
   id: string;
@@ -131,6 +132,13 @@ const FormBuilderPage = () => {
         .eq("id", form.id);
 
       if (formUpdateError) throw formUpdateError;
+
+      trackEvent("form_updated", {
+        formId: form.id,
+        action: publish ? "published" : "draft_saved",
+        version: nextVersionNum,
+        fieldCount: fields.length
+      });
 
       alert(publish ? "Form published!" : "Draft saved!");
       fetchFormData();

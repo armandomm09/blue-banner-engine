@@ -31,11 +31,6 @@ const MatchScoutPage = () => {
     } | null>(null);
 
     useEffect(() => {
-        trackEvent("page_view_custom", {
-            page: "Match Scout",
-            formId: formId || "default",
-            editId: editId || null,
-        });
         if (editId) {
             fetchSubmissionForEdit();
         } else if (formId) {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { trackEvent } from "../utils/analytics";
 
 interface InviteModalProps {
   teamId: string;
@@ -47,6 +48,11 @@ const InviteModal: React.FC<InviteModalProps> = ({
       }
 
       onSuccess();
+      trackEvent("member_invited", {
+        teamId,
+        invitedEmail: email,
+        role,
+      });
       onClose();
     } catch (err: any) {
       console.error("Error inviting member:", err);

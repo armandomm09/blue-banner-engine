@@ -67,10 +67,10 @@ export const TeamDashboard: React.FC = () => {
 
   useEffect(() => {
     if (teamNumber) {
-      trackEvent("page_view_custom", {
-        page: "Team Dashboard",
-        teamNumber,
-      });
+      // trackEvent("page_view_custom", {
+      //   page: "Team Dashboard",
+      //   teamNumber,
+      // });
     }
   }, [teamNumber]);
 
