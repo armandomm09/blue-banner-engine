@@ -523,7 +523,7 @@ const WelcomePage = () => {
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             ["Role", teamMember?.role ?? "—"],
-            ["Hola", memberCount],
+            ["Team Members", memberCount],
             ["Years in FIRST", userProfile?.years_in_first ?? "—"],
             ["Subteam", userProfile?.subteam ?? "—"],
           ].map(([label, value]) => (
