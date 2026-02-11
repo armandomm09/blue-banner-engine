@@ -61,17 +61,17 @@ function App() {
                 element={<MatchDetailPage />}
               />
 
-              <Route path="/analytics" element={<TeamAnalyticsPage />} />
+              <Route path="/radar" element={<TeamAnalyticsPage />} />
               <Route
-                path="/analytics/event/:eventKey"
+                path="/radar/event/:eventKey"
                 element={<TeamAnalyticsPage />}
               />
               <Route
-                path="/analytics/match/:matchKey"
+                path="/radar/match/:matchKey"
                 element={<TeamAnalyticsPage />}
               />
               <Route
-                path="/analytics/event/:eventKey/teams/:teamList"
+                path="/radar/event/:eventKey/teams/:teamList"
                 element={<TeamAnalyticsPage />}
               />
 
