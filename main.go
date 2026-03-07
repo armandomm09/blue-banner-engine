@@ -161,6 +161,9 @@ func main() {
 	router.StaticFS("/assets", http.Dir(filepath.Join(staticFiles, "assets")))
 	router.StaticFile("/manifest.json", filepath.Join(staticFiles, "manifest.json"))
 	router.StaticFile("/bbe_logo_no_name.png", filepath.Join(staticFiles, "bbe_logo_no_name.png"))
+	router.StaticFile("/app_icon_512.png", filepath.Join(staticFiles, "app_icon_512.png"))
+	router.StaticFile("/app_icon_192.png", filepath.Join(staticFiles, "app_icon_192.png"))
+	router.StaticFile("/app_icon.png", filepath.Join(staticFiles, "app_icon.png"))
 	router.StaticFile("/favicon.ico", filepath.Join(staticFiles, "bbe_logo_no_name.png"))
 
 	router.GET("/favicon.png", func(c *gin.Context) {

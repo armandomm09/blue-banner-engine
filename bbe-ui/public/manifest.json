@@ -3,12 +3,12 @@
   "name": "Blue Banner Engine",
   "icons": [
     {
-      "src": "/app_icon.png",
+      "src": "/app_icon_192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/app_icon.png",
+      "src": "/app_icon_512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
