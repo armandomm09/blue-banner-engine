@@ -22,3 +22,5 @@ dev/
 dev
 
 .github/workflows/test.yml
+
+migrations/

@@ -71,7 +71,10 @@ export function normalizeSubmission(
   submission: RawSubmission,
   columns: ColumnDef[]
 ): NormalizedRow {
-  const row: NormalizedRow = { id: submission.id };
+  const row: NormalizedRow = {
+    id: submission.id,
+    raw_match_key: submission.match_key,
+  };
 
   for (const col of columns) {
     if (col.accessor === "scout_name") {
@@ -82,6 +85,12 @@ export function normalizeSubmission(
         (submission.created_by
           ? submission.created_by.substring(0, 8) + "..."
           : "Unknown");
+    } else if (col.accessor === "match_key") {
+      const rawValue = getValueByPath(submission, col.accessor);
+      row[col.id] =
+        typeof rawValue === "string" && rawValue.includes("_")
+          ? rawValue.split("_")[1]
+          : rawValue;
     } else {
       const rawValue = getValueByPath(submission, col.accessor);
       row[col.id] = rawValue;

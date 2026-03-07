@@ -145,6 +145,7 @@ func main() {
 		// New Metrics Routes
 		routes.RegisterStatboticsRoutes(v1)
 		routes.RegisterMetricRoutes(v1)
+		routes.RegisterAssignmentRoutes(v1)
 	}
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

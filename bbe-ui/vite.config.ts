@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   const isTesting = env.VITE_TESTING === 'true';
-  const target = isTesting ? 'http://localhost:8080' : 'https://bbe-frc.com';
+  const target = isTesting ? 'http://10.22.228.58:8080' : 'https://bbe-frc.com';
   
   console.log(`Vite config: TESTING=${env.VITE_TESTING}, target=${target}`);
   

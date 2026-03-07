@@ -15,12 +15,30 @@ const SubmissionsPage = () => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [defaultForms, setDefaultForms] = useState<{ pit?: string, match?: string }>({});
 
   useEffect(() => {
     if (team && user) {
       checkRole();
+      fetchSettings();
     }
   }, [team, user]);
+
+  const fetchSettings = async () => {
+    if (!team) return;
+    const { data } = await supabase
+      .from("event_settings")
+      .select("default_pit_form_id, default_match_form_id")
+      .eq("team_id", team.id)
+      .maybeSingle();
+
+    if (data) {
+      setDefaultForms({
+        pit: data.default_pit_form_id,
+        match: data.default_match_form_id
+      });
+    }
+  };
 
   useEffect(() => {
     if (team) {
@@ -54,12 +72,22 @@ const SubmissionsPage = () => {
       const table = view === "pit" ? "pit_submissions" : "match_submissions";
       let query = supabase
         .from(table)
-        .select("*, version:form_versions!inner(version, form_id)")
+        .select(`
+          *,
+          version:form_versions!inner(version, form_id),
+          scouter:user_profiles!created_by(full_name)
+        `)
         .eq("team_id", team?.id)
         .order("created_at", { ascending: false });
 
       if (filterFormId) {
-        query = query.eq("form_versions.form_id", filterFormId);
+        query = query.eq("version.form_id", filterFormId);
+      } else {
+        // If no filter, try to use default form for this view
+        const defaultId = view === "pit" ? defaultForms.pit : defaultForms.match;
+        if (defaultId) {
+          query = query.eq("version.form_id", defaultId);
+        }
       }
 
       if (!showAll && user) {
@@ -77,6 +105,8 @@ const SubmissionsPage = () => {
       setLoading(false);
     }
   };
+
+
 
   return (
     <div className="max-w-7xl mx-auto p-6 font-['Poppins']">
@@ -131,6 +161,8 @@ const SubmissionsPage = () => {
               Match Data
             </button>
           </div>
+
+
         </div>
       </div>
 
@@ -161,6 +193,9 @@ const SubmissionsPage = () => {
                     </>
                   )}
                   <th className="px-6 py-4 text-xs font-bold text-accent uppercase tracking-wider">
+                    Scouter
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold text-accent uppercase tracking-wider">
                     Date
                   </th>
                   <th className="px-6 py-4 text-xs font-bold text-accent uppercase tracking-wider">
@@ -187,7 +222,7 @@ const SubmissionsPage = () => {
                             {sub.event_key}
                           </td>
                           <td className="px-6 py-4 text-text-muted text-sm">
-                            {sub.match_key}
+                            {sub.match_key.includes("_") ? sub.match_key.split("_")[1] : sub.match_key}
                           </td>
                           <td className="px-6 py-4">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full border ${sub.match_type === 'practice' ? 'border-yellow-500/50 text-yellow-400 bg-yellow-400/10' :
@@ -199,6 +234,9 @@ const SubmissionsPage = () => {
                           </td>
                         </>
                       )}
+                      <td className="px-6 py-4 text-white font-medium text-sm">
+                        {sub.scouter?.full_name || sub.created_by.substring(0, 8)}
+                      </td>
                       <td className="px-6 py-4 text-text-muted text-xs">
                         {new Date(sub.created_at).toLocaleString()}
                       </td>

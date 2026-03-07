@@ -1,9 +1,20 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useAuth } from "../../auth/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { trackEvent } from "../../utils/analytics";
+
+interface FieldAction {
+  id: string;
+  label: string;
+  category: string;
+  behavior_type: "instant" | "toggle" | "timer";
+  placement: "side" | "field";
+  x?: number;
+  y?: number;
+  color?: string;
+}
 
 interface Field {
   id: string;
@@ -17,6 +28,10 @@ interface Field {
   max?: number;
   help_text?: string;
   default_value?: any;
+  // Field Component specific
+  field_image?: string;
+  drawing_enabled?: boolean;
+  actions?: FieldAction[];
 }
 
 const FIELD_TYPES = [
@@ -28,6 +43,13 @@ const FIELD_TYPES = [
   { value: "multi_select", label: "Multi Select" },
   { value: "rating", label: "Rating (1-5)" },
   { value: "time_seconds", label: "Time (Seconds)" },
+  { value: "field_component", label: "Field Component (Auto/Drawing)" },
+];
+
+const KNOWN_FIELDS = [
+  { id: "2024_cre", name: "2024 Crescendo", url: "https://raw.githubusercontent.com/wpilibsuite/PathWeaver/main/src/main/resources/edu/wpi/first/pathweaver/2024-field.png" },
+  { id: "2025_reef", name: "2025 Reefscape", url: "https://raw.githubusercontent.com/wpilibsuite/PathWeaver/main/src/main/resources/edu/wpi/first/pathweaver/2025-field.png" },
+  { id: "2026_reb", name: "2026 Rebuilt", url: "https://supabase.bbe-frc.com/storage/v1/object/public/services-images/BBE%20Light%20Rebuild.png" },
 ];
 
 const FormBuilderPage = () => {
@@ -229,225 +251,367 @@ const FormBuilderPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3 space-y-4">
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="bg-card border border-border p-6 rounded-2xl hover:border-accent/30 transition-all"
-              >
-                <div className="flex justify-between items-center mb-5">
-                  <span className="text-accent font-bold text-xs uppercase tracking-wider">
-                    Field #{index + 1}
-                  </span>
-                  <button
-                    onClick={() => removeField(field.id)}
-                    className="text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs text-text-muted">
-                      Field Label
-                    </label>
-                    <input
-                      type="text"
-                      value={field.label}
-                      onChange={(e) =>
-                        updateField(field.id, { label: e.target.value })
-                      }
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-accent"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs text-text-muted">
-                      Input Type
-                    </label>
-                    <select
-                      value={field.type}
-                      onChange={(e) =>
-                        updateField(field.id, { type: e.target.value })
-                      }
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-accent"
-                    >
-                      {FIELD_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>
-                          {t.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {(field.type === "single_select" ||
-                  field.type === "multi_select") && (
-                    <div className="mt-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs text-text-muted font-bold uppercase tracking-wider">
-                          Options
-                        </label>
-                        <button
-                          onClick={() => {
-                            const currentOptions = field.options || [];
-                            updateField(field.id, {
-                              options: [...currentOptions, ""],
-                            });
-                          }}
-                          className="text-[10px] bg-accent/10 text-accent px-2 py-1 rounded hover:bg-accent/20 transition-all font-bold uppercase"
-                        >
-                          + Add Option
-                        </button>
+          <div className="lg:col-span-3">
+            <Reorder.Group axis="y" values={fields} onReorder={setFields} className="space-y-4">
+              {fields.map((field, index) => (
+                <Reorder.Item
+                  key={field.id}
+                  value={field}
+                  className="bg-card border border-border p-6 rounded-2xl hover:border-accent/30 transition-all cursor-default"
+                >
+                  <div className="flex justify-between items-center mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="cursor-grab active:cursor-grabbing text-text-muted hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                        </svg>
                       </div>
+                      <span className="text-accent font-bold text-xs uppercase tracking-wider">
+                        Field #{index + 1}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => removeField(field.id)}
+                      className="text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
 
-                      <div className="space-y-2">
-                        {(field.options || []).map((opt, optIdx) => (
-                          <div key={optIdx} className="flex gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs text-text-muted">
+                        Field Label
+                      </label>
+                      <input
+                        type="text"
+                        value={field.label}
+                        onChange={(e) =>
+                          updateField(field.id, { label: e.target.value })
+                        }
+                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-accent"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs text-text-muted">
+                        Input Type
+                      </label>
+                      <select
+                        value={field.type}
+                        onChange={(e) =>
+                          updateField(field.id, { type: e.target.value })
+                        }
+                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-accent"
+                      >
+                        {FIELD_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {(field.type === "single_select" ||
+                    field.type === "multi_select") && (
+                      <div className="mt-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs text-text-muted font-bold uppercase tracking-wider">
+                            Options
+                          </label>
+                          <button
+                            onClick={() => {
+                              const currentOptions = field.options || [];
+                              updateField(field.id, {
+                                options: [...currentOptions, ""],
+                              });
+                            }}
+                            className="text-[10px] bg-accent/10 text-accent px-2 py-1 rounded hover:bg-accent/20 transition-all font-bold uppercase"
+                          >
+                            + Add Option
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {(field.options || []).map((opt, optIdx) => (
+                            <div key={optIdx} className="flex gap-2">
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) => {
+                                  const newOptions = [...(field.options || [])];
+                                  newOptions[optIdx] = e.target.value;
+                                  updateField(field.id, { options: newOptions });
+                                }}
+                                className="flex-1 bg-background border border-border rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-accent"
+                                placeholder={`Option ${optIdx + 1}`}
+                              />
+                              <button
+                                onClick={() => {
+                                  const newOptions = (field.options || []).filter(
+                                    (_, i) => i !== optIdx
+                                  );
+                                  updateField(field.id, { options: newOptions });
+                                }}
+                                className="text-red-400 hover:text-red-300 p-1"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-2">
+                          <input
+                            type="checkbox"
+                            id={`allow-other-${field.id}`}
+                            checked={field.allow_other || false}
+                            onChange={(e) =>
+                              updateField(field.id, {
+                                allow_other: e.target.checked,
+                              })
+                            }
+                            className="accent-accent h-4 w-4"
+                          />
+                          <label
+                            htmlFor={`allow-other-${field.id}`}
+                            className="text-xs text-text-muted cursor-pointer"
+                          >
+                            Include "Other" option with text field
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                  {field.type === "field_component" && (
+                    <div className="mt-4 space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs text-text-muted font-bold uppercase tracking-wider">
+                            Field Image
+                          </label>
+                          <select
+                            value={field.field_image || ""}
+                            onChange={(e) => updateField(field.id, { field_image: e.target.value })}
+                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-accent"
+                          >
+                            <option value="">Select Field...</option>
+                            {KNOWN_FIELDS.map(f => (
+                              <option key={f.id} value={f.url}>{f.name}</option>
+                            ))}
+                            <option value="custom">Custom URL...</option>
+                          </select>
+                          {field.field_image?.startsWith("http") && !KNOWN_FIELDS.find(f => f.url === field.field_image) && (
                             <input
                               type="text"
-                              value={opt}
-                              onChange={(e) => {
-                                const newOptions = [...(field.options || [])];
-                                newOptions[optIdx] = e.target.value;
-                                updateField(field.id, { options: newOptions });
-                              }}
-                              className="flex-1 bg-background border border-border rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-accent"
-                              placeholder={`Option ${optIdx + 1}`}
+                              value={field.field_image}
+                              onChange={(e) => updateField(field.id, { field_image: e.target.value })}
+                              placeholder="https://example.com/field.png"
+                              className="w-full mt-2 bg-background border border-border rounded-lg px-3 py-2 text-white text-xs"
                             />
-                            <button
-                              onClick={() => {
-                                const newOptions = (field.options || []).filter(
-                                  (_, i) => i !== optIdx
-                                );
-                                updateField(field.id, { options: newOptions });
-                              }}
-                              className="text-red-400 hover:text-red-300 p-1"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 h-full pt-6">
+                          <input
+                            type="checkbox"
+                            id={`drawing-${field.id}`}
+                            checked={field.drawing_enabled !== false}
+                            onChange={(e) => updateField(field.id, { drawing_enabled: e.target.checked })}
+                            className="accent-accent h-4 w-4"
+                          />
+                          <label htmlFor={`drawing-${field.id}`} className="text-xs text-text-muted cursor-pointer">
+                            Enable Path Drawing
+                          </label>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-2">
-                        <input
-                          type="checkbox"
-                          id={`allow-other-${field.id}`}
-                          checked={field.allow_other || false}
-                          onChange={(e) =>
-                            updateField(field.id, {
-                              allow_other: e.target.checked,
-                            })
-                          }
-                          className="accent-accent h-4 w-4"
-                        />
-                        <label
-                          htmlFor={`allow-other-${field.id}`}
-                          className="text-xs text-text-muted cursor-pointer"
-                        >
-                          Include "Other" option with text field
-                        </label>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs text-text-muted font-bold uppercase tracking-wider">
+                            Action Buttons
+                          </label>
+                          <button
+                            onClick={() => {
+                              const newAction: FieldAction = {
+                                id: crypto.randomUUID(),
+                                label: "New Action",
+                                category: "shot",
+                                behavior_type: "instant",
+                                placement: "side"
+                              };
+                              updateField(field.id, { actions: [...(field.actions || []), newAction] });
+                            }}
+                            className="text-[10px] bg-accent/10 text-accent px-2 py-1 rounded hover:bg-accent/20 transition-all font-bold uppercase"
+                          >
+                            + Add Action
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {(field.actions || []).map((action, actionIdx) => (
+                            <div key={action.id} className="bg-background/40 p-4 rounded-xl border border-border/50 space-y-3">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-accent uppercase">Action #{actionIdx + 1}</span>
+                                <button
+                                  onClick={() => {
+                                    const next = (field.actions || []).filter(a => a.id !== action.id);
+                                    updateField(field.id, { actions: next });
+                                  }}
+                                  className="text-red-400 hover:text-red-300"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-text-muted">Label</label>
+                                  <input
+                                    type="text"
+                                    value={action.label}
+                                    onChange={(e) => {
+                                      const next = [...(field.actions || [])];
+                                      next[actionIdx] = { ...action, label: e.target.value };
+                                      updateField(field.id, { actions: next });
+                                    }}
+                                    className="w-full bg-background border border-border rounded px-2 py-1 text-xs text-white"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-text-muted">Type</label>
+                                  <select
+                                    value={action.behavior_type}
+                                    onChange={(e) => {
+                                      const next = [...(field.actions || [])];
+                                      next[actionIdx] = { ...action, behavior_type: e.target.value as any };
+                                      updateField(field.id, { actions: next });
+                                    }}
+                                    className="w-full bg-background border border-border rounded px-2 py-1 text-xs text-white"
+                                  >
+                                    <option value="instant">Instant</option>
+                                    <option value="toggle">Toggle</option>
+                                    <option value="timer">Timer</option>
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-text-muted">Placement</label>
+                                  <select
+                                    value={action.placement}
+                                    onChange={(e) => {
+                                      const next = [...(field.actions || [])];
+                                      next[actionIdx] = { ...action, placement: e.target.value as any };
+                                      if (e.target.value === 'field' && action.x === undefined) {
+                                        next[actionIdx].x = 0.5;
+                                        next[actionIdx].y = 0.5;
+                                      }
+                                      updateField(field.id, { actions: next });
+                                    }}
+                                    className="w-full bg-background border border-border rounded px-2 py-1 text-xs text-white"
+                                  >
+                                    <option value="side">Side Panel</option>
+                                    <option value="field">On Field</option>
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-text-muted">Category</label>
+                                  <input
+                                    type="text"
+                                    value={action.category}
+                                    onChange={(e) => {
+                                      const next = [...(field.actions || [])];
+                                      next[actionIdx] = { ...action, category: e.target.value };
+                                      updateField(field.id, { actions: next });
+                                    }}
+                                    className="w-full bg-background border border-border rounded px-2 py-1 text-xs text-white"
+                                  />
+                                </div>
+                              </div>
+
+                              {action.placement === 'field' && (
+                                <div className="flex gap-4 pt-2 border-t border-border/30">
+                                  <div className="flex-1 space-y-1">
+                                    <label className="text-[10px] text-text-muted">X Position (0-1)</label>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      max="1"
+                                      value={action.x}
+                                      onChange={(e) => {
+                                        const next = [...(field.actions || [])];
+                                        next[actionIdx] = { ...action, x: parseFloat(e.target.value) };
+                                        updateField(field.id, { actions: next });
+                                      }}
+                                      className="w-full bg-background border border-border rounded px-2 py-1 text-xs text-white"
+                                    />
+                                  </div>
+                                  <div className="flex-1 space-y-1">
+                                    <label className="text-[10px] text-text-muted">Y Position (0-1)</label>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      min="0"
+                                      max="1"
+                                      value={action.y}
+                                      onChange={(e) => {
+                                        const next = [...(field.actions || [])];
+                                        next[actionIdx] = { ...action, y: parseFloat(e.target.value) };
+                                        updateField(field.id, { actions: next });
+                                      }}
+                                      className="w-full bg-background border border-border rounded px-2 py-1 text-xs text-white"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
 
-                {field.type === "rating" && (
-                  <div className="mt-4 space-y-3">
-                    <label className="text-xs text-text-muted font-bold uppercase tracking-wider">
-                      Reference Labels (Optional)
+                  <div className="mt-4 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={field.required}
+                      onChange={(e) =>
+                        updateField(field.id, { required: e.target.checked })
+                      }
+                      className="accent-accent"
+                    />
+                    <label className="text-xs text-text-muted">
+                      Required field
                     </label>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-text-muted">
-                          Value 1
-                        </label>
-                        <input
-                          type="text"
-                          value={field.rating_labels?.[0] || ""}
-                          onChange={(e) => {
-                            const labels = [...(field.rating_labels || ["", "", "", "", ""])];
-                            labels[0] = e.target.value;
-                            updateField(field.id, { rating_labels: labels });
-                          }}
-                          className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent"
-                          placeholder="e.g. Bad"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-text-muted">
-                          Value 3
-                        </label>
-                        <input
-                          type="text"
-                          value={field.rating_labels?.[2] || ""}
-                          onChange={(e) => {
-                            const labels = [...(field.rating_labels || ["", "", "", "", ""])];
-                            labels[2] = e.target.value;
-                            updateField(field.id, { rating_labels: labels });
-                          }}
-                          className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent"
-                          placeholder="e.g. Mid"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-text-muted">
-                          Value 5
-                        </label>
-                        <input
-                          type="text"
-                          value={field.rating_labels?.[4] || ""}
-                          onChange={(e) => {
-                            const labels = [...(field.rating_labels || ["", "", "", "", ""])];
-                            labels[4] = e.target.value;
-                            updateField(field.id, { rating_labels: labels });
-                          }}
-                          className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent"
-                          placeholder="e.g. Good"
-                        />
-                      </div>
-                    </div>
                   </div>
-                )}
-
-                <div className="mt-4 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={field.required}
-                    onChange={(e) =>
-                      updateField(field.id, { required: e.target.checked })
-                    }
-                    className="accent-accent"
-                  />
-                  <label className="text-xs text-text-muted">
-                    Required field
-                  </label>
-                </div>
-              </div>
-            ))}
+                </Reorder.Item>
+              ))}
+            </Reorder.Group>
 
             <button
               onClick={addField}

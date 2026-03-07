@@ -60,18 +60,20 @@ const Navbar: React.FC = () => {
     { to: "/matchpoint", label: "Matchpoint" },
     ...(user
       ? [
-          { to: "/welcome", label: "Home" },
-          { to: "/forms", label: "Forms" },
-          { to: "/scout/pit", label: "Pit" },
-          { to: "/scout/match", label: "Match" },
-          {
-            to: "/forms/submissions",
-            label: "Submissions",
-            active:
-              isActive("/forms/submissions") ||
-              isActive("/dashboard/submissions"),
-          },
-        ]
+        { to: "/welcome", label: "Home" },
+        { to: "/forms", label: "Forms" },
+        { to: "/scout/pit", label: "Pit" },
+        { to: "/scout/match", label: "Match" },
+        { to: "/visualize/teams", label: "Visualize" },
+        {
+          to: "/forms/submissions",
+          label: "Submissions",
+          active:
+            isActive("/forms/submissions") ||
+            isActive("/dashboard/submissions"),
+        },
+        { to: "/admin/settings", label: "Settings" },
+      ]
       : []),
   ];
 
@@ -224,15 +226,14 @@ const Navbar: React.FC = () => {
                     key={link.to}
                     to={link.to}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`px-4 py-3 rounded-xl text-lg font-bold transition-all ${
-                      (
-                        link.active !== undefined
-                          ? link.active
-                          : isActive(link.to)
-                      )
-                        ? "text-accent bg-accent/10"
-                        : "text-text-muted hover:text-white hover:bg-white/5"
-                    }`}
+                    className={`px-4 py-3 rounded-xl text-lg font-bold transition-all ${(
+                      link.active !== undefined
+                        ? link.active
+                        : isActive(link.to)
+                    )
+                      ? "text-accent bg-accent/10"
+                      : "text-text-muted hover:text-white hover:bg-white/5"
+                      }`}
                   >
                     {link.label}
                   </Link>
@@ -273,11 +274,10 @@ const NavLink = ({
 }) => (
   <Link
     to={to}
-    className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
-      active
-        ? "text-accent bg-accent/10"
-        : "text-text-muted hover:text-white hover:bg-white/5"
-    }`}
+    className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${active
+      ? "text-accent bg-accent/10"
+      : "text-text-muted hover:text-white hover:bg-white/5"
+      }`}
   >
     {label}
   </Link>

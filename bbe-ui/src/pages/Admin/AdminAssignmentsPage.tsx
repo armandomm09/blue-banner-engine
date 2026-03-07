@@ -21,6 +21,16 @@ interface TeamData {
     country?: string;
 }
 
+interface Match {
+    key: string;
+    match_number: number;
+    comp_level: string;
+    alliances: {
+        red: { team_keys: string[] };
+        blue: { team_keys: string[] };
+    };
+}
+
 interface Assignment {
     id: string;
     scout_user_id: string;
@@ -56,6 +66,8 @@ const AdminAssignmentsPage = () => {
     const [scoutDropdownOpen, setScoutDropdownOpen] = useState(false);
     const [teamSearch, setTeamSearch] = useState("");
     const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
+    const [eventMatches, setEventMatches] = useState<Match[]>([]);
+    const [collisions, setCollisions] = useState<Record<string, string[]>>({}); // scoutUserId -> matchKeys
 
     useEffect(() => {
         // Wait until auth is loaded AND userRole has been fetched
@@ -147,6 +159,7 @@ const AdminAssignmentsPage = () => {
                         settingsData.current_event_key,
                         settingsData.competition_type
                     );
+                    fetchEventMatches(settingsData.current_event_key);
                 }
             }
         } catch (error) {
@@ -154,6 +167,52 @@ const AdminAssignmentsPage = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchEventMatches = async (eventKey: string) => {
+        try {
+            const response = await fetch(`/api/v1/tba/event/${eventKey}/schedule`);
+            if (response.ok) {
+                const data = await response.json();
+                setEventMatches(data);
+            }
+        } catch (error) {
+            console.error("Error fetching matches:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (eventMatches.length > 0 && assignments.length > 0) {
+            calculateCollisions();
+        }
+    }, [eventMatches, assignments]);
+
+    const calculateCollisions = () => {
+        const scoutCollisions: Record<string, string[]> = {};
+
+        scouts.forEach(scout => {
+            const scoutTeamNumbers = assignments
+                .filter(a => a.scout_user_id === scout.user_id)
+                .map(a => `frc${a.assigned_team_number}`);
+
+            if (scoutTeamNumbers.length < 2) return;
+
+            const problematicMatches = eventMatches.filter(match => {
+                const teamsInMatch = [
+                    ...match.alliances.red.team_keys,
+                    ...match.alliances.blue.team_keys
+                ];
+                // Check if more than one of the scout's teams are in this match
+                const assignedTeamsInMatch = scoutTeamNumbers.filter(t => teamsInMatch.includes(t));
+                return assignedTeamsInMatch.length > 1;
+            });
+
+            if (problematicMatches.length > 0) {
+                scoutCollisions[scout.user_id] = problematicMatches.map(m => m.key);
+            }
+        });
+
+        setCollisions(scoutCollisions);
     };
 
     const fetchEventTeams = async (
@@ -233,6 +292,7 @@ const AdminAssignmentsPage = () => {
                     eventSettings.current_event_key,
                     eventSettings.competition_type
                 );
+                fetchEventMatches(eventSettings.current_event_key);
             }
 
             trackEvent("admin_settings_saved", {
@@ -246,6 +306,126 @@ const AdminAssignmentsPage = () => {
         } catch (error) {
             console.error("Error saving settings:", error);
             alert("Failed to save settings");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const autofillAssignments = async () => {
+        if (!team || eventTeams.length === 0 || scouts.length === 0) return;
+
+        const activeScouts = scouts.filter(s => s.role === 'scout' || s.role === 'team_lead' || s.role === 'admin');
+        if (activeScouts.length === 0) {
+            alert("No scouts available to assign teams to.");
+            return;
+        }
+
+        if (!confirm("This will distribute unassigned teams among active scouts. Continue?")) return;
+
+        setSaving(true);
+        try {
+            // Get already assigned team numbers
+            const assignedTeams = new Set(assignments.map(a => a.assigned_team_number));
+            const unassignedTeams = eventTeams
+                .filter(t => !assignedTeams.has(t.teamNumber))
+                .map(t => t.teamNumber);
+
+            if (unassignedTeams.length === 0) {
+                alert("All teams are already assigned.");
+                return;
+            }
+
+            const response = await fetch('/api/v1/assignments/autofill', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    active_scouts: activeScouts.map(s => s.user_id),
+                    unassigned_teams: unassignedTeams,
+                    current_assignments: assignments.map(a => ({
+                        scout_user_id: a.scout_user_id,
+                        assigned_team_number: a.assigned_team_number
+                    }))
+                })
+            });
+
+            if (!response.ok) throw new Error("Backend autofill failed");
+
+            const newAssignmentsData = await response.json();
+            const supabaseAssignments = newAssignmentsData.map((a: any) => ({
+                team_id: team.id,
+                scout_user_id: a.scout_user_id,
+                assigned_team_number: a.assigned_team_number,
+            }));
+
+            const { error } = await supabase.from("scout_team_assignments").insert(supabaseAssignments);
+
+            if (error) throw error;
+
+            trackEvent("scout_autofill_completed", {
+                teamId: team.id,
+                count: supabaseAssignments.length
+            });
+
+            fetchData();
+        } catch (error) {
+            console.error("Error in autofill:", error);
+            alert("Failed to autofill assignments");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const fixCollisions = async () => {
+        if (!team || assignments.length === 0 || scouts.length === 0) return;
+
+        if (!confirm("This will attempt to resolve all scouting collisions by reassigning teams. Continue?")) return;
+
+        setSaving(true);
+        try {
+            const response = await fetch('/api/v1/assignments/fix-collisions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assignments: assignments.map(a => ({
+                        scout_user_id: a.scout_user_id,
+                        assigned_team_number: a.assigned_team_number
+                    })),
+                    matches: eventMatches,
+                    scouts: scouts.map(s => s.user_id)
+                })
+            });
+
+            if (!response.ok) throw new Error("Backend collision fix failed");
+
+            const fixedAssignments = await response.json();
+
+            // Replace all assignments for the team
+            const { error: deleteError } = await supabase
+                .from("scout_team_assignments")
+                .delete()
+                .eq("team_id", team.id);
+
+            if (deleteError) throw deleteError;
+
+            const { error: insertError } = await supabase
+                .from("scout_team_assignments")
+                .insert(fixedAssignments.map((a: any) => ({
+                    team_id: team.id,
+                    scout_user_id: a.scout_user_id,
+                    assigned_team_number: a.assigned_team_number
+                })));
+
+            if (insertError) throw insertError;
+
+            trackEvent("scout_collisions_fixed", {
+                teamId: team.id,
+                count: fixedAssignments.length
+            });
+
+            fetchData();
+        } catch (error) {
+            console.error("Error fixing collisions:", error);
+            alert("Failed to fix collisions");
         } finally {
             setSaving(false);
         }
@@ -576,13 +756,32 @@ const AdminAssignmentsPage = () => {
                             )}
                         </div>
 
-                        <div className="flex items-end">
+                        <div className="flex items-end gap-2">
                             <button
                                 onClick={addAssignment}
                                 disabled={!newAssignment.scoutId || !newAssignment.teamNumber}
                                 className="px-6 py-2 bg-accent text-background rounded-lg font-bold hover:shadow-[0_0_15px_rgba(0,238,228,0.4)] transition-all disabled:opacity-50"
                             >
                                 Add Assignment
+                            </button>
+                            <button
+                                onClick={autofillAssignments}
+                                disabled={saving || eventTeams.length === 0}
+                                className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg border border-white/10 transition-all font-bold disabled:opacity-50"
+                                title="Distribute unassigned teams"
+                            >
+                                Autofill
+                            </button>
+                            <button
+                                onClick={fixCollisions}
+                                disabled={saving || Object.keys(collisions).length === 0}
+                                className={`px-6 py-2 rounded-lg border transition-all font-bold disabled:opacity-50 ${Object.keys(collisions).length > 0
+                                    ? "bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)] animate-pulse"
+                                    : "bg-white/5 text-text-muted border-white/10"
+                                    }`}
+                                title="Resolve scouter-match collisions"
+                            >
+                                Fix Collisions
                             </button>
                         </div>
                     </div>
@@ -613,6 +812,11 @@ const AdminAssignmentsPage = () => {
                                                 <span className="ml-2 text-xs px-2 py-1 rounded-full bg-accent/20 text-accent uppercase">
                                                     {scout.role}
                                                 </span>
+                                                {collisions[scout.user_id] && (
+                                                    <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold uppercase animate-pulse">
+                                                        Collision: {collisions[scout.user_id].length} Matches
+                                                    </span>
+                                                )}
                                             </div>
                                             <span className="text-sm text-text-muted">
                                                 {scoutAssignments.length} team

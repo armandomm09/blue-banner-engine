@@ -62,6 +62,8 @@ const WelcomePage = () => {
     []
   );
   const [teamInvitations, setTeamInvitations] = useState<Invitation[]>([]);
+  const [teamMembersList, setTeamMembersList] = useState<any[]>([]);
+  const [showAllUsers, setShowAllUsers] = useState(false);
 
   // Form states
   const [personalForm, setPersonalForm] = useState({
@@ -215,6 +217,31 @@ const WelcomePage = () => {
           .eq("team_id", teamId);
 
         setTeamInvitations(teamInvData || []);
+
+        // Fetch active team members
+        const { data: membersData, error: membersError } = await supabase
+          .from("team_members")
+          .select("user_id, role")
+          .eq("team_id", teamId);
+
+        if (membersError) throw membersError;
+
+        if (membersData && membersData.length > 0) {
+          const userIds = membersData.map(m => m.user_id);
+          const { data: profilesData } = await supabase
+            .from("user_profiles")
+            .select("*")
+            .in("user_id", userIds);
+
+          const profileMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
+          const memberWithProfiles = membersData.map(m => ({
+            ...m,
+            profile: profileMap.get(m.user_id) || null
+          }));
+          setTeamMembersList(memberWithProfiles);
+        } else {
+          setTeamMembersList([]);
+        }
       }
     } catch (err) {
       console.error("Error:", err);
@@ -271,6 +298,47 @@ const WelcomePage = () => {
       fetchData();
     } catch (err: any) {
       alert("Failed to cancel invitation");
+    }
+  };
+
+  const handleRemoveMember = async (memberUserId: string) => {
+    if (!teamMember?.team?.id) return;
+    if (memberUserId === user?.id) {
+      alert("You cannot remove yourself. Ask another admin to do so or use another method.");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to remove this member from the team?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", teamMember.team.id)
+        .eq("user_id", memberUserId);
+
+      if (error) throw error;
+      fetchData();
+    } catch (err: any) {
+      console.error("Error removing member:", err);
+      alert("Failed to remove member");
+    }
+  };
+
+  const handleChangeRole = async (memberUserId: string, newRole: string) => {
+    if (!teamMember?.team?.id) return;
+    try {
+      const { error } = await supabase
+        .from("team_members")
+        .update({ role: newRole })
+        .eq("team_id", teamMember.team.id)
+        .eq("user_id", memberUserId);
+
+      if (error) throw error;
+      fetchData();
+    } catch (err: any) {
+      console.error("Error changing role:", err);
+      alert("Failed to change role");
     }
   };
 
@@ -918,10 +986,10 @@ const WelcomePage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-lg font-semibold text-white">
-                  Team Invitations
+                  User Management
                 </h2>
                 <p className="text-xs text-text-muted">
-                  Manage pending requests to join your team.
+                  View and manage your team's invitations and active members.
                 </p>
               </div>
 
@@ -937,64 +1005,105 @@ const WelcomePage = () => {
               <table className="w-full text-left">
                 <thead>
                   <tr className="text-xs font-bold text-text-muted uppercase tracking-wider border-b border-border">
-                    <th className="pb-3 px-4">Email</th>
+                    <th className="pb-3 px-4">User</th>
                     <th className="pb-3 px-4">Role</th>
                     <th className="pb-3 px-4">Status</th>
                     <th className="pb-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {teamInvitations.map((inv) => (
+                  {[
+                    ...teamMembersList.map(m => ({
+                      id: m.user_id,
+                      name: m.profile?.full_name || m.user_id.substring(0, 8),
+                      email: "",
+                      role: m.role,
+                      status: "active",
+                      type: "member"
+                    })),
+                    ...teamInvitations.filter(i => i.status === "pending").map(i => ({
+                      id: i.id,
+                      name: i.email,
+                      email: i.email,
+                      role: i.role,
+                      status: "pending",
+                      type: "invite"
+                    }))
+                  ].slice(0, showAllUsers ? undefined : 5).map((u) => (
                     <tr
-                      key={inv.id}
+                      key={u.id}
                       className="border-b border-border/50 hover:bg-white/[0.02]"
                     >
                       <td className="py-4 px-4 text-white font-medium">
-                        {inv.email}
+                        {u.name}
                       </td>
-                      <td className="py-4 px-4 text-text-muted capitalize">
-                        {inv.role}
+                      <td className="py-4 px-4 text-text-muted">
+                        {u.type === "member" ? (
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                            className="bg-background border border-border rounded px-2 py-1 text-xs text-white capitalize focus:border-accent outline-none"
+                          >
+                            <option value="scouter">Scouter</option>
+                            <option value="admin">Admin</option>
+                            <option value="viewer">Viewer</option>
+                          </select>
+                        ) : (
+                          <span className="capitalize">{u.role}</span>
+                        )}
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${inv.status === "pending"
-                            ? "bg-yellow-500/10 text-yellow-400"
-                            : inv.status === "accepted"
-                              ? "bg-green-500/10 text-green-400"
-                              : "bg-red-500/10 text-red-400"
+                          className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${u.status === "active"
+                            ? "bg-green-500/10 text-green-400"
+                            : "bg-yellow-500/10 text-yellow-400"
                             }`}
                         >
-                          {inv.status}
+                          {u.status}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right">
-                        {inv.status === "pending" && (
-                          <button
-                            onClick={() => handleCancelInvitation(inv.id)}
-                            className="text-red-400 hover:text-red-300 transition-colors"
-                            title="Cancel Invitation"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={2}
-                              stroke="currentColor"
-                              className="w-5 h-5"
+                        <div className="flex justify-end gap-2">
+                          {u.type === "invite" ? (
+                            <button
+                              onClick={() => handleCancelInvitation(u.id)}
+                              className="text-red-400 hover:text-red-300 transition-colors"
+                              title="Cancel Invitation"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                        )}
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          ) : (
+                            u.id !== user?.id && (
+                              <button
+                                onClick={() => handleRemoveMember(u.id)}
+                                className="text-red-400 hover:text-red-300 transition-colors"
+                                title="Remove Member"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              {(teamMembersList.length + teamInvitations.filter(i => i.status === "pending").length) > 5 && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={() => setShowAllUsers(!showAllUsers)}
+                    className="text-sm text-accent hover:text-accent/80 font-bold transition-colors"
+                  >
+                    {showAllUsers ? "SHOW LESS" : `SHOW ALL (${teamMembersList.length + teamInvitations.filter(i => i.status === "pending").length})`}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

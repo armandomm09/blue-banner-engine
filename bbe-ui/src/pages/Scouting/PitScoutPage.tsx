@@ -26,12 +26,19 @@ const PitScoutPage = () => {
   useEffect(() => {
     if (editId) {
       fetchSubmissionForEdit();
-    } else if (formId) {
-      fetchPublishedVersion();
     } else {
-      fetchDefaultForm();
+      if (formId) {
+        fetchPublishedVersion();
+      } else {
+        fetchDefaultForm();
+      }
+
+      const urlTeam = searchParams.get("team");
+      if (urlTeam) {
+        setScoutedTeam(urlTeam);
+      }
     }
-  }, [formId, editId]);
+  }, [formId, editId, searchParams]);
 
   useEffect(() => {
     if (team?.id && user?.id) {
@@ -116,6 +123,19 @@ const PitScoutPage = () => {
   const fetchDefaultForm = async () => {
     if (!team) return;
     try {
+      // 1. Try to get default form from event settings
+      const { data: settings } = await supabase
+        .from("event_settings")
+        .select("default_pit_form_id")
+        .eq("team_id", team.id)
+        .maybeSingle();
+
+      if (settings?.default_pit_form_id) {
+        fetchPublishedVersion(settings.default_pit_form_id);
+        return;
+      }
+
+      // 2. Fallback to any published pit form
       const { data } = await supabase
         .from("forms")
         .select("id")
@@ -123,7 +143,7 @@ const PitScoutPage = () => {
         .eq("type", "pit")
         .eq("status", "published")
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (data) {
         fetchPublishedVersion(data.id);

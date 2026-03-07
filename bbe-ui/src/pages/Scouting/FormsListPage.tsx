@@ -121,6 +121,49 @@ const FormsListPage = () => {
       alert("Failed to update form name");
     }
   };
+  const deleteForm = async (id: string, name: string) => {
+    const alsoSubmissions = confirm(`Are you sure you want to delete "${name}"? This will delete all versions.\n\nDo you ALSO want to delete all submissions made to this form?`);
+    if (alsoSubmissions === null) return; // User cancelled
+
+    try {
+      // 1. Get all version IDs
+      const { data: versions } = await supabase
+        .from("form_versions")
+        .select("id")
+        .eq("form_id", id);
+
+      const versionIds = versions?.map(v => v.id) || [];
+
+      if (versionIds.length > 0 && alsoSubmissions) {
+        // 2. Delete submissions
+        await supabase.from("pit_submissions").delete().in("form_version_id", versionIds);
+        await supabase.from("match_submissions").delete().in("form_version_id", versionIds);
+      }
+
+      // 3. Delete versions (if not cascaded)
+      await supabase.from("form_versions").delete().eq("form_id", id);
+
+      // 4. Delete form
+      const { error } = await supabase.from("forms").delete().eq("id", id);
+      if (error) throw error;
+
+      fetchForms();
+    } catch (error) {
+      console.error("Error deleting form:", error);
+      alert("Failed to delete form");
+    }
+  };
+
+  const updateStatus = async (id: string, status: "draft" | "published" | "archived") => {
+    try {
+      const { error } = await supabase.from("forms").update({ status }).eq("id", id);
+      if (error) throw error;
+      fetchForms();
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-text font-['Poppins'] animate-fade-in">
@@ -217,26 +260,62 @@ const FormsListPage = () => {
               >
                 <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
                   <span
-                    className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                      form.type === "pit"
-                        ? "bg-blue-500/10 text-blue-400"
-                        : "bg-purple-500/10 text-purple-400"
-                    }`}
+                    className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${form.type === "pit"
+                      ? "bg-blue-500/10 text-blue-400"
+                      : "bg-purple-500/10 text-purple-400"
+                      }`}
                   >
                     {form.type} scouting
                   </span>
 
-                  <span
-                    className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${
-                      form.status === "published"
+                  <div className="flex gap-2">
+                    <span
+                      className={`px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider ${form.status === "published"
                         ? "bg-green-500/10 text-green-400"
                         : form.status === "archived"
-                        ? "bg-red-500/10 text-red-400"
-                        : "bg-yellow-500/10 text-yellow-400"
-                    }`}
-                  >
-                    {form.status}
-                  </span>
+                          ? "bg-red-500/10 text-red-400"
+                          : "bg-yellow-500/10 text-yellow-400"
+                        }`}
+                    >
+                      {form.status}
+                    </span>
+
+                    {isAdmin && (
+                      <div className="flex gap-1 overflow-hidden rounded border border-border bg-background/50">
+                        {form.status !== "archived" && (
+                          <button
+                            onClick={() => updateStatus(form.id, "archived")}
+                            title="Archive/Disable"
+                            className="p-1 hover:bg-red-500/10 text-text-muted hover:text-red-400"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                          </button>
+                        )}
+                        {form.status !== "draft" && (
+                          <button
+                            onClick={() => updateStatus(form.id, "draft")}
+                            title="Move to Draft"
+                            className="p-1 hover:bg-yellow-500/10 text-text-muted hover:text-yellow-400"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteForm(form.id, form.name)}
+                          title="Delete Permanently"
+                          className="p-1 hover:bg-red-500/20 text-text-muted hover:text-red-500"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mb-2">
@@ -309,11 +388,10 @@ const FormsListPage = () => {
 
                   <Link
                     to={`/scout/${form.type}?form=${form.id}`}
-                    className={`w-full sm:flex-1 py-2 text-center rounded-lg font-bold text-sm transition-all ${
-                      form.status === "published"
-                        ? "bg-background border border-border text-white hover:border-accent/50"
-                        : "bg-background/50 border border-border/50 text-text-muted cursor-not-allowed"
-                    }`}
+                    className={`w-full sm:flex-1 py-2 text-center rounded-lg font-bold text-sm transition-all ${form.status === "published"
+                      ? "bg-background border border-border text-white hover:border-accent/50"
+                      : "bg-background/50 border border-border/50 text-text-muted cursor-not-allowed"
+                      }`}
                     onClick={(e) =>
                       form.status !== "published" && e.preventDefault()
                     }

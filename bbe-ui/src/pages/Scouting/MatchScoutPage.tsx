@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { supabase } from "../../lib/supabase";
 import Stopwatch from "../../components/Scouting/Stopwatch";
+import FieldComponent from "../../components/Scouting/FieldComponent";
 import { trackEvent } from "../../utils/analytics";
 
 const MatchScoutPage = () => {
@@ -33,12 +34,27 @@ const MatchScoutPage = () => {
     useEffect(() => {
         if (editId) {
             fetchSubmissionForEdit();
-        } else if (formId) {
-            fetchPublishedVersion();
         } else {
-            fetchDefaultForm();
+            if (formId) {
+                fetchPublishedVersion();
+            } else {
+                fetchDefaultForm();
+            }
+
+            const urlTeam = searchParams.get("team");
+            const urlMatch = searchParams.get("match");
+            const urlEvent = searchParams.get("event");
+
+            if (urlTeam || urlMatch || urlEvent) {
+                setScoutMeta(prev => ({
+                    ...prev,
+                    scouted_team_number: urlTeam || prev.scouted_team_number,
+                    match_key: urlMatch || prev.match_key,
+                    event_key: urlEvent || prev.event_key
+                }));
+            }
         }
-    }, [formId, editId]);
+    }, [formId, editId, searchParams]);
 
     // ...
 
@@ -94,11 +110,20 @@ const MatchScoutPage = () => {
 
             if (subError) throw subError;
 
+            // Extract just the number for the UI if it's the full key
+            let displayMatchKey = sub.match_key;
+            if (displayMatchKey.includes("_")) {
+                const parts = displayMatchKey.split("_");
+                if (parts.length > 1) {
+                    displayMatchKey = parts[1].replace(/^\D+/g, "");
+                }
+            }
+
             setFormVersion(sub.version);
             setScoutMeta({
                 scouted_team_number: sub.scouted_team_number.toString(),
                 event_key: sub.event_key,
-                match_key: sub.match_key,
+                match_key: displayMatchKey,
                 alliance: sub.alliance,
                 match_type: sub.match_type || "quals",
             });
@@ -138,6 +163,19 @@ const MatchScoutPage = () => {
     const fetchDefaultForm = async () => {
         if (!team) return;
         try {
+            // 1. Try to get default form from event settings
+            const { data: settings } = await supabase
+                .from("event_settings")
+                .select("default_match_form_id")
+                .eq("team_id", team.id)
+                .maybeSingle();
+
+            if (settings?.default_match_form_id) {
+                fetchPublishedVersion(settings.default_match_form_id);
+                return;
+            }
+
+            // 2. Fallback to any published match form
             const { data } = await supabase
                 .from("forms")
                 .select("id")
@@ -145,7 +183,7 @@ const MatchScoutPage = () => {
                 .eq("type", "match")
                 .eq("status", "published")
                 .limit(1)
-                .single();
+                .maybeSingle();
 
             if (data) {
                 fetchPublishedVersion(data.id);
@@ -182,11 +220,14 @@ const MatchScoutPage = () => {
 
         setSubmitting(true);
         try {
+            const matchTypeCode = scoutMeta.match_type === "quals" ? "qm" : scoutMeta.match_type === "practice" ? "pm" : "p";
+            const fullMatchKey = `${scoutMeta.event_key}_${matchTypeCode}${scoutMeta.match_key}`;
+
             const submissionData = {
                 team_id: team.id,
                 form_version_id: formVersion.id,
                 event_key: scoutMeta.event_key,
-                match_key: scoutMeta.match_key,
+                match_key: fullMatchKey,
                 alliance: scoutMeta.alliance,
                 match_type: scoutMeta.match_type,
                 scouted_team_number: parseInt(scoutMeta.scouted_team_number),
@@ -616,12 +657,23 @@ const MatchScoutPage = () => {
                                         />
                                     )}
 
+                                    {field.type === "field_component" && (
+                                        <FieldComponent
+                                            fieldImage={field.field_image}
+                                            drawingEnabled={field.drawing_enabled !== false}
+                                            actions={field.actions || []}
+                                            value={answers[field.id] || { strokes: [], actions: [] }}
+                                            onChange={(val) => setAnswers({ ...answers, [field.id]: val })}
+                                        />
+                                    )}
+
                                     {field.type !== "number" &&
                                         field.type !== "boolean" &&
                                         field.type !== "single_select" &&
                                         field.type !== "multi_select" &&
                                         field.type !== "rating" &&
-                                        field.type !== "time_seconds" && (
+                                        field.type !== "time_seconds" &&
+                                        field.type !== "field_component" && (
                                             <input
                                                 type="text"
                                                 value={answers[field.id] || ""}

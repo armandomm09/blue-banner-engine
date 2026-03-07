@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { Link } from "react-router-dom";
 import type { ColumnDef } from "../../utils/schemaToColumns";
 import type { NormalizedRow } from "../../utils/normalizeSubmissions";
 import { formatCellValue } from "../../utils/normalizeSubmissions";
@@ -226,6 +227,23 @@ const DataGrid: React.FC<DataGridProps> = ({
                           >
                             {value}
                           </span>
+                        ) : col.id === "actions" ? (
+                          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                            <Link
+                              to={`/visualize/match/${row.raw_match_key || `${row.event_key}_qm${row.match_key}`}?team=frc${row.scouted_team_number}`}
+                              className="px-3 py-1 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg text-[10px] font-black uppercase transition-all"
+                            >
+                              Analyze
+                            </Link>
+                            {row.onDelete && (
+                              <button
+                                onClick={row.onDelete}
+                                className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-[10px] font-black uppercase transition-all"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           displayValue || (
                             <span className="text-text-muted/50">—</span>

@@ -295,6 +295,42 @@ const SubmissionsDashboard = () => {
     []
   );
 
+  const handleExportCSV = () => {
+    if (processedData.length === 0) return;
+
+    const activeColumns = columns.filter(c => visibleColumns.includes(c.id));
+    const headers = activeColumns.map(c => c.label);
+
+    const csvRows = [
+      headers.join(","),
+      ...processedData.map(row =>
+        activeColumns
+          .map(c => {
+            const val = row[c.id];
+            const strVal = formatCellValue(val, c.type);
+            return `"${strVal.replace(/"/g, '""')}"`;
+          })
+          .join(",")
+      )
+    ];
+
+    const csvContent = "\uFEFF" + csvRows.join("\n"); // Add BOM for Excel UTF-8 support
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `submissions_${view}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    trackEvent("export_csv", {
+      type: view,
+      count: processedData.length
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background text-text font-['Poppins'] animate-fade-in">
       <div className="max-w-[1800px] mx-auto px-6 py-8">
@@ -369,6 +405,28 @@ const SubmissionsDashboard = () => {
                     </div>
                   )}
                 </div>
+
+                <button
+                  onClick={handleExportCSV}
+                  disabled={processedData.length === 0}
+                  className="px-4 py-2 bg-card border border-border rounded-xl text-sm font-bold text-text-muted hover:text-white transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                  </svg>
+                  Export CSV
+                </button>
 
                 <div className="flex bg-card border border-border rounded-xl p-1">
                   <button

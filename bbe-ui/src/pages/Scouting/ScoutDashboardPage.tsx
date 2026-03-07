@@ -73,7 +73,7 @@ const ScoutDashboardPage = () => {
                     .from("pit_submissions")
                     .select("scouted_team_number")
                     .eq("team_id", team.id);
-
+                // Completed pit scouting teams is not working correctly, print pitSubmissions team numbers to debug correctly
                 const completedPitTeams = new Set(
                     (pitSubmissions || []).map((s: any) => s.scouted_team_number)
                 );
@@ -121,7 +121,7 @@ const ScoutDashboardPage = () => {
                     (s: any) => `${s.match_key}-${s.scouted_team_number}`
                 )
             );
-
+            // console.log("Completed Match Keys:", completedMatchKeys);
             const assignedTeamNumbers = new Set(
                 userAssignments.map((a: Assignment) => a.assigned_team_number)
             );
@@ -149,9 +149,10 @@ const ScoutDashboardPage = () => {
 
             for (const match of matches) {
                 const matchKey = competitionType === "ftc"
-                    ? `qm${match.matchNumber}`
-                    : match.key?.split("_")[1] || `qm${match.match_number}`;
+                    ? `${match.matchNumber}`
+                    : match.key || `${eventKey}_qm${match.match_number}`;
 
+                // console.log(`Processing match ${matchKey} with data:`, match);
                 const matchNum = competitionType === "ftc"
                     ? match.matchNumber
                     : match.match_number;
@@ -178,6 +179,7 @@ const ScoutDashboardPage = () => {
                 for (const teamNum of teamsInMatch) {
                     if (assignedTeamNumbers.has(teamNum)) {
                         const key = `${matchKey}-${teamNum}`;
+                        // console.log(`Checking match ${matchKey} for team ${teamNum} with key ${key}`);
                         pendingMatchList.push({
                             matchKey,
                             teamNumber: teamNum,
@@ -312,14 +314,24 @@ const ScoutDashboardPage = () => {
                                     >
                                         Team {pit.teamNumber}
                                     </span>
-                                    <span
-                                        className={`text-xs px-2 py-1 rounded-full ${pit.completed
-                                            ? "bg-green-500/20 text-green-400"
-                                            : "bg-yellow-500/20 text-yellow-400"
-                                            }`}
-                                    >
-                                        {pit.completed ? "Completed" : "Pending"}
-                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        <span
+                                            className={`text-xs px-2 py-1 rounded-full ${pit.completed
+                                                ? "bg-green-500/20 text-green-400"
+                                                : "bg-yellow-500/20 text-yellow-400"
+                                                }`}
+                                        >
+                                            {pit.completed ? "Completed" : "Pending"}
+                                        </span>
+                                        {!pit.completed && (
+                                            <Link
+                                                to={`/scout/pit?team=${pit.teamNumber}`}
+                                                className="px-3 py-1 bg-accent text-background rounded-lg text-[10px] font-black uppercase hover:shadow-[0_0_10px_rgba(0,238,228,0.3)] transition-all"
+                                            >
+                                                Scout Now
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -363,20 +375,30 @@ const ScoutDashboardPage = () => {
                                                 className={`font-mono ${match.completed ? "text-green-400" : "text-white"
                                                     }`}
                                             >
-                                                {match.matchKey.toUpperCase()}
+                                                {match.matchKey.includes("_") ? match.matchKey.split("_")[1].toUpperCase() : match.matchKey.toUpperCase()}
                                             </span>
                                             <span className="text-text-muted ml-2">
                                                 → Team {match.teamNumber}
                                             </span>
                                         </div>
-                                        <span
-                                            className={`text-xs px-2 py-1 rounded-full ${match.completed
-                                                ? "bg-green-500/20 text-green-400"
-                                                : "bg-orange-500/20 text-orange-400"
-                                                }`}
-                                        >
-                                            {match.completed ? "Completed" : "Pending"}
-                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            <span
+                                                className={`text-xs px-2 py-1 rounded-full ${match.completed
+                                                    ? "bg-green-500/20 text-green-400"
+                                                    : "bg-orange-500/20 text-orange-400"
+                                                    }`}
+                                            >
+                                                {match.completed ? "Completed" : "Pending"}
+                                            </span>
+                                            {!match.completed && (
+                                                <Link
+                                                    to={`/scout/match?team=${match.teamNumber}&match=${match.matchNumber}&event=${eventSettings?.current_event_key}`}
+                                                    className="px-3 py-1 bg-accent text-background rounded-lg text-[10px] font-black uppercase hover:shadow-[0_0_10px_rgba(0,238,228,0.3)] transition-all"
+                                                >
+                                                    Scout Now
+                                                </Link>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                         </div>

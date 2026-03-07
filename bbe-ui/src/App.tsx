@@ -35,8 +35,14 @@ import SubmissionsDashboard from "./pages/Dashboard/SubmissionsDashboard";
 import { TeamDashboard } from "./pages/Dashboard/TeamDashboard";
 import { CompareDashboard } from "./pages/Dashboard/CompareDashboard";
 
+// Visualization
+import TeamListPage from "./pages/Visualization/TeamListPage";
+import TeamDetailPage from "./pages/Visualization/TeamDetailPage";
+import MatchDetailPage_Viz from "./pages/Visualization/MatchDetailPage";
+
 // Admin
 import AdminAssignmentsPage from "./pages/Admin/AdminAssignmentsPage";
+import SettingsPage from "./pages/Admin/SettingsPage";
 
 function App() {
   return (
@@ -154,6 +160,18 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route path="/visualize/teams" element={<TeamListPage />} />
+              <Route path="/visualize/team/:teamNumber" element={<TeamDetailPage />} />
+              <Route path="/visualize/match/:matchKey" element={<MatchDetailPage_Viz />} />
 
               <Route
                 path="/welcome"

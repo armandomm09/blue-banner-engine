@@ -15,7 +15,7 @@ type StatboticsClient struct {
 func NewStatboticsClient() *StatboticsClient {
 	return &StatboticsClient{
 		BaseURL: "https://api.statbotics.io/v3",
-		Client:  &http.Client{Timeout: 10 * time.Second},
+		Client:  &http.Client{Timeout: 15 * time.Second},
 	}
 }
 
