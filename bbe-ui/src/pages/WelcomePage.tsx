@@ -304,23 +304,23 @@ const WelcomePage = () => {
   const handleRemoveMember = async (memberUserId: string) => {
     if (!teamMember?.team?.id) return;
     if (memberUserId === user?.id) {
-      alert("You cannot remove yourself. Ask another admin to do so or use another method.");
+      alert("You cannot remove yourself...");
       return;
     }
-
-    if (!confirm("Are you sure you want to remove this member from the team?")) return;
+    if (!confirm("Are you sure...?")) return;
 
     try {
-      const { error } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("team_id", teamMember.team.id)
-        .eq("user_id", memberUserId);
+      const { data, error } = await supabase
+        .rpc("remove_team_member_and_invitations", {
+          p_team_id: teamMember.team.id,
+          p_user_id: memberUserId,
+        });
 
       if (error) throw error;
+      console.log("RPC OK", data);
       fetchData();
     } catch (err: any) {
-      console.error("Error removing member:", err);
+      console.error("Error removing member via RPC:", err);
       alert("Failed to remove member");
     }
   };
