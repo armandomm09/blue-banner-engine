@@ -198,7 +198,7 @@ const MatchScoutPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!team || !user || !formVersion) return;
-
+        console.log(answers)
         // Basic validation
         if (
             !scoutMeta.scouted_team_number ||
@@ -210,7 +210,15 @@ const MatchScoutPage = () => {
         }
 
         const missing = formVersion.schema.fields
-            .filter((f: any) => f.required && !answers[f.id])
+            .filter((f: any) => {
+                if (!f.required) return false;
+
+                if (f.type === "boolean") {
+                    return !(f.id in answers);
+                }
+
+                return !answers[f.id];
+            })
             .map((f: any) => f.label);
 
         if (missing.length > 0) {
