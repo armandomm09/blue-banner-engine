@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { supabase } from "../../lib/supabase";
 import Stopwatch from "../../components/Scouting/Stopwatch";
 import { trackEvent } from "../../utils/analytics";
+import FieldComponent from "../../components/Scouting/FieldComponent";
 
 const PitScoutPage = () => {
   const [searchParams] = useSearchParams();
@@ -511,6 +512,16 @@ const PitScoutPage = () => {
                     />
                   )}
 
+                  {field.type === "field_component" && (
+                    <FieldComponent
+                      fieldImage={field.field_image}
+                      drawingEnabled={field.drawing_enabled !== false}
+                      actions={field.actions || []}
+                      value={answers[field.id] || { strokes: [], actions: [] }}
+                      onChange={(val) => setAnswers({ ...answers, [field.id]: val })}
+                    />
+                  )}
+
                   {field.type !== "short_text" &&
                     field.type !== "long_text" &&
                     field.type !== "number" &&
@@ -518,7 +529,8 @@ const PitScoutPage = () => {
                     field.type !== "single_select" &&
                     field.type !== "multi_select" &&
                     field.type !== "rating" &&
-                    field.type !== "time_seconds" && (
+                    field.type !== "time_seconds" &&
+                    field.type !== "field_component" && (
                       <input
                         type="text"
                         value={answers[field.id] || ""}
