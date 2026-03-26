@@ -337,6 +337,7 @@ const WelcomePage = () => {
       if (error) throw error;
       fetchData();
     } catch (err: any) {
+      console.log(newRole)
       console.error("Error changing role:", err);
       alert("Failed to change role");
     }
@@ -1044,7 +1045,7 @@ const WelcomePage = () => {
                             onChange={(e) => handleChangeRole(u.id, e.target.value)}
                             className="bg-background border border-border rounded px-2 py-1 text-xs text-white capitalize focus:border-accent outline-none"
                           >
-                            <option value="scouter">Scouter</option>
+                            <option value="scout">Scouter</option>
                             <option value="admin">Admin</option>
                             <option value="viewer">Viewer</option>
                           </select>
