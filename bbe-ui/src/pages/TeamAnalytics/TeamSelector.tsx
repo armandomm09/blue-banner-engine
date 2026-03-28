@@ -79,7 +79,7 @@ export const TeamSelector: React.FC<Props> = ({
             type="text"
             value={eventKeyInput}
             onChange={(e) => setEventKeyInput(e.target.value)}
-            placeholder="e.g., 2025mxmo"
+            placeholder="e.g., 2026mxmo"
             className="bg-background border border-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent w-full"
             disabled={isLoading}
           />

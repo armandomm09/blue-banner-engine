@@ -44,6 +44,9 @@ import MatchDetailPage_Viz from "./pages/Visualization/MatchDetailPage";
 import AdminAssignmentsPage from "./pages/Admin/AdminAssignmentsPage";
 import SettingsPage from "./pages/Admin/SettingsPage";
 
+// Strategy
+import StrategyWorkspacePage from "./pages/Strategy/StrategyWorkspacePage";
+
 function App() {
   return (
     <Router>
@@ -160,6 +163,15 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/strategy"
+                element={<StrategyWorkspacePage />}
+              />
+              <Route
+                path="/strategy/:strategyId"
+                element={<StrategyWorkspacePage />}
+              />
+
               <Route
                 path="/admin/settings"
                 element={

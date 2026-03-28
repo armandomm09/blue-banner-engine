@@ -65,6 +65,7 @@ const Navbar: React.FC = () => {
         { to: "/scout/pit", label: "Pit" },
         { to: "/scout/match", label: "Match" },
         { to: "/visualize/teams", label: "Visualize" },
+        { to: "/strategy", label: "Strategy" },
         {
           to: "/forms/submissions",
           label: "Submissions",

@@ -15,7 +15,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, metadata?: any) => Promise<void>;
   signOut: () => Promise<void>;
-  team: { id: string; name: string; accent_color: string } | null;
+  team: { id: string; name: string; accent_color: string; team_number: number } | null;
   userRole: 'admin' | 'scout' | 'strategist' | 'viewer' | 'team_lead' | null;
   isAdmin: boolean;
 }
@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     id: string;
     name: string;
     accent_color: string;
+    team_number: number;
   } | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'scout' | 'strategist' | 'viewer' | 'team_lead' | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     team:teams (
                         id,
                         name,
+                        team_number,
                         accent_color
                     )
                 `
@@ -125,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTeam({
           id: teamData.id,
           name: teamData.name,
+          team_number: teamData.team_number,
           accent_color: teamData.accent_color || "#00eee4",
         });
         setUserRole(data.role as 'admin' | 'scout' | 'strategist' | 'viewer' | 'team_lead');
