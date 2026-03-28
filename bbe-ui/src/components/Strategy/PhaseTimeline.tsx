@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import type { PhaseName, CanvasData, StrategyRobot } from "../../types/strategy";
+import type { PhaseName, CanvasData } from "../../types/strategy";
 import { DEFAULT_PHASES } from "../../types/strategy";
 
 interface PhaseTimelineProps {

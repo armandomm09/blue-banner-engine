@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef } from "react";
 import type { ContextMenuAction, StrategyRobot } from "../../types/strategy";
 import { CONTEXT_MENU_ACTIONS } from "../../types/strategy";
 
@@ -69,11 +69,10 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
                   onMouseLeave={() => setSubmenuOpen(null)}
                 >
                   <button
-                    className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center justify-between hover:bg-white/5 transition-colors ${
-                      action.danger
+                    className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center justify-between hover:bg-white/5 transition-colors ${action.danger
                         ? "text-red-400 hover:bg-red-500/10"
                         : "text-text-muted hover:text-white"
-                    }`}
+                      }`}
                   >
                     <span>{action.label}</span>
                     <span className="text-[10px] opacity-50">▶</span>
@@ -88,11 +87,10 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
                             onAction(action.id, sub.value);
                             onClose();
                           }}
-                          className={`w-full text-left px-3 py-2 text-xs font-medium text-text-muted hover:text-white hover:bg-white/5 transition-colors ${
-                            robot.role === sub.value
+                          className={`w-full text-left px-3 py-2 text-xs font-medium text-text-muted hover:text-white hover:bg-white/5 transition-colors ${robot.role === sub.value
                               ? "text-accent bg-accent/5"
                               : ""
-                          }`}
+                            }`}
                         >
                           {sub.label}
                         </button>
@@ -106,11 +104,10 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
                     onAction(action.id);
                     onClose();
                   }}
-                  className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-white/5 transition-colors ${
-                    action.danger
+                  className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-white/5 transition-colors ${action.danger
                       ? "text-red-400 hover:bg-red-500/10"
                       : "text-text-muted hover:text-white"
-                  }`}
+                    }`}
                 >
                   {action.label}
                   {action.id === "lock" && robot.locked && (

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import type { StrategyRobot, RobotStats } from "../../types/strategy";
+import type { StrategyRobot } from "../../types/strategy";
 
 interface RobotTokenProps {
   robot: StrategyRobot;
@@ -11,8 +11,6 @@ interface RobotTokenProps {
 
 const RobotToken: React.FC<RobotTokenProps> = ({
   robot,
-  containerRef,
-  onPositionChange,
   onContextMenu,
   onSelect,
 }) => {
