@@ -631,8 +631,8 @@ const MatchScoutPage = () => {
                                         )}
 
                                     {field.type === "rating" && (
-                                        <div className="grid grid-cols-5 gap-2 items-start bg-background/50 p-4 rounded-xl border border-border justify-items-center">
-                                            {[1, 2, 3, 4, 5].map((num, idx) => (
+                                        <div className="grid grid-cols-6 gap-2 items-start bg-background/50 p-4 rounded-xl border border-border justify-items-center">
+                                            {[0, 1, 2, 3, 4, 5].map((num, idx) => (
                                                 <div key={num} className="flex flex-col items-center gap-2">
                                                     <button
                                                         type="button"
